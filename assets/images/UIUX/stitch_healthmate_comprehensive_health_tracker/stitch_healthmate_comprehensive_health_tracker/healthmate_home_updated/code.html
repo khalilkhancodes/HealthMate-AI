@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HealthMate - Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error-container": "#ffdad6",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-tint": "#006d37",
+                    "tertiary-fixed": "#ffdcc5",
+                    "on-background": "#191c1d",
+                    "inverse-primary": "#4ae183",
+                    "on-error": "#ffffff",
+                    "surface-dim": "#d9dadb",
+                    "on-surface": "#191c1d",
+                    "surface-container-highest": "#e1e3e4",
+                    "surface-bright": "#f8f9fa",
+                    "secondary-fixed-dim": "#92ccff",
+                    "on-primary-fixed": "#00210c",
+                    "secondary-container": "#5cb8fd",
+                    "surface-container": "#edeeef",
+                    "tertiary": "#944a00",
+                    "on-error-container": "#93000a",
+                    "secondary-fixed": "#cce5ff",
+                    "on-primary": "#ffffff",
+                    "on-primary-container": "#005027",
+                    "on-secondary-container": "#00476e",
+                    "tertiary-container": "#ff9a4a",
+                    "primary-fixed": "#6bfe9c",
+                    "outline": "#6c7b6d",
+                    "error": "#ba1a1a",
+                    "inverse-on-surface": "#f0f1f2",
+                    "surface": "#f8f9fa",
+                    "surface-container-low": "#f3f4f5",
+                    "inverse-surface": "#2e3132",
+                    "on-tertiary-fixed-variant": "#713700",
+                    "on-tertiary-container": "#6e3600",
+                    "primary-fixed-dim": "#4ae183",
+                    "on-secondary-fixed": "#001d31",
+                    "on-primary-fixed-variant": "#005228",
+                    "surface-variant": "#e1e3e4",
+                    "on-surface-variant": "#3d4a3e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-tablet": "24px",
+                    "baseline": "4px",
+                    "margin-desktop": "32px",
+                    "gutter": "16px",
+                    "margin-mobile": "16px",
+                    "container-gap": "12px"
+            },
+            "fontFamily": {
+                    "label-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "title-lg": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "label-lg": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "label-md": ["11px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        .bg-gradient-soft {
+            background: linear-gradient(135deg, #ffffff 0%, #f3f4f5 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 w-full px-margin-mobile flex items-center justify-between h-16 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-container">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional studio portrait of a smiling young woman with warm lighting and a neutral soft-focus background. The image has a clean, high-clarity modern aesthetic that fits a premium health and wellness application. The lighting is soft and flattering, highlighting a sense of personal well-being and approachability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgYSgLAGlkkoG_nTmbkus717dXYp8KFnubhS0FRgpEhUxFb8jiGiXq-QFTWe6vzPTFDiX0_HQwfsW2nAFO3iM4kmUIQRZ6s1t9mToVYsqoddnz7gmxdEbreN7xcaVoe9_FeYNtephbNK23-vc90MKAQDHhurY6JUrbUYkT0ipCQOlV7lIg0cYHywLj6MmdKO6xkdmkbcIf8cCyO0KgPccwzijYiStcJ5tcS3Uhanh-gE1UhRwer8civ74fPqUP8Rk6rMfwbOCQQ9k"/>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md-mobile text-primary tracking-tight">HealthMate</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="flex items-center gap-1 bg-tertiary-container/20 px-3 py-1 rounded-full bg-tertiary-container/40"><span class="material-symbols-outlined text-tertiary text-lg" style="font-variation-settings: 'FILL' 1;">local_fire_department</span><span class="font-label-lg text-tertiary font-bold">12 Day Streak</span></div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high/50 transition-all duration-200 active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<main class="px-margin-mobile py-6 mb-24 max-w-md mx-auto">
+<!-- Health Score Hero Section -->
+<section class="mb-8">
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.04)] relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-8xl">favorite</span>
+</div>
+<div class="flex items-center justify-between relative z-10">
+<div class="flex flex-col gap-1">
+<h2 class="font-title-lg text-title-lg text-on-surface">Daily Health Score</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">You're doing better than 82% of users today!</p>
+<button class="mt-4 w-fit px-4 py-2 bg-primary text-on-primary rounded-full font-label-lg text-label-lg transition-all duration-200 active:scale-95">
+                            View Insights
+                        </button>
+</div>
+<div class="relative flex items-center justify-center">
+<svg class="w-24 h-24">
+<circle class="text-surface-container-highest" cx="48" cy="48" fill="transparent" r="40" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-primary-container" cx="48" cy="48" fill="transparent" r="40" stroke="currentColor" stroke-dasharray="251.2" stroke-dashoffset="37.68" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-headline-md text-headline-md text-primary">85</span>
+<span class="font-label-md text-label-md text-on-surface-variant">/ 100</span>
+</div>
+</div>
+</div>
+</div>
+</section><section class="mb-8"><h3 class="font-title-lg text-title-lg text-on-surface mb-4">Weekly Momentum</h3><div class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)]"><div class="flex items-end justify-between h-24 gap-2"><div class="flex-1 flex flex-col items-center gap-2"><div class="w-full bg-primary-container/20 rounded-t-sm relative h-[70%]"><div class="absolute bottom-0 w-full bg-primary-container h-full rounded-t-sm"></div></div><span class="text-[10px] text-on-surface-variant font-medium uppercase">M</span></div><div class="flex-1 flex flex-col items-center gap-2"><div class="w-full bg-primary-container/20 rounded-t-sm relative h-[85%]"><div class="absolute bottom-0 w-full bg-primary-container h-full rounded-t-sm"></div></div><span class="text-[10px] text-on-surface-variant font-medium uppercase">T</span></div><div class="flex-1 flex flex-col items-center gap-2"><div class="w-full bg-primary-container/20 rounded-t-sm relative h-[65%]"><div class="absolute bottom-0 w-full bg-primary-container h-full rounded-t-sm"></div></div><span class="text-[10px] text-on-surface-variant font-medium uppercase">W</span></div><div class="flex-1 flex flex-col items-center gap-2"><div class="w-full bg-primary-container/20 rounded-t-sm relative h-[90%]"><div class="absolute bottom-0 w-full bg-primary-container h-full rounded-t-sm"></div></div><span class="text-[10px] text-on-surface-variant font-medium uppercase">T</span></div><div class="flex-1 flex flex-col items-center gap-2"><div class="w-full bg-primary-container/20 rounded-t-sm relative h-[75%]"><div class="absolute bottom-0 w-full bg-primary-container h-full rounded-t-sm"></div></div><span class="text-[10px] text-on-surface-variant font-medium uppercase">F</span></div><div class="flex-1 flex flex-col items-center gap-2"><div class="w-full bg-primary-container/20 rounded-t-sm relative h-[80%]"><div class="absolute bottom-0 w-full bg-primary-container h-full rounded-t-sm"></div></div><span class="text-[10px] text-on-surface-variant font-medium uppercase">S</span></div><div class="flex-1 flex flex-col items-center gap-2"><div class="w-full bg-primary-container/20 rounded-t-sm relative h-[95%]"><div class="absolute bottom-0 w-full bg-primary-active h-full rounded-t-sm bg-primary"></div></div><span class="text-[10px] text-primary font-bold uppercase">S</span></div></div><div class="mt-4 flex justify-between items-center"><p class="font-body-md text-body-md text-on-surface-variant">Trend: +5% from last week</p><span class="font-label-lg text-label-lg text-primary">View Report</span></div></div></section>
+<!-- Daily Goal Achievement -->
+<section class="mb-8">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-title-lg text-title-lg text-on-surface">Daily Goals</h3>
+<span class="font-label-lg text-label-lg text-primary">Edit Goals</span>
+</div>
+<div class="grid gap-3">
+<!-- Steps -->
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-xl">directions_walk</span>
+</div>
+<span class="font-body-lg text-body-lg text-on-surface">Steps</span><span class="font-label-md text-label-md text-primary ml-2">+500 vs yesterday</span>
+</div>
+<span class="font-label-lg text-label-lg text-on-surface-variant">8,432 / 10,000</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-primary-container h-2 rounded-full" style="width: 84%;"></div>
+</div>
+</div>
+<!-- Water -->
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-xl">water_drop</span>
+</div>
+<span class="font-body-lg text-body-lg text-on-surface">Water</span><span class="font-label-md text-label-md text-secondary ml-2">+0.2L vs yesterday</span>
+</div>
+<span class="font-label-lg text-label-lg text-on-surface-variant">1.5 / 2.5 L</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-secondary-container h-2 rounded-full" style="width: 60%;"></div>
+</div>
+</div>
+<!-- Sleep -->
+<div class="bg-surface-container-lowest p-4 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-tertiary-container/20 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-xl">bedtime</span>
+</div>
+<span class="font-body-lg text-body-lg text-on-surface">Sleep</span><span class="font-label-md text-label-md text-tertiary ml-2">-0.5h vs yesterday</span>
+</div>
+<span class="font-label-lg text-label-lg text-on-surface-variant">7.2 / 8.0 hr</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-tertiary-container h-2 rounded-full" style="width: 90%;"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Quick Actions Grid -->
+<section class="mb-8">
+<h3 class="font-title-lg text-title-lg text-on-surface mb-4">Quick Actions</h3>
+<div class="grid grid-cols-3 gap-container-gap">
+<button class="flex flex-col items-center justify-center gap-2 p-4 bg-surface-container-lowest rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.02)] active:scale-95 transition-transform">
+<div class="w-12 h-12 rounded-full bg-secondary-container/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">water_drop</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface text-center">Log Water</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 p-4 bg-surface-container-lowest rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.02)] active:scale-95 transition-transform">
+<div class="w-12 h-12 rounded-full bg-primary-container/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">fitness_center</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface text-center">Exercise</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 p-4 bg-surface-container-lowest rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.02)] active:scale-95 transition-transform">
+<div class="w-12 h-12 rounded-full bg-tertiary-container/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">monitor_weight</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface text-center">Weight</span>
+</button>
+</div>
+</section>
+<!-- Health Tip Bento Card -->
+<section>
+<div class="relative w-full h-40 rounded-xl overflow-hidden group shadow-lg">
+<img alt="Yoga Tip" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A serene woman practicing yoga in a bright, sunlit studio with minimalist decor. The lighting is ethereal and high-key, using soft morning light to create a peaceful atmosphere. The aesthetic is modern and professional, with a focus on holistic wellness and mental clarity, featuring a palette of soft whites and natural greens." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAP9nBtZG0T9seCEYOc7B49CnwcCQc5wHQjyyYRPsFjEFSB4A2CFoeQVzrIYCJAm3DQInF6pbp3zoWjWp50q_5Zt7IgfBHVmJOuOG4QI33FnCtZBytlN7NbTDyisq3Ch2jKunM7ZqM5YO-Jrv58X2CcGTFVt2fcabzGrjcXfEo_iiyeo903EsG1mH7L481nKnhX0vbayDV3WLyIcqBcWpsPAUrBgfpP3IdMh6wOElL3h44ca118OBI-GE4p64T5yv-rRsPo3TZJhb4"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-background/80 to-transparent flex flex-col justify-end p-4">
+<span class="font-label-lg text-label-lg text-primary-fixed mb-1">PRO TIP</span>
+<h4 class="font-title-lg text-title-lg text-white leading-tight">Improve posture with a 5-minute morning stretch.</h4>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-surface/90 backdrop-blur-xl border-t border-outline-variant/20 shadow-[0_-2px_10px_rgba(0,0,0,0.04)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-primary-container bg-primary-container rounded-full px-5 py-1 transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-md text-label-md-mobile">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-surface-container transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined">build</span>
+<span class="font-label-md text-label-md-mobile">Tools</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-surface-container transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-md text-label-md-mobile">Analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-surface-container transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-label-md-mobile">Profile</span>
+</a>
+</nav>
+<!-- FAB for quick tracking -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-primary text-on-primary rounded-2xl shadow-lg flex items-center justify-center active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+</body></html>

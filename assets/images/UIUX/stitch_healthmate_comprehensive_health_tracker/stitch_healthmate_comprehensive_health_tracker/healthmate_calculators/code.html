@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-container": "#005027",
+                    "secondary-fixed": "#cce5ff",
+                    "background": "#f8f9fa",
+                    "surface": "#f8f9fa",
+                    "on-secondary-container": "#00476e",
+                    "inverse-on-surface": "#f0f1f2",
+                    "on-tertiary-fixed": "#301400",
+                    "on-tertiary": "#ffffff",
+                    "surface-tint": "#006d37",
+                    "surface-dim": "#d9dadb",
+                    "outline": "#6c7b6d",
+                    "secondary": "#006397",
+                    "on-primary": "#ffffff",
+                    "surface-bright": "#f8f9fa",
+                    "tertiary-container": "#ff9a4a",
+                    "inverse-primary": "#4ae183",
+                    "on-surface": "#191c1d",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-background": "#191c1d",
+                    "error-container": "#ffdad6",
+                    "tertiary": "#944a00",
+                    "on-tertiary-container": "#6e3600",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed": "#00210c",
+                    "on-tertiary-fixed-variant": "#713700",
+                    "tertiary-fixed": "#ffdcc5",
+                    "secondary-container": "#5cb8fd",
+                    "on-primary-fixed-variant": "#005228",
+                    "surface-container": "#edeeef",
+                    "on-secondary-fixed-variant": "#004b73",
+                    "on-surface-variant": "#3d4a3e",
+                    "surface-variant": "#e1e3e4",
+                    "tertiary-fixed-dim": "#ffb783",
+                    "primary-fixed-dim": "#4ae183",
+                    "primary-fixed": "#6bfe9c",
+                    "on-error-container": "#93000a",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e7e8e9",
+                    "outline-variant": "#bbcbbb",
+                    "inverse-surface": "#2e3132",
+                    "error": "#ba1a1a",
+                    "surface-container-low": "#f3f4f5",
+                    "primary": "#006d37",
+                    "on-secondary-fixed": "#001d31",
+                    "on-error": "#ffffff",
+                    "secondary-fixed-dim": "#92ccff",
+                    "primary-container": "#2ecc71"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-tablet": "24px",
+                    "margin-mobile": "16px",
+                    "gutter": "16px",
+                    "margin-desktop": "32px",
+                    "container-gap": "12px",
+                    "baseline": "4px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Inter"],
+                    "label-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "title-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-lg": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-md": ["11px", {"lineHeight": "16px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .hide-scrollbar::-webkit-scrollbar { display: none; }
+      .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-md antialiased">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 w-full px-margin-mobile flex items-center justify-between h-16 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional studio portrait of a health-conscious individual in clean, modern athletic wear. The lighting is soft and natural, emphasizing a bright, trustworthy atmosphere typical of a premium wellness application. The background is a clean, minimalist off-white, maintaining a corporate and modern aesthetic that aligns with a Material Design 3 interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBH4NK1DTcGbQ6pz2Mtm24mxdLSJILbhccO7iUa1G9l_wCCXAmHwklLQeSbcpVTxuZfrrKHB4Y99FxX8ukfupMpTx3q7POFYbrCt82rQzPFkmhI1692f_NcLkp5CSS0r0rKC-a-VOI2Dt2v4Uw3NzplR1zJo4G4VkvU15JEubCPWAVA1yvkppcyJXCQX425kAMH7P9OVFcVgSwSgxbkEkbXK6IT0u-YfzUg3aRpaXAph1N4kxtFc8Je5JpzgejJHVgx3tJT6El_TAY"/>
+</div>
+<h1 class="font-headline-md text-headline-md-mobile text-primary tracking-tight">HealthMate</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high/50 transition-all duration-200 active:scale-95">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</button>
+</header>
+<main class="px-margin-mobile py-6 pb-32 max-w-2xl mx-auto space-y-6">
+<!-- Input Section: Bento Grid Style -->
+<section class="grid grid-cols-2 gap-container-gap">
+<!-- Gender Selection -->
+<div class="col-span-2 bg-surface-container-lowest p-5 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] space-y-4">
+<h2 class="font-title-lg text-title-lg text-on-surface">Biometrics</h2>
+<div class="flex gap-4">
+<button class="flex-1 py-3 rounded-xl border-1.5 border-primary bg-primary/5 flex flex-col items-center justify-center gap-1 transition-all">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">male</span>
+<span class="font-label-lg text-label-lg text-primary">Male</span>
+</button>
+<button class="flex-1 py-3 rounded-xl border-1.5 border-outline-variant hover:bg-surface-container flex flex-col items-center justify-center gap-1 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">female</span>
+<span class="font-label-lg text-label-lg text-on-surface-variant">Female</span>
+</button>
+</div>
+</div>
+<!-- Height Input -->
+<div class="bg-surface-container-lowest p-5 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] space-y-2">
+<label class="font-label-md text-label-md text-on-surface-variant">Height (cm)</label>
+<div class="flex items-end gap-2">
+<input class="w-full bg-surface-container text-headline-md font-headline-md border-0 border-b-2 border-outline-variant focus:border-primary focus:ring-0 p-0 py-1 transition-all" type="number" value="180"/>
+</div>
+</div>
+<!-- Weight Input -->
+<div class="bg-surface-container-lowest p-5 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] space-y-2">
+<label class="font-label-md text-label-md text-on-surface-variant">Weight (kg)</label>
+<div class="flex items-end gap-2">
+<input class="w-full bg-surface-container text-headline-md font-headline-md border-0 border-b-2 border-outline-variant focus:border-primary focus:ring-0 p-0 py-1 transition-all" type="number" value="75"/>
+</div>
+</div>
+<button class="col-span-2 py-4 bg-primary text-on-primary font-title-lg text-title-lg rounded-xl shadow-sm active:scale-[0.98] transition-all">
+                Calculate Metrics
+            </button>
+</section>
+<!-- Results: Visual Scale Card -->
+<section class="bg-surface-container-lowest p-6 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.04)] space-y-6">
+<div class="flex justify-between items-start">
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Your Body Mass Index</p>
+<h3 class="font-headline-lg text-headline-lg text-primary">23.1 BMI</h3>
+</div>
+<div class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full font-label-lg text-label-lg">
+                    Normal Weight
+                </div>
+</div>
+<!-- Visual Gradient Scale -->
+<div class="space-y-3">
+<div class="relative h-3 w-full rounded-full bg-surface-container overflow-hidden flex">
+<div class="h-full w-[18.5%] bg-blue-400"></div>
+<div class="h-full w-[25%] bg-primary"></div>
+<div class="h-full w-[25%] bg-yellow-400"></div>
+<div class="h-full w-[31.5%] bg-error"></div>
+<!-- Indicator Pin -->
+<div class="absolute top-0 left-[23.1%] h-full w-1 bg-white shadow-md z-10 border-x border-black/10"></div>
+</div>
+<div class="flex justify-between text-[10px] font-label-md text-on-surface-variant uppercase">
+<span>Underweight</span>
+<span>Normal</span>
+<span>Overweight</span>
+<span>Obese</span>
+</div>
+</div>
+<div class="pt-4 border-t border-outline-variant/30 grid grid-cols-2 gap-4">
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant">Basal Metabolic Rate</p>
+<p class="font-title-lg text-title-lg text-on-surface">1,840 <span class="text-body-md font-body-md">kcal/day</span></p>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant">Ideal Weight Range</p>
+<p class="font-title-lg text-title-lg text-on-surface">64 - 79 <span class="text-body-md font-body-md">kg</span></p>
+</div>
+</div>
+</section>
+<!-- Personalized Suggestions -->
+<section class="space-y-4">
+<h3 class="font-title-lg text-title-lg text-on-surface px-1">Tailored Recommendations</h3>
+<div class="space-y-3">
+<!-- Calorie Card -->
+<div class="flex items-center gap-4 bg-secondary-container/20 p-4 rounded-xl">
+<div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+</div>
+<div class="flex-1">
+<h4 class="font-label-lg text-label-lg text-on-secondary-container">Daily Calorie Target</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">Maintain current weight with 2,250 kcal daily.</p>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+<!-- Activity Card -->
+<div class="flex items-center gap-4 bg-tertiary-fixed/30 p-4 rounded-xl">
+<div class="w-12 h-12 rounded-full bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed-variant">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">directions_run</span>
+</div>
+<div class="flex-1">
+<h4 class="font-label-lg text-label-lg text-on-tertiary-fixed-variant">Activity Suggestion</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">30 min brisk walk to boost metabolic rate.</p>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- Informational Visual -->
+<section class="relative h-48 rounded-2xl overflow-hidden shadow-sm">
+<img class="w-full h-full object-cover" data-alt="A clean, minimalist 3D visualization of biological data and health metrics. Soft green and blue glowing light paths represent metabolic energy flow against a pristine white studio background. The style is high-tech yet approachable, emphasizing the precision and clarity of personal health data in a modern medical context." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPJvO_cebJlsOPbQnQFLEBXbF0n0EebyRZ3fdRCEUiAElYN0I44kpdgA-t6gS2uUlvkQO1tbJHmOZIt4sr8dF-FG0F5EB4-X5qhZQobHrZx9H3UxPaTjEcO8Tnt42RPP3XQYzwxHcaiuCOwRh5RoqoxJeJREOd0wJftSCtiNhkPWlT-eW3-9wrwiaWC1MLz-V3MXjKybw91x1IllKw5oMJNozlb2M2P5gv431SYuNflOQURCW1UsNooks6lYzesKNwUOS7eFFuBa8"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-6">
+<p class="text-white font-headline-md text-headline-md-mobile leading-tight">Understand your metrics.</p>
+<p class="text-white/80 font-body-md text-body-md">Learn how BMR impacts your longevity.</p>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-surface/90 backdrop-blur-xl border-t border-outline-variant/20 shadow-[0_-2px_10px_rgba(0,0,0,0.04)] rounded-t-xl md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-md text-label-md-mobile">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-primary-container bg-primary-container rounded-full px-5 py-1 transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">build</span>
+<span class="font-label-md text-label-md-mobile">Tools</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-md text-label-md-mobile">Analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-label-md-mobile">Profile</span>
+</a>
+</nav>
+</body></html>

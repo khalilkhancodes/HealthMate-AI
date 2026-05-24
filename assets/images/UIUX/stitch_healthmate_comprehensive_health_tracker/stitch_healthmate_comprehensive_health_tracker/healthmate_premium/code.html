@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .backdrop-blur-md { backdrop-filter: blur(12px); }
+        .backdrop-blur-xl { backdrop-filter: blur(24px); }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#005027",
+                        "secondary-fixed": "#cce5ff",
+                        "background": "#f8f9fa",
+                        "surface": "#f8f9fa",
+                        "on-secondary-container": "#00476e",
+                        "inverse-on-surface": "#f0f1f2",
+                        "on-tertiary-fixed": "#301400",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#006d37",
+                        "surface-dim": "#d9dadb",
+                        "outline": "#6c7b6d",
+                        "secondary": "#006397",
+                        "on-primary": "#ffffff",
+                        "surface-bright": "#f8f9fa",
+                        "tertiary-container": "#ff9a4a",
+                        "inverse-primary": "#4ae183",
+                        "on-surface": "#191c1d",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-background": "#191c1d",
+                        "error-container": "#ffdad6",
+                        "tertiary": "#944a00",
+                        "on-tertiary-container": "#6e3600",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed": "#00210c",
+                        "on-tertiary-fixed-variant": "#713700",
+                        "tertiary-fixed": "#ffdcc5",
+                        "secondary-container": "#5cb8fd",
+                        "on-primary-fixed-variant": "#005228",
+                        "surface-container": "#edeeef",
+                        "on-secondary-fixed-variant": "#004b73",
+                        "on-surface-variant": "#3d4a3e",
+                        "surface-variant": "#e1e3e4",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "primary-fixed-dim": "#4ae183",
+                        "primary-fixed": "#6bfe9c",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#e7e8e9",
+                        "outline-variant": "#bbcbbb",
+                        "inverse-surface": "#2e3132",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f3f4f5",
+                        "primary": "#006d37",
+                        "on-secondary-fixed": "#001d31",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#92ccff",
+                        "primary-container": "#2ecc71"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-tablet": "24px",
+                        "margin-mobile": "16px",
+                        "gutter": "16px",
+                        "margin-desktop": "32px",
+                        "container-gap": "12px",
+                        "baseline": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-lg": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-md": ["11px", {"lineHeight": "16px", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="sticky top-0 z-50 w-full px-margin-mobile flex items-center justify-between h-16 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="A professional studio portrait of a friendly health consultant, with a warm smile, wearing modern athletic attire. The lighting is soft and natural, emphasizing a clean and trustworthy medical-tech brand identity. The background is a blurred, high-end fitness studio with light wood accents and soft greens, maintaining a corporate yet human-centric modern aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7899ZTqQMYqiMy3PB6ymyHK1NaPCYSbJ5fFrd3btIeldtj89uSsZfvOEC90E8EoJGnVg-eWIgEbdoYprY_lB4wRwv9Hp2HDfPyHtcSPcLNi0qY56OYBZjXjhZhxO_TwU-j1LRyCbIUXKuiJshSNjvzxSMa6uW5C166eH8txZ-DPrrDFj54WeRo2DAgMq7zEZxcjAKiK0BMjyMRQN_4A9dON5i1D8OgKT-J9LzEMlSh0WtsKPaN_bZGdlNfXZYsNubeByOIgz5xrE"/>
+</div>
+<h1 class="font-headline-md text-headline-md-mobile text-primary tracking-tight">HealthMate</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high/50 transition-all duration-200 active:scale-95">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="pb-24">
+<!-- Hero Section -->
+<section class="px-margin-mobile py-8 flex flex-col items-center text-center gap-4">
+<span class="px-4 py-1 rounded-full bg-tertiary-container text-on-tertiary-container font-label-lg text-label-lg uppercase tracking-widest">Premium</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Unlock Your Full Health Potential</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-md">Experience HealthMate without limits. Advanced tools designed to help you reach your goals faster.</p>
+</section>
+<!-- Bento Grid Features -->
+<section class="px-margin-mobile grid grid-cols-1 md:grid-cols-2 gap-container-gap">
+<!-- Advanced Analytics Card -->
+<div class="p-6 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-4 border border-outline-variant/10">
+<div class="w-12 h-12 rounded-lg bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[32px]" data-icon="analytics">analytics</span>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-2">Advanced Analytics</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Deep dive into your health trends with predictive modeling and metabolic tracking charts.</p>
+</div>
+<div class="mt-2 h-32 w-full rounded-lg bg-surface-container overflow-hidden">
+<div class="w-full h-full bg-gradient-to-tr from-primary/10 to-secondary/10 flex items-end p-4">
+<div class="flex items-end gap-1 w-full h-16">
+<div class="flex-1 bg-primary/40 rounded-t-sm h-[40%]"></div>
+<div class="flex-1 bg-primary/60 rounded-t-sm h-[60%]"></div>
+<div class="flex-1 bg-primary rounded-t-sm h-[80%]"></div>
+<div class="flex-1 bg-primary/50 rounded-t-sm h-[50%]"></div>
+<div class="flex-1 bg-primary/70 rounded-t-sm h-[90%]"></div>
+<div class="flex-1 bg-primary/30 rounded-t-sm h-[30%]"></div>
+<div class="flex-1 bg-primary rounded-t-sm h-[100%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Personalized Meal Plans Card -->
+<div class="p-6 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-4 border border-outline-variant/10">
+<div class="w-12 h-12 rounded-lg bg-tertiary-container/20 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[32px]" data-icon="restaurant">restaurant</span>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-2">AI Meal Planning</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Custom nutrition plans that adapt to your progress, allergies, and daily energy expenditure.</p>
+</div>
+<div class="relative h-32 w-full rounded-lg overflow-hidden">
+<img class="w-full h-full object-cover opacity-60" data-alt="A vibrant and appetizing close-up of a professionally prepared healthy meal, featuring colorful vegetables, lean proteins, and whole grains arranged artistically. The lighting is bright and high-key, reflecting a fresh and energetic morning mood. The aesthetic is clean and modern, perfectly aligned with a high-end health and wellness application's visual identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXZHUASaVzIr1a3wUNIkJOR-CpNQ66UE78vGrhalZRZbYpVnHV0Gji6aLwnNbFbFXNtNtl81XYGL4u0goGk6QBBV55ujEt3Hy82IgYkW3ARdLvTraX0MlStAFww5kbE3FRFUf7oPRYHO5YdCZ3viy-wThMJLix97WQGt47zCS9hPzFx6k_0MMwmcL55mG4_kbQQayaWYvlrjouqqPFW3ENw9i6equ6bTLfK5FMwEBS5-tqZkCqxc2O-ksoyChCrnh8X3IDKOvTjtU"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent"></div>
+</div>
+</div>
+<!-- Ad-Free Experience Card -->
+<div class="p-6 rounded-xl bg-surface-container-lowest shadow-sm flex items-center gap-4 border border-outline-variant/10 md:col-span-2">
+<div class="w-12 h-12 rounded-lg bg-secondary-container/20 flex items-center justify-center text-secondary shrink-0">
+<span class="material-symbols-outlined text-[32px]" data-icon="verified">verified</span>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface">Seamless Ad-Free Focus</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Zero interruptions. Just you and your wellness journey, optimized for maximum focus.</p>
+</div>
+</div>
+</section>
+<!-- Pricing Section -->
+<section class="px-margin-mobile py-12 flex flex-col gap-6">
+<h2 class="font-headline-md text-headline-md text-center text-on-surface">Choose Your Plan</h2>
+<div class="flex flex-col gap-4">
+<!-- Annual Plan (Best Value) -->
+<div class="relative p-6 rounded-xl bg-surface-container-lowest border-2 border-primary shadow-sm overflow-hidden">
+<div class="absolute top-0 right-0 bg-primary text-on-primary px-4 py-1 rounded-bl-xl font-label-md text-label-md">SAVE 40%</div>
+<div class="flex flex-col gap-2">
+<span class="font-label-lg text-label-lg text-primary uppercase tracking-widest">Annual Access</span>
+<div class="flex items-baseline gap-1">
+<span class="text-4xl font-bold text-on-surface">$59.99</span>
+<span class="text-on-surface-variant">/year</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">Equivalent to just $4.99/month</p>
+</div>
+<ul class="mt-6 flex flex-col gap-3">
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="check_circle">check_circle</span>
+<span class="text-on-surface-variant">All Pro Features Included</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="check_circle">check_circle</span>
+<span class="text-on-surface-variant">Priority 24/7 Support</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="check_circle">check_circle</span>
+<span class="text-on-surface-variant">Exclusive Beta Access</span>
+</li>
+</ul>
+</div>
+<!-- Monthly Plan -->
+<div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant shadow-sm">
+<div class="flex flex-col gap-2">
+<span class="font-label-lg text-label-lg text-on-surface-variant uppercase tracking-widest">Monthly</span>
+<div class="flex items-baseline gap-1">
+<span class="text-3xl font-bold text-on-surface">$9.99</span>
+<span class="text-on-surface-variant">/month</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">Flexibility to cancel anytime</p>
+</div>
+<ul class="mt-6 flex flex-col gap-3">
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline" data-icon="check_circle">check_circle</span>
+<span class="text-on-surface-variant">All Pro Features Included</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline" data-icon="check_circle">check_circle</span>
+<span class="text-on-surface-variant">Standard Support</span>
+</li>
+</ul>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="px-margin-mobile pt-4 pb-12 flex flex-col items-center gap-6">
+<button class="w-full py-4 bg-primary text-on-primary rounded-full font-title-lg text-title-lg shadow-sm active:scale-95 transition-transform duration-200">
+                Start 7-Day Free Trial
+            </button>
+<p class="font-label-md text-label-md text-on-surface-variant text-center px-4">
+                No commitment. Cancel anytime before your trial ends to avoid being charged.
+            </p>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-surface/90 backdrop-blur-xl border-t border-outline-variant/20 shadow-[0_-2px_10px_rgba(0,0,0,0.04)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-surface-container transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-md text-label-md-mobile">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-surface-container transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="build">build</span>
+<span class="font-label-md text-label-md-mobile">Tools</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-surface-container transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-md text-label-md-mobile">Analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-primary-container bg-primary-container rounded-full px-5 py-1 transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-md text-label-md-mobile">Profile</span>
+</a>
+</nav>
+</body></html>

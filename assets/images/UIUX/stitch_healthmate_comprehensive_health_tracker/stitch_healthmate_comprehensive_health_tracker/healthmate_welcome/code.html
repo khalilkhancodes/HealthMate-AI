@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HealthMate - Energizing Trust</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "on-primary-container": "#005027",
+                "secondary-fixed": "#cce5ff",
+                "background": "#f8f9fa",
+                "surface": "#f8f9fa",
+                "on-secondary-container": "#00476e",
+                "inverse-on-surface": "#f0f1f2",
+                "on-tertiary-fixed": "#301400",
+                "on-tertiary": "#ffffff",
+                "surface-tint": "#006d37",
+                "surface-dim": "#d9dadb",
+                "outline": "#6c7b6d",
+                "secondary": "#006397",
+                "on-primary": "#ffffff",
+                "surface-bright": "#f8f9fa",
+                "tertiary-container": "#ff9a4a",
+                "inverse-primary": "#4ae183",
+                "on-surface": "#191c1d",
+                "surface-container-highest": "#e1e3e4",
+                "on-background": "#191c1d",
+                "error-container": "#ffdad6",
+                "tertiary": "#944a00",
+                "on-tertiary-container": "#6e3600",
+                "on-secondary": "#ffffff",
+                "on-primary-fixed": "#00210c",
+                "on-tertiary-fixed-variant": "#713700",
+                "tertiary-fixed": "#ffdcc5",
+                "secondary-container": "#5cb8fd",
+                "on-primary-fixed-variant": "#005228",
+                "surface-container": "#edeeef",
+                "on-secondary-fixed-variant": "#004b73",
+                "on-surface-variant": "#3d4a3e",
+                "surface-variant": "#e1e3e4",
+                "tertiary-fixed-dim": "#ffb783",
+                "primary-fixed-dim": "#4ae183",
+                "primary-fixed": "#6bfe9c",
+                "on-error-container": "#93000a",
+                "surface-container-lowest": "#ffffff",
+                "surface-container-high": "#e7e8e9",
+                "outline-variant": "#bbcbbb",
+                "inverse-surface": "#2e3132",
+                "error": "#ba1a1a",
+                "surface-container-low": "#f3f4f5",
+                "primary": "#006d37",
+                "on-secondary-fixed": "#001d31",
+                "on-error": "#ffffff",
+                "secondary-fixed-dim": "#92ccff",
+                "primary-container": "#2ecc71"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+            },
+            "spacing": {
+                "margin-tablet": "24px",
+                "margin-mobile": "16px",
+                "gutter": "16px",
+                "margin-desktop": "32px",
+                "container-gap": "12px",
+                "baseline": "4px"
+            },
+            "fontFamily": {
+                "headline-lg-mobile": ["Inter"],
+                "label-lg": ["Inter"],
+                "headline-md": ["Inter"],
+                "title-lg": ["Inter"],
+                "headline-lg": ["Inter"],
+                "body-lg": ["Inter"],
+                "body-md": ["Inter"],
+                "label-md": ["Inter"]
+            },
+            "fontSize": {
+                "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                "label-lg": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                "label-md": ["11px", {"lineHeight": "16px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body {
+            background-color: #f8f9fa;
+            color: #191c1d;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .hide-scroll::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scroll {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background">
+<!-- Splash Screen Section -->
+<section class="fixed inset-0 z-[100] bg-primary flex flex-col items-center justify-center" id="splash">
+<div class="flex flex-col items-center space-y-4">
+<div class="w-24 h-24 bg-surface-container-lowest rounded-full flex items-center justify-center shadow-lg">
+<span class="material-symbols-outlined text-primary text-[48px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-primary tracking-tight">HealthMate</h1>
+<p class="font-body-md text-body-md text-primary-fixed-dim opacity-90">Your Clinical Partner in Health</p>
+</div>
+</section>
+<!-- Onboarding Container (Horizontal Scroll Simulation) -->
+<main class="relative h-screen overflow-hidden flex flex-col">
+<!-- Onboarding Slide 1: Education -->
+<div class="flex-shrink-0 w-full h-full flex flex-col items-center justify-between py-12 px-margin-mobile">
+<div class="w-full max-w-md flex flex-col items-center space-y-8">
+<div class="w-full h-80 rounded-xl overflow-hidden shadow-sm bg-surface-container-high relative">
+<img class="w-full h-full object-cover" data-alt="A clean, bright medical interior with a soft green accent wall. A modern fitness tracker sits on a white table next to a glass of water and a vibrant green apple. The lighting is bright and airy, using high-key tones to create a sense of health and vitality. The overall aesthetic is professional, minimalist, and clinical yet welcoming." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEkasF0C4ym8argOkUkQKnT0qewsQnI0Ni51E3M-RZq8qpLFTZpVM_tJsWVoMfWaeoQGa3bYDDX2CcGHqWvWzBbGrV2zG8g5CFomYpPGT15twFAwZjuU8i7mShDxCYkfYfxxg_vKNjupB-Yx9R-OQwqXAyl1-0XwrkZRQxYzgcVbpms1JK0IRNUGAxX5pTSV8d5XbnV0PdbnqOEbwHZJ_zPNATCHmDQwk-rSE4Te2gQrux6bUO13V6jqxoZkJ-T87Mhp1Gdx_xSFo"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+</div>
+<div class="text-center space-y-4">
+<h2 class="font-headline-md text-headline-md text-on-surface">Precision Tracking</h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-[280px] mx-auto">
+                        Monitor your vitals with clinical accuracy and intuitive data visualizations designed for clarity.
+                    </p>
+</div>
+</div>
+<!-- Onboarding Controls -->
+<div class="w-full max-w-md flex flex-col items-center space-y-8">
+<div class="flex space-x-2">
+<div class="w-8 h-2 rounded-full bg-primary"></div>
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+</div>
+<button class="w-full py-4 bg-primary text-on-primary rounded-xl font-title-lg text-title-lg transition-all duration-200 active:scale-95 shadow-sm">
+                    Continue
+                </button>
+</div>
+</div>
+</main>
+<!-- Login/Signup Screen (Overlaid for demo purpose) -->
+<!-- In a real app, this would be the next step in the flow -->
+<section class="fixed inset-0 z-50 bg-background flex flex-col px-margin-mobile py-12 overflow-y-auto hide-scroll hidden" id="auth">
+<div class="w-full max-w-md mx-auto flex flex-col h-full">
+<header class="mb-12">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-2">Welcome Back</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Sign in to continue your journey</p>
+</header>
+<!-- Social Logins -->
+<div class="space-y-4 mb-10">
+<button class="w-full py-3.5 border-[1.5px] border-outline-variant rounded-xl flex items-center justify-center space-x-3 bg-surface-container-lowest hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-on-surface">google</span>
+<span class="font-body-lg text-body-lg text-on-surface">Continue with Google</span>
+</button>
+<button class="w-full py-3.5 border-[1.5px] border-outline-variant rounded-xl flex items-center justify-center space-x-3 bg-surface-container-lowest hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-on-surface">ios</span>
+<span class="font-body-lg text-body-lg text-on-surface">Continue with Apple</span>
+</button>
+</div>
+<div class="flex items-center space-x-4 mb-10">
+<div class="flex-grow h-[1px] bg-outline-variant"></div>
+<span class="font-label-md text-label-md text-outline">OR EMAIL</span>
+<div class="flex-grow h-[1px] bg-outline-variant"></div>
+</div>
+<!-- Standard Form -->
+<form class="space-y-6 flex-grow">
+<div class="space-y-1.5">
+<label class="font-label-lg text-label-lg text-on-surface-variant ml-1">Email Address</label>
+<input class="w-full px-4 py-4 bg-surface-container-low border-b-[1.5px] border-outline focus:border-primary focus:ring-0 rounded-t-lg transition-all font-body-lg text-body-lg" placeholder="name@example.com" type="email"/>
+</div>
+<div class="space-y-1.5">
+<label class="font-label-lg text-label-lg text-on-surface-variant ml-1">Password</label>
+<div class="relative">
+<input class="w-full px-4 py-4 bg-surface-container-low border-b-[1.5px] border-outline focus:border-primary focus:ring-0 rounded-t-lg transition-all font-body-lg text-body-lg" placeholder="••••••••" type="password"/>
+<span class="material-symbols-outlined absolute right-4 top-4 text-on-surface-variant cursor-pointer">visibility_off</span>
+</div>
+<div class="flex justify-end">
+<a class="font-label-lg text-label-lg text-primary mt-1" href="#">Forgot Password?</a>
+</div>
+</div>
+<button class="w-full py-4 bg-primary text-on-primary rounded-xl font-title-lg text-title-lg mt-4 transition-all duration-200 active:scale-95 shadow-md" type="submit">
+                    Sign In
+                </button>
+</form>
+<footer class="mt-12 text-center pb-8">
+<p class="font-body-md text-body-md text-on-surface-variant">
+                    Don't have an account? 
+                    <button class="text-primary font-title-lg ml-1 font-semibold">Sign Up</button>
+</p>
+</footer>
+</div>
+</section>
+<!-- Simple layout switcher simulation -->
+<script>
+        // Automatic splash screen transition simulation
+        setTimeout(() => {
+            const splash = document.getElementById('splash');
+            splash.style.opacity = '0';
+            splash.style.transition = 'opacity 0.5s ease';
+            setTimeout(() => splash.classList.add('hidden'), 500);
+        }, 2000);
+
+        // Interaction simulation for "Continue" button
+        document.querySelector('button').addEventListener('click', () => {
+            document.getElementById('auth').classList.remove('hidden');
+        });
+    </script>
+<!-- Shared Component: FAB (Suppressed as per rules for Transactional/Onboarding) -->
+<!-- Navigation (Suppressed as per rules for Transactional/Onboarding) -->
+</body></html>

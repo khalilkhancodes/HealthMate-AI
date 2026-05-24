@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HealthMate - Login (Light)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface": "#191c1d",
+                    "on-error-container": "#93000a",
+                    "surface-container-high": "#e7e8e9",
+                    "on-secondary": "#ffffff",
+                    "tertiary-container": "#ff9a4a",
+                    "primary": "#006d37",
+                    "surface-tint": "#006d37",
+                    "on-tertiary-fixed-variant": "#713700",
+                    "on-secondary-fixed-variant": "#004b73",
+                    "outline-variant": "#bbcbbb",
+                    "on-surface-variant": "#3d4a3e",
+                    "background": "#f8f9fa",
+                    "surface-container-low": "#f3f4f5",
+                    "on-tertiary-container": "#6e3600",
+                    "on-primary": "#ffffff",
+                    "inverse-surface": "#2e3132",
+                    "error-container": "#ffdad6",
+                    "surface": "#f8f9fa",
+                    "tertiary-fixed": "#ffdcc5",
+                    "outline": "#6c7b6d",
+                    "tertiary": "#944a00",
+                    "secondary-fixed": "#cce5ff",
+                    "on-secondary-container": "#00476e",
+                    "secondary-fixed-dim": "#92ccff",
+                    "inverse-on-surface": "#f0f1f2",
+                    "on-tertiary-fixed": "#301400",
+                    "surface-variant": "#e1e3e4",
+                    "surface-container-lowest": "#ffffff",
+                    "on-error": "#ffffff",
+                    "on-background": "#191c1d",
+                    "secondary-container": "#5cb8fd",
+                    "on-tertiary": "#ffffff",
+                    "surface-container": "#edeeef",
+                    "on-primary-container": "#005027",
+                    "primary-fixed-dim": "#4ae183",
+                    "surface-dim": "#d9dadb",
+                    "surface-bright": "#f8f9fa",
+                    "on-primary-fixed-variant": "#005228",
+                    "tertiary-fixed-dim": "#ffb783",
+                    "secondary": "#006397",
+                    "primary-fixed": "#6bfe9c",
+                    "primary-container": "#2ecc71",
+                    "on-primary-fixed": "#00210c",
+                    "inverse-primary": "#4ae183",
+                    "error": "#ba1a1a",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-secondary-fixed": "#001d31"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-desktop": "32px",
+                    "margin-mobile": "16px",
+                    "container-gap": "12px",
+                    "margin-tablet": "24px",
+                    "gutter": "16px",
+                    "baseline": "4px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Inter"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "title-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "label-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "label-md": ["11px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-lg": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .backdrop-blur-login {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col">
+<main class="flex-grow flex flex-col lg:flex-row min-h-screen">
+<!-- Left Section: Visual Narrative (Hero Image) -->
+<section class="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-primary items-center justify-center p-12">
+<div class="absolute inset-0 z-0 opacity-40">
+<img alt="Healthy Lifestyle" class="w-full h-full object-cover" data-alt="A high-resolution, bright, and airy photograph showing a person tying their running shoes in a sun-drenched, minimalist living room with clean white walls and green plants. The lighting is soft and natural, emphasizing a morning health routine. The color palette is dominated by fresh whites and vibrant primary greens to evoke trust and vitality. The composition is professional and clean, fitting a modern corporate health application aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_nG5c31HOvPLzHDu4Tmmld15W7K0tzD9UFGtB7t47daDlK3AVvxBuusz_TgYNuivFjvk-HuqeKCJC1ay3qUIRBmS1C1whEqHHKwWTigGc0DrXHpsKYjNWiGc3rKDUg2YpffPnq4rL7EKPualqFv-OGl7Mci3dAiTdLwNmp_D-2qq3rgwty4OnTXaQq8lyOC0L_a5E5CcrinxAQdEkkSfv2fD5urIxjkpXlTn0f-ydq3SAhTReKAZDpo8M1THLSWxakNcdhePnotk"/>
+</div>
+<div class="relative z-10 max-w-md text-on-primary">
+<h1 class="font-headline-lg text-headline-lg mb-4">Energizing Your Wellness Journey.</h1>
+<p class="font-body-lg text-body-lg opacity-90 leading-relaxed">Join a community dedicated to proactive health and clinical precision. Track, analyze, and achieve your goals with HealthMate.</p>
+<div class="mt-8 flex gap-4">
+<div class="w-12 h-1 bg-on-primary/30 rounded-full"></div>
+<div class="w-4 h-1 bg-on-primary rounded-full"></div>
+<div class="w-4 h-1 bg-on-primary/30 rounded-full"></div>
+</div>
+</div>
+</section>
+<!-- Right Section: Login Form -->
+<section class="flex-grow flex items-center justify-center p-margin-mobile md:p-margin-tablet lg:p-margin-desktop bg-surface lg:w-1/2">
+<div class="w-full max-w-[440px] flex flex-col">
+<!-- Logo & Branding -->
+<div class="mb-10 text-center lg:text-left">
+<div class="inline-flex items-center justify-center lg:justify-start gap-2 mb-2">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-on-primary-container" data-icon="health_and_safety">health_and_safety</span>
+</div>
+<span class="font-headline-md text-headline-md text-primary tracking-tight">HealthMate</span>
+</div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Welcome back</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Please enter your details to log in.</p>
+</div>
+<!-- Social Login Buttons -->
+<div class="grid grid-cols-2 gap-container-gap mb-8">
+<button class="flex items-center justify-center gap-3 py-3 px-4 bg-surface-container-lowest border border-outline-variant/30 rounded-xl hover:bg-surface-container-low transition-all active:scale-95 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
+<img alt="Google" class="w-5 h-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgEsAD0cs47yBNVizvPPjA2m6oFhv7i-Xf_R7efQC4-H59TAQb63NVpkhWNvvXUgXo8ZldR8hZHmfQF5rc4_3T9O5VboiCTeJvm8s5QoLp1fsw8Yq1j98ZORwPFgGQHXe2HM0s7HV4IlUiQCCMxYgnuT17K29SlxUBGuGMRNnb45G5KTA29_9SaZdtrYNzRTs73N5KRNn_OtNuOQki4XEF9qGMRVIjryib0jdpu_Jip396sJOflAXipoHcR1m5BROx6l5J45i1l6s"/>
+<span class="font-label-lg text-label-lg text-on-surface">Google</span>
+</button>
+<button class="flex items-center justify-center gap-3 py-3 px-4 bg-surface-container-lowest border border-outline-variant/30 rounded-xl hover:bg-surface-container-low transition-all active:scale-95 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
+<span class="material-symbols-outlined text-on-surface text-[20px]" style="font-variation-settings: 'FILL' 1;">File</span>
+<span class="font-label-lg text-label-lg text-on-surface">Apple</span>
+</button>
+</div>
+<div class="relative flex items-center mb-8">
+<div class="flex-grow border-t border-outline-variant/30"></div>
+<span class="px-4 font-label-md text-label-md text-on-surface-variant/60 uppercase">or login with email</span>
+<div class="flex-grow border-t border-outline-variant/30"></div>
+</div>
+<!-- Email/Password Form -->
+<form class="space-y-6">
+<div class="space-y-2">
+<label class="block font-label-lg text-label-lg text-on-surface-variant ml-1" for="email">Email Address</label>
+<div class="relative">
+<input class="w-full h-14 px-4 pt-1 bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 rounded-t-lg transition-all text-on-surface font-body-md placeholder:text-outline" id="email" placeholder="name@example.com" type="email"/>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center ml-1">
+<label class="block font-label-lg text-label-lg text-on-surface-variant" for="password">Password</label>
+<a class="font-label-lg text-label-lg text-primary hover:underline" href="#">Forgot?</a>
+</div>
+<div class="relative">
+<input class="w-full h-14 px-4 pt-1 bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 rounded-t-lg transition-all text-on-surface font-body-md placeholder:text-outline" id="password" placeholder="••••••••" type="password"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant" type="button">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-3 py-2">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary focus:ring-offset-0" id="remember" type="checkbox"/>
+<label class="font-body-md text-body-md text-on-surface-variant" for="remember">Keep me logged in for 30 days</label>
+</div>
+<button class="w-full h-14 bg-primary text-on-primary rounded-xl font-title-lg transition-all hover:bg-opacity-90 hover:shadow-lg active:scale-[0.98] mt-4 flex items-center justify-center gap-2" type="submit">
+<span>Log In</span>
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</form>
+<!-- Footer Links -->
+<p class="mt-10 text-center font-body-md text-body-md text-on-surface-variant">
+                    Don't have an account? 
+                    <a class="text-primary font-title-lg ml-1 hover:underline" href="#">Sign up for free</a>
+</p>
+<div class="mt-auto pt-10 text-center lg:text-left flex flex-wrap justify-center lg:justify-start gap-x-6 gap-y-2 opacity-60">
+<a class="font-label-md text-label-md hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-md text-label-md hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-label-md text-label-md hover:text-primary transition-colors" href="#">Help Center</a>
+</div>
+</div>
+</section>
+</main>
+</body></html>

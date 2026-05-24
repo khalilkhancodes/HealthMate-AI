@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-container": "#005027",
+                    "secondary-fixed": "#cce5ff",
+                    "background": "#f8f9fa",
+                    "surface": "#f8f9fa",
+                    "on-secondary-container": "#00476e",
+                    "inverse-on-surface": "#f0f1f2",
+                    "on-tertiary-fixed": "#301400",
+                    "on-tertiary": "#ffffff",
+                    "surface-tint": "#006d37",
+                    "surface-dim": "#d9dadb",
+                    "outline": "#6c7b6d",
+                    "secondary": "#006397",
+                    "on-primary": "#ffffff",
+                    "surface-bright": "#f8f9fa",
+                    "tertiary-container": "#ff9a4a",
+                    "inverse-primary": "#4ae183",
+                    "on-surface": "#191c1d",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-background": "#191c1d",
+                    "error-container": "#ffdad6",
+                    "tertiary": "#944a00",
+                    "on-tertiary-container": "#6e3600",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed": "#00210c",
+                    "on-tertiary-fixed-variant": "#713700",
+                    "tertiary-fixed": "#ffdcc5",
+                    "secondary-container": "#5cb8fd",
+                    "on-primary-fixed-variant": "#005228",
+                    "surface-container": "#edeeef",
+                    "on-secondary-fixed-variant": "#004b73",
+                    "on-surface-variant": "#3d4a3e",
+                    "surface-variant": "#e1e3e4",
+                    "tertiary-fixed-dim": "#ffb783",
+                    "primary-fixed-dim": "#4ae183",
+                    "primary-fixed": "#6bfe9c",
+                    "on-error-container": "#93000a",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e7e8e9",
+                    "outline-variant": "#bbcbbb",
+                    "inverse-surface": "#2e3132",
+                    "error": "#ba1a1a",
+                    "surface-container-low": "#f3f4f5",
+                    "primary": "#006d37",
+                    "on-secondary-fixed": "#001d31",
+                    "on-error": "#ffffff",
+                    "secondary-fixed-dim": "#92ccff",
+                    "primary-container": "#2ecc71"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-tablet": "24px",
+                    "margin-mobile": "16px",
+                    "gutter": "16px",
+                    "margin-desktop": "32px",
+                    "container-gap": "12px",
+                    "baseline": "4px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Inter"],
+                    "label-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "title-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-lg": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-md": ["11px", {"lineHeight": "16px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="sticky top-0 z-50 w-full px-margin-mobile flex items-center justify-between h-16 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden transition-all duration-200 active:scale-95">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCycSDS_Q1JxiCmNU2Fkm2JjQ1wGKz7T8CZhIpToAyGn2FS_tjdQNN8gi-TFmXsSJgC9rpYiwtvFQFCIetCD95BryHvcMjUt-3ESmapo0BGdKJS-OBSwQ4LdVcjyn5GF18m44_cLphqIy1ZdBpEG8p4km3Ds3g6c9R0XW5WOX6D-yD7peQkwBroLW6FKa7p5wfg5dsvz2txyySDYI1wD1r3GdVu61zaXVmFRAAwrYdbR7av2twlYNTg1IJOE1PtDzRVc8v6FYLe4OE"/>
+</div>
+<h1 class="font-headline-md text-headline-md-mobile text-primary tracking-tight">HealthMate</h1>
+</div>
+<button class="material-symbols-outlined text-primary p-2 hover:bg-surface-container-high/50 transition-all duration-200 active:scale-95">notifications</button>
+</header>
+<main class="px-margin-mobile py-6 pb-32 max-w-md mx-auto space-y-8">
+<!-- Hero: Step Counter Progress Ring -->
+<section class="relative flex flex-col items-center">
+<div class="relative w-64 h-64">
+<!-- SVG Progress Ring -->
+<svg class="w-full h-full" viewbox="0 0 100 100">
+<circle class="text-surface-container stroke-current" cx="50" cy="50" fill="transparent" r="42" stroke-width="8"></circle>
+<circle class="text-primary stroke-current progress-ring-circle" cx="50" cy="50" fill="transparent" r="42" stroke-linecap="round" stroke-width="8" style="stroke-dasharray: 263.89; stroke-dashoffset: 70;"></circle>
+</svg>
+<!-- Central Text -->
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">8,432</span>
+<span class="font-label-md text-label-md-mobile text-on-surface-variant uppercase tracking-widest">Steps Today</span>
+<div class="mt-2 px-3 py-1 bg-primary-container text-on-primary-container rounded-full font-label-lg text-label-lg">84% of Goal</div>
+</div>
+</div>
+</section>
+<!-- Stats Grid (Bento Style) -->
+<div class="grid grid-cols-2 gap-container-gap">
+<!-- Distance -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
+<div class="flex items-center gap-2 mb-2 text-secondary">
+<span class="material-symbols-outlined text-[20px]">distance</span>
+<span class="font-label-lg text-label-lg">Distance</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-lg text-title-lg">5.8 <small class="text-on-surface-variant font-normal">km</small></span>
+<span class="font-label-md text-label-md-mobile text-on-surface-variant">+0.4 from yesterday</span>
+</div>
+</div>
+<!-- Calories -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/10 shadow-[0_2px_10px_rgba(0,0,0,0.04)]">
+<div class="flex items-center gap-2 mb-2 text-tertiary">
+<span class="material-symbols-outlined text-[20px]">local_fire_department</span>
+<span class="font-label-lg text-label-lg">Calories</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-lg text-title-lg">342 <small class="text-on-surface-variant font-normal">kcal</small></span>
+<span class="font-label-md text-label-md-mobile text-on-surface-variant">Active burn</span>
+</div>
+</div>
+</div>
+<!-- Activity Chart Section -->
+<section class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-[0_2px_10px_rgba(0,0,0,0.04)] space-y-4">
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-title-lg text-title-lg">Hourly Activity</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Peak activity at 2:00 PM</p>
+</div>
+<button class="text-primary font-label-lg text-label-lg px-2 py-1 hover:bg-primary-container/20 rounded-lg">Details</button>
+</div>
+<!-- Mock Chart -->
+<div class="h-32 w-full flex items-end justify-between gap-1 px-1">
+<div class="w-full bg-surface-container rounded-t-sm h-[20%] transition-all hover:bg-primary-container"></div>
+<div class="w-full bg-surface-container rounded-t-sm h-[35%] transition-all hover:bg-primary-container"></div>
+<div class="w-full bg-surface-container rounded-t-sm h-[15%] transition-all hover:bg-primary-container"></div>
+<div class="w-full bg-surface-container rounded-t-sm h-[45%] transition-all hover:bg-primary-container"></div>
+<div class="w-full bg-primary-container rounded-t-sm h-[85%]"></div>
+<div class="w-full bg-surface-container rounded-t-sm h-[60%] transition-all hover:bg-primary-container"></div>
+<div class="w-full bg-surface-container rounded-t-sm h-[40%] transition-all hover:bg-primary-container"></div>
+<div class="w-full bg-surface-container rounded-t-sm h-[25%] transition-all hover:bg-primary-container"></div>
+<div class="w-full bg-surface-container rounded-t-sm h-[10%] transition-all hover:bg-primary-container"></div>
+<div class="w-full bg-surface-container rounded-t-sm h-[5%] transition-all hover:bg-primary-container"></div>
+</div>
+<div class="flex justify-between text-[10px] text-on-surface-variant font-medium px-1">
+<span>8 AM</span>
+<span>12 PM</span>
+<span>4 PM</span>
+<span>8 PM</span>
+</div>
+</section>
+<!-- CTA Section -->
+<section>
+<button class="w-full bg-primary-container text-on-primary-container py-4 rounded-xl font-title-lg text-title-lg flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.98] shadow-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+                Start Workout
+            </button>
+</section>
+<!-- Achievements Horizontal Scroll -->
+<section class="space-y-4">
+<h2 class="font-title-lg text-title-lg px-1">Monthly Achievements</h2>
+<div class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
+<!-- Badge 1 -->
+<div class="flex-none w-32 bg-surface-container-low p-4 rounded-2xl flex flex-col items-center text-center snap-start border border-outline-variant/10">
+<div class="w-16 h-16 mb-2 rounded-full bg-secondary-container/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-3xl" style="font-variation-settings: 'FILL' 1;">emoji_events</span>
+</div>
+<span class="font-label-lg text-label-lg text-on-surface">50k Steps</span>
+<span class="text-[10px] text-on-surface-variant">Unlocked</span>
+</div>
+<!-- Badge 2 -->
+<div class="flex-none w-32 bg-surface-container-low p-4 rounded-2xl flex flex-col items-center text-center snap-start border border-outline-variant/10">
+<div class="w-16 h-16 mb-2 rounded-full bg-tertiary-container/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary text-3xl" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+</div>
+<span class="font-label-lg text-label-lg text-on-surface">7 Day Streak</span>
+<span class="text-[10px] text-on-surface-variant">Unlocked</span>
+</div>
+<!-- Badge 3 (Locked) -->
+<div class="flex-none w-32 bg-surface-container-low/50 p-4 rounded-2xl flex flex-col items-center text-center snap-start border border-dashed border-outline-variant opacity-60">
+<div class="w-16 h-16 mb-2 rounded-full bg-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-outline text-3xl">lock</span>
+</div>
+<span class="font-label-lg text-label-lg text-on-surface">100k Steps</span>
+<span class="text-[10px] text-on-surface-variant">Progress: 84%</span>
+</div>
+</div>
+</section>
+<!-- Contextual Image Section -->
+<section class="rounded-xl overflow-hidden shadow-sm relative h-40">
+<img class="w-full h-full object-cover" data-alt="A serene first-person perspective of a person walking on a modern, clean urban running path during the golden hour. The sunlight is warm and soft, casting long shadows and highlighting the green foliage of nearby trees. The overall aesthetic is clean, professional, and health-focused with a bright, airy feeling that evokes a sense of motivation and peaceful outdoor activity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYk_L1loDTSvKgeasohGoxUmHcAfXWPUMnauUU5SqCpx5-r0r1Ia2x9SA2CxiGEgdzKIWNIUcuVh9jjCiEtfSze_74H2kY4snMALSQsIL0JrMB0Shbmvf2uONULL8y-sf3IW4bKupnPanggFiQSidm7i3R9Xt88hbnIWRChlFuYWdIZYnf2ZcvGkz5MLAYNZCASvQ3odEo8yJoMhVRuycY47hAoQC9x1nJkV80SuPPB3QNxe67D5OmPQNveVH0vl0-7s65r68Vp-s"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-4">
+<span class="text-white font-label-lg text-label-lg uppercase tracking-widest opacity-80">Daily Tip</span>
+<p class="text-white font-title-lg text-title-lg leading-tight">Walking just 30 minutes a day can boost cardiovascular health.</p>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-surface/90 backdrop-blur-xl border-t border-outline-variant/20 shadow-[0_-2px_10px_rgba(0,0,0,0.04)]">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-md text-label-md-mobile mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-primary-container bg-primary-container rounded-full px-5 py-1 transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="font-label-md text-label-md-mobile mt-1">Analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined">build</span>
+<span class="font-label-md text-label-md-mobile mt-1">Tools</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-label-md-mobile mt-1">Profile</span>
+</a>
+</nav>
+</body></html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-container": "#005027",
+                    "secondary-fixed": "#cce5ff",
+                    "background": "#f8f9fa",
+                    "surface": "#f8f9fa",
+                    "on-secondary-container": "#00476e",
+                    "inverse-on-surface": "#f0f1f2",
+                    "on-tertiary-fixed": "#301400",
+                    "on-tertiary": "#ffffff",
+                    "surface-tint": "#006d37",
+                    "surface-dim": "#d9dadb",
+                    "outline": "#6c7b6d",
+                    "secondary": "#006397",
+                    "on-primary": "#ffffff",
+                    "surface-bright": "#f8f9fa",
+                    "tertiary-container": "#ff9a4a",
+                    "inverse-primary": "#4ae183",
+                    "on-surface": "#191c1d",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-background": "#191c1d",
+                    "error-container": "#ffdad6",
+                    "tertiary": "#944a00",
+                    "on-tertiary-container": "#6e3600",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed": "#00210c",
+                    "on-tertiary-fixed-variant": "#713700",
+                    "tertiary-fixed": "#ffdcc5",
+                    "secondary-container": "#5cb8fd",
+                    "on-primary-fixed-variant": "#005228",
+                    "surface-container": "#edeeef",
+                    "on-secondary-fixed-variant": "#004b73",
+                    "on-surface-variant": "#3d4a3e",
+                    "surface-variant": "#e1e3e4",
+                    "tertiary-fixed-dim": "#ffb783",
+                    "primary-fixed-dim": "#4ae183",
+                    "primary-fixed": "#6bfe9c",
+                    "on-error-container": "#93000a",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e7e8e9",
+                    "outline-variant": "#bbcbbb",
+                    "inverse-surface": "#2e3132",
+                    "error": "#ba1a1a",
+                    "surface-container-low": "#f3f4f5",
+                    "primary": "#006d37",
+                    "on-secondary-fixed": "#001d31",
+                    "on-error": "#ffffff",
+                    "secondary-fixed-dim": "#92ccff",
+                    "primary-container": "#2ecc71"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-tablet": "24px",
+                    "margin-mobile": "16px",
+                    "gutter": "16px",
+                    "margin-desktop": "32px",
+                    "container-gap": "12px",
+                    "baseline": "4px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Inter"],
+                    "label-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "title-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-lg": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-md": ["11px", {"lineHeight": "16px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .message-gradient {
+            background: linear-gradient(135deg, #006d37 0%, #2ecc71 100%);
+        }
+        .ai-shadow {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface">
+<!-- TopAppBar -->
+<header class="sticky top-0 z-50 w-full px-margin-mobile flex items-center justify-between h-16 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden border-2 border-primary/10">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional studio portrait of a smiling, diverse young adult in a minimalist healthcare setting. The lighting is bright and warm, emphasizing a clear complexion and friendly expression. The background is a soft, out-of-focus medical office with pristine white and calming green accents, creating a modern and trustworthy atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaqmt96n0pZ0-ixERinl0McRfWs3zGFMapcTbQ78z53d0Lv3WHYWvfP1zBTPv5oq03s8XPLxF6b1R1Y85qj4frcHhYaBKlb94WK3YYpvJV5CiZeUKyXQzq0PbY5cVlAoA8xUV8kBaYxDvQFOhUlakI5BWUaL3FwosB9yuBP8TWyUGHPFTTWn40X_V7mM6fnWWSZ5OUa042u6deiExWwz43-k3UMb3pPHRZq6n5G1c6FBgdw42J-AByZ804QKsazoQhGJd_1FroVXU"/>
+</div>
+<h1 class="font-headline-md text-headline-md-mobile text-primary tracking-tight">HealthMate</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high/50 transition-all duration-200 active:scale-95 text-on-surface-variant">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<main class="flex flex-col h-[calc(100vh-128px)] relative max-w-2xl mx-auto">
+<!-- Chat History Area -->
+<div class="flex-1 overflow-y-auto px-margin-mobile py-6 space-y-6 no-scrollbar">
+<!-- Welcome AI Card -->
+<div class="flex flex-col items-center text-center space-y-4 mb-8">
+<div class="w-20 h-20 rounded-full bg-secondary-container flex items-center justify-center ai-shadow">
+<span class="material-symbols-outlined text-4xl text-on-secondary-container" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+</div>
+<div class="space-y-1">
+<h2 class="font-title-lg text-title-lg text-on-surface">Hi, I'm HealthMate AI</h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-[280px]">Your personal assistant for wellness, sleep, and nutrition advice.</p>
+</div>
+</div>
+<!-- Message: AI -->
+<div class="flex gap-3 max-w-[85%]">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px] text-on-secondary-container" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+</div>
+<div class="bg-surface-container-low p-4 rounded-2xl rounded-tl-none border border-outline-variant/20 ai-shadow">
+<p class="font-body-md text-body-md text-on-surface">Hello! How can I help you reach your health goals today? I can analyze your sleep patterns, suggest recipes, or guide your workout.</p>
+</div>
+</div>
+<!-- Message: User -->
+<div class="flex flex-row-reverse gap-3 max-w-[85%] ml-auto">
+<div class="w-8 h-8 rounded-full bg-primary-container flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px] text-on-primary-container" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+<div class="message-gradient p-4 rounded-2xl rounded-tr-none text-white shadow-sm">
+<p class="font-body-md text-body-md">I've been feeling quite tired lately. How can I improve my sleep quality?</p>
+</div>
+</div>
+<!-- Message: AI -->
+<div class="flex gap-3 max-w-[85%]">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px] text-on-secondary-container" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+</div>
+<div class="bg-surface-container-low p-4 rounded-2xl rounded-tl-none border border-outline-variant/20 ai-shadow">
+<p class="font-body-md text-body-md text-on-surface">Improving sleep quality often starts with consistency. Have you tried a regular wind-down routine? Here are a few tips:<br/><br/>1. Dim lights 1 hour before bed.<br/>2. Keep your room at 65°F (18°C).<br/>3. Avoid screens 30 mins prior.</p>
+</div>
+</div>
+</div>
+<!-- Sticky Bottom Input & Suggestions -->
+<div class="px-margin-mobile pb-8 pt-2 bg-surface/90 backdrop-blur-md">
+<!-- Suggested Prompts -->
+<div class="flex gap-2 overflow-x-auto no-scrollbar mb-4 py-1">
+<button class="whitespace-nowrap px-4 py-2 bg-white border border-outline-variant/40 rounded-full font-label-md text-label-md text-on-surface-variant hover:bg-surface-container transition-colors shadow-sm">
+                    Analyze my sleep
+                </button>
+<button class="whitespace-nowrap px-4 py-2 bg-white border border-outline-variant/40 rounded-full font-label-md text-label-md text-on-surface-variant hover:bg-surface-container transition-colors shadow-sm">
+                    Recipe for focus
+                </button>
+<button class="whitespace-nowrap px-4 py-2 bg-white border border-outline-variant/40 rounded-full font-label-md text-label-md text-on-surface-variant hover:bg-surface-container transition-colors shadow-sm">
+                    10-min HIIT workout
+                </button>
+</div>
+<!-- Chat Input -->
+<div class="relative flex items-center">
+<input class="w-full bg-surface-container-highest/40 border-none rounded-2xl px-5 py-4 pr-14 font-body-md text-body-md focus:ring-2 focus:ring-primary/20 placeholder:text-outline" placeholder="Ask HealthMate anything..." type="text"/>
+<button class="absolute right-2 w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg active:scale-90 transition-transform">
+<span class="material-symbols-outlined">arrow_upward</span>
+</button>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-surface/90 backdrop-blur-xl border-t border-outline-variant/20 shadow-[0_-2px_10px_rgba(0,0,0,0.04)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-surface-container transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-md text-label-md-mobile mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-primary-container bg-primary-container rounded-full px-5 py-1 transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="build" style="font-variation-settings: 'FILL' 1;">build</span>
+<span class="font-label-md text-label-md-mobile mt-1">Tools</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-surface-container transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-md text-label-md-mobile mt-1">Analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-surface-container transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-md text-label-md-mobile mt-1">Profile</span>
+</a>
+</nav>
+</body></html>

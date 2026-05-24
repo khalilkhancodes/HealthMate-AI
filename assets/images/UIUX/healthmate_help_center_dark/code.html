@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HealthMate - Help Center (Dark)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-primary": "#006d37",
+                    "on-primary-fixed": "#00210c",
+                    "primary-container": "#2ecc71",
+                    "on-secondary-fixed": "#001e2c",
+                    "surface-container-highest": "#2d3449",
+                    "error": "#ffb4ab",
+                    "on-primary-container": "#005027",
+                    "primary-fixed-dim": "#4ae183",
+                    "surface-container": "#171f33",
+                    "secondary-container": "#00a6e0",
+                    "on-tertiary": "#402d00",
+                    "on-background": "#dae2fd",
+                    "secondary": "#7bd0ff",
+                    "primary-fixed": "#6bfe9c",
+                    "tertiary-fixed-dim": "#f9bd22",
+                    "on-primary-fixed-variant": "#005228",
+                    "surface-dim": "#0b1326",
+                    "surface-bright": "#31394d",
+                    "tertiary": "#ffc63f",
+                    "tertiary-fixed": "#ffdf9f",
+                    "outline": "#869486",
+                    "inverse-surface": "#dae2fd",
+                    "error-container": "#93000a",
+                    "surface": "#0b1326",
+                    "on-error": "#690005",
+                    "on-tertiary-fixed": "#261a00",
+                    "surface-variant": "#2d3449",
+                    "surface-container-lowest": "#060e20",
+                    "on-secondary-container": "#00374d",
+                    "secondary-fixed-dim": "#7bd0ff",
+                    "inverse-on-surface": "#283044",
+                    "secondary-fixed": "#c4e7ff",
+                    "surface-container-high": "#222a3d",
+                    "on-secondary": "#00354a",
+                    "on-error-container": "#ffdad6",
+                    "on-surface": "#dae2fd",
+                    "surface-container-low": "#131b2e",
+                    "on-tertiary-container": "#5a4100",
+                    "on-primary": "#003919",
+                    "on-surface-variant": "#bbcbbb",
+                    "background": "#0b1326",
+                    "on-secondary-fixed-variant": "#004c69",
+                    "outline-variant": "#3d4a3e",
+                    "tertiary-container": "#e3aa00",
+                    "primary": "#54e98a",
+                    "surface-tint": "#4ae183",
+                    "on-tertiary-fixed-variant": "#5c4300"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "lg": "48px",
+                    "gutter": "16px",
+                    "sm": "12px",
+                    "base": "8px",
+                    "xl": "80px",
+                    "margin-desktop": "32px",
+                    "margin-mobile": "16px",
+                    "md": "24px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "title-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "code-sm": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "headline-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "code-sm": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .neon-glow {
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.2);
+        }
+        .neon-glow-strong {
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-lg min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="sticky top-0 z-50 w-full px-margin-mobile flex items-center justify-between h-16 bg-surface/80 dark:bg-on-background/80 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-2xl">arrow_back</span>
+<h1 class="font-headline-md text-headline-md-mobile text-primary dark:text-primary-fixed tracking-tight">HealthMate</h1>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-xs">JD</div>
+<span class="material-symbols-outlined text-on-surface-variant dark:text-outline-variant">notifications</span>
+</div>
+</header>
+<main class="max-w-4xl mx-auto px-margin-mobile pt-8 space-y-8">
+<!-- Hero Search Section -->
+<section class="text-center space-y-6">
+<div class="space-y-2">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">How can we help you today?</h2>
+<p class="font-body-sm text-on-surface-variant">Search for articles, guides, and health tracking tips.</p>
+</div>
+<div class="relative group">
+<input class="w-full bg-surface-container-low border-2 border-primary/20 focus:border-primary rounded-xl py-4 pl-12 pr-4 text-on-surface placeholder:text-outline-variant focus:outline-none transition-all duration-300 neon-glow" placeholder="Search for 'Sleep quality' or 'Syncing devices'..." type="text"/>
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">search</span>
+</div>
+</section>
+<!-- Quick Categories (Bento Grid Style) -->
+<section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="glass-card rounded-xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-surface-container-high transition-all cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:neon-glow transition-all">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">monitor_heart</span>
+</div>
+<span class="font-label-md text-on-surface text-center">Vital Tracking</span>
+</div>
+<div class="glass-card rounded-xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-surface-container-high transition-all cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center group-hover:shadow-[0_0_15px_rgba(123,208,255,0.3)] transition-all">
+<span class="material-symbols-outlined text-secondary text-3xl" style="font-variation-settings: 'FILL' 1;">account_circle</span>
+</div>
+<span class="font-label-md text-on-surface text-center">Account</span>
+</div>
+<div class="glass-card rounded-xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-surface-container-high transition-all cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-tertiary/10 flex items-center justify-center group-hover:shadow-[0_0_15px_rgba(255,198,63,0.3)] transition-all">
+<span class="material-symbols-outlined text-tertiary text-3xl" style="font-variation-settings: 'FILL' 1;">sync</span>
+</div>
+<span class="font-label-md text-on-surface text-center">Device Sync</span>
+</div>
+<div class="glass-card rounded-xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-surface-container-high transition-all cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center group-hover:shadow-[0_0_15px_rgba(255,180,171,0.3)] transition-all">
+<span class="material-symbols-outlined text-error text-3xl" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<span class="font-label-md text-on-surface text-center">Privacy</span>
+</div>
+</section>
+<!-- Featured Articles Section -->
+<section class="space-y-4">
+<h3 class="font-title-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">auto_awesome</span>
+                Popular Topics
+            </h3>
+<div class="space-y-3">
+<div class="glass-card rounded-xl p-4 flex items-center justify-between hover:translate-x-1 transition-transform cursor-pointer">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-outline">description</span>
+<div class="space-y-0.5">
+<p class="font-body-lg text-on-surface">Calibrating your Heart Rate sensor</p>
+<p class="font-body-sm text-on-surface-variant">Update: 2 days ago</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+</div>
+<div class="glass-card rounded-xl p-4 flex items-center justify-between hover:translate-x-1 transition-transform cursor-pointer">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-outline">description</span>
+<div class="space-y-0.5">
+<p class="font-body-lg text-on-surface">Understanding Sleep Stage data</p>
+<p class="font-body-sm text-on-surface-variant">4 min read</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+</div>
+<div class="glass-card rounded-xl p-4 flex items-center justify-between hover:translate-x-1 transition-transform cursor-pointer">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-outline">description</span>
+<div class="space-y-0.5">
+<p class="font-body-lg text-on-surface">Exporting reports for medical use</p>
+<p class="font-body-sm text-on-surface-variant">Updated last week</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- Troubleshooting Cards -->
+<section class="grid md:grid-cols-2 gap-4">
+<div class="relative overflow-hidden glass-card rounded-2xl p-6 group cursor-pointer border-l-4 border-primary">
+<div class="relative z-10 space-y-2">
+<h4 class="font-title-md text-primary">Live Chat Support</h4>
+<p class="font-body-sm text-on-surface-variant">Speak with our health tech experts now. Typical wait: 2 mins.</p>
+<div class="flex items-center gap-2 pt-2">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-xs font-label-md text-primary uppercase">Active Now</span>
+</div>
+</div>
+</div>
+<div class="relative overflow-hidden glass-card rounded-2xl p-6 group cursor-pointer border-l-4 border-secondary">
+<div class="relative z-10 space-y-2">
+<h4 class="font-title-md text-secondary">Community Hub</h4>
+<p class="font-body-sm text-on-surface-variant">Join discussions with 50k+ other HealthMate users.</p>
+<div class="flex items-center gap-2 pt-2">
+<span class="material-symbols-outlined text-secondary text-sm">groups</span>
+<span class="text-xs font-label-md text-secondary uppercase">2.4k online</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer Help -->
+<section class="text-center py-8">
+<p class="font-body-sm text-outline">Still need help?</p>
+<button class="mt-4 px-8 py-3 bg-primary-container text-on-primary-container font-title-md rounded-full neon-glow hover:neon-glow-strong transition-all active:scale-95">
+                Contact Technical Support
+            </button>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-surface/90 dark:bg-on-background/90 backdrop-blur-xl border-t border-outline-variant/20 shadow-[0_-2px_10px_rgba(0,0,0,0.04)] rounded-t-xl">
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-5 py-1 hover:bg-surface-container dark:hover:bg-surface-variant/10 transition-transform duration-300 ease-in-out active:scale-90">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-md text-label-md-mobile">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-5 py-1 hover:bg-surface-container dark:hover:bg-surface-variant/10 transition-transform duration-300 ease-in-out active:scale-90">
+<span class="material-symbols-outlined" data-icon="build">build</span>
+<span class="font-label-md text-label-md-mobile">Tools</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-5 py-1 hover:bg-surface-container dark:hover:bg-surface-variant/10 transition-transform duration-300 ease-in-out active:scale-90">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-md text-label-md-mobile">Analytics</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-primary-container dark:text-on-primary-fixed bg-primary-container dark:bg-primary-fixed-variant rounded-full px-5 py-1 transition-transform duration-300 ease-in-out active:scale-90">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-md text-label-md-mobile">Profile</span>
+</div>
+</nav>
+</body></html>

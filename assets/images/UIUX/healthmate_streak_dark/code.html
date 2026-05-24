@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HealthMate | Streak Journey</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .streak-glow {
+            box-shadow: 0 0 30px 2px rgba(46, 204, 113, 0.4);
+        }
+        .flame-glow {
+            filter: drop-shadow(0 0 8px rgba(46, 204, 113, 0.6));
+        }
+        .calendar-glow {
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.15);
+        }
+        .glass-card {
+            background: rgba(30, 32, 33, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-container": "#2ecc71",
+                      "error-container": "#ffdad6",
+                      "secondary-fixed-dim": "#92ccff",
+                      "on-surface": "#f0f1f2",
+                      "on-error-container": "#93000a",
+                      "surface-variant": "#3d4a3e",
+                      "on-surface-variant": "#bbcbbb",
+                      "inverse-surface": "#f0f1f2",
+                      "tertiary": "#ffb783",
+                      "on-tertiary-fixed": "#301400",
+                      "tertiary-fixed-dim": "#ffb783",
+                      "background": "#191c1d",
+                      "tertiary-fixed": "#ffdcc5",
+                      "on-primary-fixed-variant": "#005228",
+                      "surface-container": "#2e3132",
+                      "surface-container-lowest": "#0d0f10",
+                      "surface-bright": "#343738",
+                      "error": "#ffb4ab",
+                      "outline": "#8b948c",
+                      "secondary-fixed": "#cce5ff",
+                      "on-primary-fixed": "#00210c",
+                      "on-secondary-fixed": "#001d31",
+                      "on-background": "#f0f1f2",
+                      "inverse-primary": "#006d37",
+                      "secondary": "#92ccff",
+                      "surface-container-high": "#3a3d3e",
+                      "on-error": "#690005",
+                      "surface-container-highest": "#454849",
+                      "on-tertiary": "#502400",
+                      "on-tertiary-container": "#ffdbca",
+                      "on-primary-container": "#6bfe9c",
+                      "tertiary-container": "#713700",
+                      "secondary-container": "#004b73",
+                      "surface": "#191c1d",
+                      "on-tertiary-fixed-variant": "#713700",
+                      "on-secondary-fixed-variant": "#004b73",
+                      "surface-container-low": "#232627",
+                      "outline-variant": "#3d4a3e",
+                      "on-secondary": "#003351",
+                      "inverse-on-surface": "#191c1d",
+                      "primary-fixed": "#6bfe9c",
+                      "on-primary": "#00391a",
+                      "on-secondary-container": "#cce5ff",
+                      "surface-tint": "#4ae183",
+                      "surface-dim": "#191c1d",
+                      "primary-fixed-dim": "#4ae183",
+                      "primary": "#4ae183"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "baseline": "4px",
+                      "margin-mobile": "16px",
+                      "margin-desktop": "32px",
+                      "container-gap": "12px",
+                      "margin-tablet": "24px",
+                      "gutter": "16px"
+              },
+              "fontFamily": {
+                      "body-md": ["Inter"],
+                      "label-lg": ["Inter"],
+                      "title-lg": ["Inter"],
+                      "label-md": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "headline-lg-mobile": ["Inter"]
+              },
+              "fontSize": {
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "label-lg": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "label-md": ["11px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="sticky top-0 z-50 w-full px-margin-mobile flex items-center justify-between h-16 bg-surface/90 backdrop-blur-md border-b border-outline-variant/20">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional studio portrait of a smiling young adult with a clean, healthy appearance. The background is a soft, out-of-focus wellness clinic environment with bright, natural morning light. The overall aesthetic is modern and clinical yet warm, reflecting a proactive approach to personal health and fitness." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKp4s-2-VKzbbt8YOmPE5-GaOYmX-YrPOkh6LzSPykHrHGmScZIvPzTLl6ic0R7ftFdyhKsHF2KMoqUUPrCsj6pJWaW4ti7h5ltoOTB9vxFOT6O1owFCEyLs9S6HDxgh1tVzlgAlPJxx4TcfzchjK80BbWOdw2UAYcia98QgzJt-HUghPkNUapWQVXByvmXvjJaO1Z276qJ-ftZm84wuML7HuTi7MoIyZ1-0C62Kx_V_47Z9B7Y2wBxI7e6z1y-OL2h7Hzwetdy1g"/>
+</div>
+<span class="font-headline-md text-headline-md text-primary tracking-tight">HealthMate</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-all duration-200 active:scale-95 text-primary">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<main class="max-w-md mx-auto px-margin-mobile pt-8 space-y-8">
+<!-- Hero Streak Counter -->
+<section class="flex flex-col items-center justify-center text-center space-y-4 py-8">
+<div class="relative w-48 h-48 flex items-center justify-center">
+<!-- Outer Glow and Ring -->
+<div class="absolute inset-0 rounded-full border-[10px] border-surface-container-highest"></div>
+<div class="absolute inset-0 rounded-full border-[10px] border-primary border-t-transparent -rotate-45 streak-glow"></div>
+<div class="z-10 flex flex-col items-center">
+<span class="material-symbols-outlined text-primary text-5xl mb-1 flame-glow" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">12 Days</h1>
+<p class="font-label-lg text-label-lg text-on-surface-variant uppercase tracking-widest">Current Streak</p>
+</div>
+</div>
+<div class="bg-primary/10 border border-primary/20 px-4 py-2 rounded-full inline-flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">stars</span>
+<span class="font-label-md text-label-md text-primary">Personal Best: 24 Days</span>
+</div>
+</section>
+<!-- Calendar Section -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h2 class="font-title-lg text-title-lg text-on-surface">October 2023</h2>
+<div class="flex gap-2">
+<button class="w-8 h-8 rounded-full flex items-center justify-center bg-surface-container hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded-full flex items-center justify-center bg-surface-container hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-2xl p-5 border border-outline-variant/10 calendar-glow">
+<div class="grid grid-cols-7 text-center mb-6">
+<span class="font-label-md text-label-md text-outline">M</span>
+<span class="font-label-md text-label-md text-outline">T</span>
+<span class="font-label-md text-label-md text-outline">W</span>
+<span class="font-label-md text-label-md text-outline">T</span>
+<span class="font-label-md text-label-md text-outline">F</span>
+<span class="font-label-md text-label-md text-outline">S</span>
+<span class="font-label-md text-label-md text-outline">S</span>
+</div>
+<div class="grid grid-cols-7 gap-y-4">
+<!-- Previous Month -->
+<span class="h-9 flex items-center justify-center font-body-md text-body-md text-outline/30">28</span>
+<span class="h-9 flex items-center justify-center font-body-md text-body-md text-outline/30">29</span>
+<span class="h-9 flex items-center justify-center font-body-md text-body-md text-outline/30">30</span>
+<!-- Current Month Active Days -->
+<div class="h-9 flex items-center justify-center bg-primary text-on-primary rounded-full font-body-md text-body-md shadow-[0_0_10px_rgba(74,225,131,0.3)]">1</div>
+<div class="h-9 flex items-center justify-center bg-primary text-on-primary rounded-full font-body-md text-body-md shadow-[0_0_10px_rgba(74,225,131,0.3)]">2</div>
+<div class="h-9 flex items-center justify-center bg-primary text-on-primary rounded-full font-body-md text-body-md shadow-[0_0_10px_rgba(74,225,131,0.3)]">3</div>
+<div class="h-9 flex items-center justify-center bg-primary text-on-primary rounded-full font-body-md text-body-md shadow-[0_0_10px_rgba(74,225,131,0.3)]">4</div>
+<div class="h-9 flex items-center justify-center bg-primary text-on-primary rounded-full font-body-md text-body-md shadow-[0_0_10px_rgba(74,225,131,0.3)]">5</div>
+<div class="h-9 flex items-center justify-center bg-primary text-on-primary rounded-full font-body-md text-body-md shadow-[0_0_10px_rgba(74,225,131,0.3)]">6</div>
+<div class="h-9 flex items-center justify-center bg-primary text-on-primary rounded-full font-body-md text-body-md shadow-[0_0_10px_rgba(74,225,131,0.3)]">7</div>
+<div class="h-9 flex items-center justify-center bg-primary text-on-primary rounded-full font-body-md text-body-md shadow-[0_0_10px_rgba(74,225,131,0.3)]">8</div>
+<div class="h-9 flex items-center justify-center bg-primary text-on-primary rounded-full font-body-md text-body-md shadow-[0_0_10px_rgba(74,225,131,0.3)]">9</div>
+<div class="h-9 flex items-center justify-center bg-primary text-on-primary rounded-full font-body-md text-body-md shadow-[0_0_10px_rgba(74,225,131,0.3)]">10</div>
+<div class="h-9 flex items-center justify-center bg-primary text-on-primary rounded-full font-body-md text-body-md shadow-[0_0_10px_rgba(74,225,131,0.3)]">11</div>
+<div class="h-9 flex items-center justify-center bg-primary text-on-primary ring-4 ring-primary/30 rounded-full font-body-md text-body-md shadow-[0_0_15px_rgba(74,225,131,0.5)]">12</div>
+<!-- Remaining Days -->
+<span class="h-9 flex items-center justify-center font-body-md text-body-md text-on-surface">13</span>
+<span class="h-9 flex items-center justify-center font-body-md text-body-md text-on-surface">14</span>
+<span class="h-9 flex items-center justify-center font-body-md text-body-md text-on-surface">15</span>
+<span class="h-9 flex items-center justify-center font-body-md text-body-md text-on-surface">16</span>
+<span class="h-9 flex items-center justify-center font-body-md text-body-md text-on-surface">17</span>
+<span class="h-9 flex items-center justify-center font-body-md text-body-md text-on-surface">18</span>
+<span class="h-9 flex items-center justify-center font-body-md text-body-md text-on-surface">19</span>
+<span class="h-9 flex items-center justify-center font-body-md text-body-md text-on-surface">20</span>
+</div>
+</div>
+</section>
+<!-- Streak Protection / Freeze Days -->
+<section class="bg-secondary-container rounded-2xl p-6 relative overflow-hidden border border-outline-variant/10">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-secondary text-7xl">ac_unit</span>
+</div>
+<div class="relative z-10 flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">ac_unit</span>
+<h2 class="font-title-lg text-title-lg text-on-secondary-container">Streak Protection</h2>
+</div>
+<div class="flex items-end justify-between">
+<div>
+<p class="font-body-md text-body-md text-on-secondary-container/80">Available Freeze Days</p>
+<p class="font-headline-md text-headline-md text-on-secondary-container">2 Tokens</p>
+</div>
+<button class="bg-secondary text-on-secondary font-label-lg text-label-lg px-6 py-2.5 rounded-full shadow-lg active:scale-95 transition-all hover:brightness-110">
+                        Buy More
+                </button>
+</div>
+</div>
+</section>
+<!-- Milestones Section -->
+<section class="space-y-4">
+<h2 class="font-title-lg text-title-lg text-on-surface">Upcoming Milestones</h2>
+<div class="grid grid-cols-2 gap-container-gap">
+<!-- 15 Day Badge -->
+<div class="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 flex flex-col items-center text-center gap-3">
+<div class="w-14 h-14 bg-tertiary-container rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary text-2xl" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+</div>
+<div>
+<p class="font-title-lg text-title-lg text-on-surface">15 Day Badge</p>
+<p class="font-label-md text-label-md text-on-surface-variant">3 days to go</p>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2 mt-1 overflow-hidden">
+<div class="bg-tertiary w-[80%] h-full rounded-full shadow-[0_0_8px_rgba(255,183,131,0.4)]"></div>
+</div>
+</div>
+<!-- 30 Day Pro trial -->
+<div class="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 flex flex-col items-center text-center gap-3">
+<div class="w-14 h-14 bg-primary/20 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+</div>
+<div>
+<p class="font-title-lg text-title-lg text-on-surface">30 Day Pro</p>
+<p class="font-label-md text-label-md text-on-surface-variant">18 days left</p>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2 mt-1 overflow-hidden">
+<div class="bg-primary w-[40%] h-full rounded-full shadow-[0_0_8px_rgba(74,225,131,0.4)]"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Rewards Image Banner -->
+<section class="relative h-48 rounded-2xl overflow-hidden shadow-2xl border border-outline-variant/20">
+<img class="w-full h-full object-cover" data-alt="A vibrant and energetic digital illustration of abstract celebratory elements, like floating geometric confetti and glowing light trails. The color palette is dominated by fresh greens and bright oranges on a clean white background, creating a motivating and rewarding atmosphere. The lighting is high-key and optimistic, designed to make the user feel a sense of accomplishment and momentum." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-YtM1XbaFFmZDH9spIfnQI9zkH0sDwGE5y46gK5eNNg2ucc6yJ89qb-6iT0fCn0QV9DprmDRix2_5SdIeQz7yj085So0vG1Oec716pThlc2nf-RMJXltBzkHjmenBRtRyWdT1l7Md8FtXelGYWEU5rs6D9SXb6pEN-bvepwK2TBNPyGaxTBSbxjURjDwItCGA3xeAe79WojLRYc8uqT0YcJ2BXNjWagMPOW1W1n2m1uKNDgbewdJQWWEPtcvxlgSBU3XMO4YUK3o"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent flex flex-col justify-end p-6">
+<h3 class="font-headline-md text-headline-md text-on-surface">Unlock Pro Features</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Complete your 30-day streak to earn a free month of HealthMate Pro coaching.</p>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-surface/90 backdrop-blur-xl border-t border-outline-variant/10 shadow-[0_-8px_30px_rgba(0,0,0,0.3)]">
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:text-primary transition-all duration-300 active:scale-90">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-md text-label-md mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:text-primary transition-all duration-300 active:scale-90">
+<span class="material-symbols-outlined">build</span>
+<span class="font-label-md text-label-md mt-1">Tools</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-primary-container bg-primary-container/20 border border-primary-container/40 rounded-2xl px-5 py-1 transition-all duration-300 active:scale-90">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="font-label-md text-label-md text-primary mt-1">Analytics</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:text-primary transition-all duration-300 active:scale-90">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-label-md mt-1">Profile</span>
+</button>
+</nav>
+</body></html>

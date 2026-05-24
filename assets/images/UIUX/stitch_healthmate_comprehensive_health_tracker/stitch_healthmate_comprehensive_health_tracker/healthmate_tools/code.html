@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HealthMate - Tools</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#006d37",
+                        "tertiary-fixed": "#ffdcc5",
+                        "on-background": "#191c1d",
+                        "inverse-primary": "#4ae183",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#d9dadb",
+                        "on-surface": "#191c1d",
+                        "surface-container-highest": "#e1e3e4",
+                        "surface-bright": "#f8f9fa",
+                        "secondary-fixed-dim": "#92ccff",
+                        "on-primary-fixed": "#00210c",
+                        "secondary-container": "#5cb8fd",
+                        "surface-container": "#edeeef",
+                        "tertiary": "#944a00",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#cce5ff",
+                        "on-primary": "#ffffff",
+                        "on-primary-container": "#005027",
+                        "on-secondary-container": "#00476e",
+                        "tertiary-container": "#ff9a4a",
+                        "primary-fixed": "#6bfe9c",
+                        "outline": "#6c7b6d",
+                        "error": "#ba1a1a",
+                        "inverse-on-surface": "#f0f1f2",
+                        "surface": "#f8f9fa",
+                        "surface-container-high": "#e7e8e9",
+                        "on-secondary-fixed-variant": "#004b73",
+                        "secondary": "#006397",
+                        "outline-variant": "#bbcbbb",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "on-tertiary": "#ffffff",
+                        "background": "#f8f9fa",
+                        "primary": "#006d37",
+                        "on-secondary": "#ffffff",
+                        "primary-container": "#2ecc71",
+                        "on-tertiary-fixed": "#301400",
+                        "surface-container-low": "#f3f4f5",
+                        "inverse-surface": "#2e3132",
+                        "on-tertiary-fixed-variant": "#713700",
+                        "on-tertiary-container": "#6e3600",
+                        "primary-fixed-dim": "#4ae183",
+                        "on-secondary-fixed": "#001d31",
+                        "on-primary-fixed-variant": "#005228",
+                        "surface-variant": "#e1e3e4",
+                        "on-surface-variant": "#3d4a3e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-tablet": "24px",
+                        "baseline": "4px",
+                        "margin-desktop": "32px",
+                        "gutter": "16px",
+                        "margin-mobile": "16px",
+                        "container-gap": "12px"
+                    },
+                    "fontFamily": {
+                        "label-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-lg": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "label-md": ["11px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface mb-24">
+<!-- TopAppBar -->
+<header class="sticky top-0 z-50 w-full px-margin-mobile flex items-center justify-between h-16 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant/20">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a friendly individual in a modern, brightly lit clinical office setting. The person has a warm, trustworthy smile, looking directly at the camera. The background is softly blurred with clean white walls and hints of medical technology, emphasizing a premium health-tech atmosphere with soft, natural lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1vdXT1hlq3u351TAe-PCI9z1jz4rhrb5O2q_HZILL-ZJKcHDjUdvQlo6RUCvyPU1kou_NZW4XNyB9Qdev6SgE3X3prQnN0swWeNBUfSpU-jy4OaGqGzmhzWSBFptxMd8YGRBIlh9SuiulT7kiluxgY10OCozNF6odrN1fIasdwVvjUSCoqL7mhTR8rPnePJ_BVG_JZ-vWVYtRxOJU6YA4HjyBGkPpEEPp_NA9LGBxrMcnm-UXmEYZzv-KZ03ZBY5sGTfR8EIqo5Q"/>
+</div>
+<span class="font-headline-md text-headline-md-mobile text-primary tracking-tight">HealthMate</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-surface-container-high/50 transition-all duration-200 active:scale-95 text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</div>
+</header>
+<main class="px-margin-mobile py-6 max-w-4xl mx-auto">
+<!-- Header Section -->
+<section class="mb-8">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-2">Health Tools</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Precision calculations and tracking to help you maintain your momentum.</p>
+</section>
+<!-- Bento Grid Tools -->
+<div class="grid grid-cols-1 md:grid-cols-6 gap-container-gap">
+<!-- BMI Calculator (Large Card) -->
+<div class="md:col-span-4 bg-surface-container-lowest rounded-xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-transparent hover:border-primary/20 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-xl bg-primary-container/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl" data-icon="calculate" style="font-variation-settings: 'FILL' 1;">calculate</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="arrow_forward_ios">arrow_forward_ios</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-1">BMI Calculator</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">Body Mass Index calculation based on height and weight.</p>
+<div class="flex items-center gap-3 p-3 bg-surface-container rounded-lg">
+<div class="flex-1">
+<div class="h-2 w-full bg-outline-variant/30 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[65%] rounded-full"></div>
+</div>
+</div>
+<span class="font-label-lg text-label-lg text-primary">22.4 (Normal)</span>
+</div>
+</div>
+<!-- Water Intake (Medium Card) -->
+<div class="md:col-span-2 bg-surface-container-lowest rounded-xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-transparent hover:border-secondary/20 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-xl bg-secondary-container/20 flex items-center justify-center text-secondary group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl" data-icon="water_drop" style="font-variation-settings: 'FILL' 1;">water_drop</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-secondary transition-colors" data-icon="add">add</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-1">Hydration</h3>
+<div class="mt-2">
+<span class="font-headline-md text-headline-md text-secondary">1.2L</span>
+<span class="font-label-md text-label-md text-on-surface-variant"> / 2.5L</span>
+</div>
+<p class="font-label-md text-label-md text-secondary-fixed-dim mt-2">4 glasses to go</p>
+</div>
+<!-- Step Counter (Medium Card) -->
+<div class="md:col-span-3 bg-surface-container-lowest rounded-xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-transparent hover:border-primary/20 transition-all cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-full border-4 border-primary-container/20 border-t-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="steps">steps</span>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface">Step Counter</h3>
+<p class="font-headline-md text-headline-md text-on-surface">6,432 <span class="text-body-md font-normal text-on-surface-variant">today</span></p>
+</div>
+</div>
+<div class="mt-4 flex justify-between items-end">
+<div class="flex gap-1">
+<div class="w-2 h-8 bg-surface-container-high rounded-full"></div>
+<div class="w-2 h-12 bg-surface-container-high rounded-full"></div>
+<div class="w-2 h-10 bg-surface-container-high rounded-full"></div>
+<div class="w-2 h-16 bg-primary rounded-full"></div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="trending_up">trending_up</span>
+</div>
+</div>
+<!-- Sleep Tracker (Medium Card) -->
+<div class="md:col-span-3 bg-surface-container-lowest rounded-xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-transparent hover:border-tertiary/20 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-xl bg-tertiary-container/20 flex items-center justify-center text-tertiary group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl" data-icon="bedtime" style="font-variation-settings: 'FILL' 1;">bedtime</span>
+</div>
+<div class="text-right">
+<p class="font-label-md text-label-md text-on-surface-variant">Last Night</p>
+<p class="font-title-lg text-title-lg text-tertiary">7h 20m</p>
+</div>
+</div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-1">Sleep Tracker</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Restorative sleep is key to health. View your quality score.</p>
+</div>
+<!-- BMR Calculator (Small Full Width) -->
+<div class="md:col-span-6 bg-surface-container-lowest rounded-xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-transparent hover:border-primary/20 transition-all cursor-pointer group flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl" data-icon="bolt">bolt</span>
+</div>
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface">BMR Calculator</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Basal Metabolic Rate: 1,850 kcal/day</p>
+</div>
+</div>
+<button class="px-4 py-2 bg-primary text-on-primary rounded-full font-label-lg transition-transform active:scale-95 shadow-md">
+                    Recalculate
+                </button>
+</div>
+</div>
+<!-- Secondary Tools Section -->
+<section class="mt-10">
+<h2 class="font-title-lg text-title-lg text-on-surface mb-4">Quick Shortcuts</h2>
+<div class="space-y-3">
+<div class="flex items-center gap-4 p-4 bg-surface-container-low rounded-xl border border-outline-variant/10 hover:bg-surface-container transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="favorite">favorite</span>
+<span class="flex-1 font-body-lg text-body-lg text-on-surface">Heart Rate History</span>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="flex items-center gap-4 p-4 bg-surface-container-low rounded-xl border border-outline-variant/10 hover:bg-surface-container transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="restaurant">restaurant</span>
+<span class="flex-1 font-body-lg text-body-lg text-on-surface">Nutrition Log</span>
+<span class="material-symbols-outlined text-outline" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-surface/90 backdrop-blur-xl border-t border-outline-variant/20 shadow-[0_-2px_10px_rgba(0,0,0,0.04)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 transition-transform duration-300 ease-in-out active:scale-90 hover:bg-surface-container" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-md text-label-md-mobile">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-primary-container bg-primary-container rounded-full px-5 py-1 transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="build">build</span>
+<span class="font-label-md text-label-md-mobile">Tools</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 transition-transform duration-300 ease-in-out active:scale-90 hover:bg-surface-container" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-md text-label-md-mobile">Analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 transition-transform duration-300 ease-in-out active:scale-90 hover:bg-surface-container" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-md text-label-md-mobile">Profile</span>
+</a>
+</nav>
+</body></html>

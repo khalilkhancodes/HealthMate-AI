@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HealthMate - Water Intake</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-container": "#005027",
+                    "secondary-fixed": "#cce5ff",
+                    "background": "#f8f9fa",
+                    "surface": "#f8f9fa",
+                    "on-secondary-container": "#00476e",
+                    "inverse-on-surface": "#f0f1f2",
+                    "on-tertiary-fixed": "#301400",
+                    "on-tertiary": "#ffffff",
+                    "surface-tint": "#006d37",
+                    "surface-dim": "#d9dadb",
+                    "outline": "#6c7b6d",
+                    "secondary": "#006397",
+                    "on-primary": "#ffffff",
+                    "surface-bright": "#f8f9fa",
+                    "tertiary-container": "#ff9a4a",
+                    "inverse-primary": "#4ae183",
+                    "on-surface": "#191c1d",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-background": "#191c1d",
+                    "error-container": "#ffdad6",
+                    "tertiary": "#944a00",
+                    "on-tertiary-container": "#6e3600",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed": "#00210c",
+                    "on-tertiary-fixed-variant": "#713700",
+                    "tertiary-fixed": "#ffdcc5",
+                    "secondary-container": "#5cb8fd",
+                    "on-primary-fixed-variant": "#005228",
+                    "surface-container": "#edeeef",
+                    "on-secondary-fixed-variant": "#004b73",
+                    "on-surface-variant": "#3d4a3e",
+                    "surface-variant": "#e1e3e4",
+                    "tertiary-fixed-dim": "#ffb783",
+                    "primary-fixed-dim": "#4ae183",
+                    "primary-fixed": "#6bfe9c",
+                    "on-error-container": "#93000a",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e7e8e9",
+                    "outline-variant": "#bbcbbb",
+                    "inverse-surface": "#2e3132",
+                    "error": "#ba1a1a",
+                    "surface-container-low": "#f3f4f5",
+                    "primary": "#006d37",
+                    "on-secondary-fixed": "#001d31",
+                    "on-error": "#ffffff",
+                    "secondary-fixed-dim": "#92ccff",
+                    "primary-container": "#2ecc71"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-tablet": "24px",
+                    "margin-mobile": "16px",
+                    "gutter": "16px",
+                    "margin-desktop": "32px",
+                    "container-gap": "12px",
+                    "baseline": "4px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Inter"],
+                    "label-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "title-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-lg": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-md": ["11px", {"lineHeight": "16px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 w-full px-margin-mobile flex items-center justify-between h-16 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 shadow-sm transition-all duration-200 active:scale-95">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPOTS7F969pDjmKRCUKpDjOef55yBxdi20zG0aN_HznswwdxNshU7c4M_i8sYPuVaN57MVFbvTzfAAIiZZregZOwm7uyVHOvcINs69ZNTwhne0BuiGnRErRxlP4zGoXAtIE5rBpvqHqIh4azdHEax3bLlt--c0NeMzvXHTRSi9abLMEy9Bubdl_jReKr5SgbuZllVM-QH1TT4ZYbp3FyW8CsJ-fu0oxjGyVTXMu9KsuDQI7AaUdauCx_pJ82b05EczQlxdwHmfAt4"/>
+</div>
+<h1 class="font-headline-md text-headline-md-mobile text-primary tracking-tight">HealthMate</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-high/50 text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="flex-grow px-margin-mobile py-6 space-y-8 max-w-2xl mx-auto w-full">
+<!-- Hero: Progress Section -->
+<section class="flex flex-col items-center justify-center text-center space-y-6">
+<div class="relative w-64 h-64 flex items-center justify-center">
+<!-- SVG Progress Circle -->
+<svg class="w-full h-full">
+<circle class="text-secondary-container/20" cx="128" cy="128" fill="transparent" r="110" stroke="currentColor" stroke-width="12"></circle>
+<circle class="text-secondary transition-all duration-500 ease-out" cx="128" cy="128" fill="transparent" r="110" stroke="currentColor" stroke-dasharray="691" stroke-dashoffset="207" stroke-linecap="round" stroke-width="12" style="transform: rotate(-90deg); transform-origin: center;"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-4xl mb-1" data-icon="water_drop" style="font-variation-settings: 'FILL' 1;">water_drop</span>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">1,750 <span class="text-body-md font-normal text-on-surface-variant">ml</span></h2>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Goal: 2,500 ml</p>
+</div>
+</div>
+<div class="bg-secondary-container/10 px-6 py-2 rounded-full">
+<p class="font-body-md text-on-secondary-container font-medium">You've reached 70% of your goal!</p>
+</div>
+</section>
+<!-- Quick Add Section -->
+<section class="space-y-4">
+<h3 class="font-title-lg text-title-lg text-on-surface px-1">Quick Add</h3>
+<div class="grid grid-cols-2 gap-container-gap">
+<!-- 250ml Card -->
+<button class="bg-surface-container-lowest p-5 rounded-xl shadow-sm hover:shadow-md transition-all active:scale-95 flex flex-col items-center gap-3 border border-transparent hover:border-secondary/20">
+<div class="w-12 h-12 rounded-full bg-secondary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="local_drink">local_drink</span>
+</div>
+<div class="text-center">
+<p class="font-title-lg text-title-lg text-on-surface">250ml</p>
+<p class="font-label-md text-label-md text-on-surface-variant">Small glass</p>
+</div>
+</button>
+<!-- 500ml Card -->
+<button class="bg-surface-container-lowest p-5 rounded-xl shadow-sm hover:shadow-md transition-all active:scale-95 flex flex-col items-center gap-3 border border-transparent hover:border-secondary/20">
+<div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container" data-icon="water_full">water_full</span>
+</div>
+<div class="text-center">
+<p class="font-title-lg text-title-lg text-on-surface">500ml</p>
+<p class="font-label-md text-label-md text-on-surface-variant">Large bottle</p>
+</div>
+</button>
+</div>
+</section>
+<!-- Reminder Toggle -->
+<section class="bg-surface-container-low p-4 rounded-xl flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-tertiary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary" data-icon="notifications_active">notifications_active</span>
+</div>
+<div>
+<p class="font-body-lg text-body-lg font-semibold text-on-surface">Hydration Reminders</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Every 2 hours</p>
+</div>
+</div>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</div>
+</section>
+<!-- History Log -->
+<section class="space-y-4 pb-24">
+<div class="flex items-center justify-between px-1">
+<h3 class="font-title-lg text-title-lg text-on-surface">Today's History</h3>
+<button class="text-primary font-label-lg text-label-lg hover:underline">View All</button>
+</div>
+<div class="space-y-2">
+<!-- Log Item -->
+<div class="bg-surface-container-lowest p-4 rounded-xl flex items-center justify-between border-l-4 border-secondary shadow-sm">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary-fixed-dim" data-icon="schedule">schedule</span>
+<div>
+<p class="font-body-lg text-body-lg font-medium text-on-surface">500 ml</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Post-workout hydration</p>
+</div>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant">14:30</p>
+</div>
+<!-- Log Item -->
+<div class="bg-surface-container-lowest p-4 rounded-xl flex items-center justify-between border-l-4 border-secondary shadow-sm">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary-fixed-dim" data-icon="schedule">schedule</span>
+<div>
+<p class="font-body-lg text-body-lg font-medium text-on-surface">250 ml</p>
+<p class="font-body-md text-body-md text-on-surface-variant">After lunch</p>
+</div>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant">13:15</p>
+</div>
+<!-- Log Item -->
+<div class="bg-surface-container-lowest p-4 rounded-xl flex items-center justify-between border-l-4 border-secondary shadow-sm opacity-70">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary-fixed-dim" data-icon="schedule">schedule</span>
+<div>
+<p class="font-body-lg text-body-lg font-medium text-on-surface">1,000 ml</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Morning routine</p>
+</div>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant">08:45</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-surface/90 backdrop-blur-xl border-t border-outline-variant/20 shadow-[0_-2px_10px_rgba(0,0,0,0.04)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-surface-container transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-md text-label-md-mobile">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-primary-container bg-primary-container rounded-full px-5 py-1 transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="build" style="font-variation-settings: 'FILL' 1;">build</span>
+<span class="font-label-md text-label-md-mobile">Tools</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-surface-container transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-md text-label-md-mobile">Analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-5 py-1 hover:bg-surface-container transition-transform duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-md text-label-md-mobile">Profile</span>
+</a>
+</nav>
+<!-- Floating Action Button Contextual (Hidden as per rule for Details/Specific Tool Screen, but placed here if user navigates back to Home) -->
+<!-- Suppressed on specific task-focused detail screen -->
+</body></html>
