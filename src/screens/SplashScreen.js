@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import * as ExpoSplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
@@ -124,7 +123,7 @@ export default function SplashScreen({ navigation }) {
   const { isDark } = useTheme();
 
   return (
-    <LinearGradient colors={[COLORS.startGradient || 'rgba(45, 89, 145, 1)', COLORS.endGradient || 'rgba(44, 151, 124, 1)']} style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.centerWrap}>
         <View style={styles.animationLayer} pointerEvents="none">
           <BreathingCircle size={CIRCLE_1_SIZE} borderColor="#FFFFFF" scale={circle1Scale} opacity={circle1Opacity} />
@@ -139,10 +138,10 @@ export default function SplashScreen({ navigation }) {
           />
         </View>
 
-        <Text style={[styles.appName, { color: '#ffffff' }]}>HealthMate</Text>
-        <Text style={[styles.subtitle, { color: COLORS.textSecondary }]}>Your AI Health Companion</Text>
+        <Text style={[styles.appName]}>HealthMate</Text>
+        <Text style={[styles.subtitle]}>Your AI Health Companion</Text>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -152,6 +151,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
+    backgroundColor: '#447055',
   },
   centerWrap: {
     alignItems: 'center',
@@ -191,15 +191,15 @@ const styles = StyleSheet.create({
     height: 120,
   },
   appName: {
-    color: '#FFFFFF',
     fontSize: 46,
     fontWeight: '800',
     letterSpacing: 0.2,
+    color: "#ffffff",
   },
   subtitle: {
     marginTop: 3,
-    color: 'rgba(255,255,255,0.92)',
     fontSize: 18,
     fontWeight: '400',
+    color: "#ffffff",
   },
 });

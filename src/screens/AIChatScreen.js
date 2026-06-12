@@ -12,21 +12,21 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
 
-// Ensure your .env variables start with EXPO_PUBLIC_ or provide safe fallbacks
 const NVIDIA_INVOKE_URL = process.env.EXPO_PUBLIC_NVIDIA_INVOKE_URL;
 const NVIDIA_MODEL = process.env.EXPO_PUBLIC_NVIDIA_MODEL;
 const NVIDIA_API_KEY = process.env.EXPO_PUBLIC_NVIDIA_API_KEY;
 
-// Verify the key exists before trying to use it in your fetch/axios call
 if (!NVIDIA_API_KEY) {
   console.warn("Missing EXPO_PUBLIC_NVIDIA_API_KEY in .env file");
 }
+
 const INITIAL_AI_GREETING = {
   id: '1',
   text: "Hi! I'm HealthMate AI, your personal wellness coach. I can see your daily health stats and give personalized advice. How can I help you reach your goals today?",
@@ -37,7 +37,7 @@ const INITIAL_AI_GREETING = {
 export default function AIChatScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef(null);
-  const { COLORS, FONTS, SHADOWS, isDark } = useTheme();
+  const { COLORS, FONTS, isDark } = useTheme();
 
   const {
     isPremiumUser,
@@ -54,22 +54,26 @@ export default function AIChatScreen({ navigation }) {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
-  const safeTopPadding = Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 10 : insets.top + 10;
+  const safeTopPadding =
+    Platform.OS === 'android'
+      ? (StatusBar.currentHeight || 24) + 10
+      : insets.top + 10;
 
+  // ─── Initial greeting ─────────────────────────────────────────────────────
   useEffect(() => {
     if (aiChatHistory.length === 0) {
       addChatMessage(INITIAL_AI_GREETING);
     }
   }, [aiChatHistory.length, addChatMessage]);
 
-  const buildSystemPrompt = () => {
-    return `You are HealthMate AI, an expert health coach.
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+  const buildSystemPrompt = () =>
+    `You are HealthMate AI, an expert health coach.
 The user's current stats today:
 - Steps: ${dailySteps} / ${stepGoal}
 - Water: ${waterIntake}ml
 - Sleep: ${sleepDuration} hours
 Keep responses under 3 short paragraphs. Be highly encouraging. Use the stats above to give personalized advice.`;
-  };
 
   const callNvidiaChat = async (messages) => {
     if (!NVIDIA_INVOKE_URL || !NVIDIA_API_KEY) {
@@ -81,11 +85,11 @@ Keep responses under 3 short paragraphs. Be highly encouraging. Use the stats ab
       'Content-Type': 'application/json',
       Accept: 'application/json',
     };
-    
+
     const payload = {
       model: NVIDIA_MODEL,
       messages,
-      max_tokens: 500, // Reduced for faster responses
+      max_tokens: 500,
       temperature: 0.70,
       top_p: 0.90,
       stream: false,
@@ -93,9 +97,14 @@ Keep responses under 3 short paragraphs. Be highly encouraging. Use the stats ab
 
     try {
       const response = await axios.post(NVIDIA_INVOKE_URL, payload, { headers });
-      return response.data?.choices?.[0]?.message?.content || 'Sorry, I could not generate a response.';
+      return (
+        response.data?.choices?.[0]?.message?.content ||
+        'Sorry, I could not generate a response.'
+      );
     } catch (error) {
-      throw new Error(error?.response?.data?.message || error?.message || 'NVIDIA API error');
+      throw new Error(
+        error?.response?.data?.message || error?.message || 'NVIDIA API error'
+      );
     }
   };
 
@@ -103,16 +112,13 @@ Keep responses under 3 short paragraphs. Be highly encouraging. Use the stats ab
     if (!inputText.trim()) return;
 
     Keyboard.dismiss();
-    // 1. Premium Check
+
     if (!isPremiumUser && freeAiQuestionsRemaining <= 0) {
-      Keyboard.dismiss();
       navigation.navigate('PaywallScreen');
       return;
     }
 
-    if (!isPremiumUser) {
-      decrementAiQuestions();
-    }
+    if (!isPremiumUser) decrementAiQuestions();
 
     const userMessage = {
       id: Date.now().toString(),
@@ -125,7 +131,9 @@ Keep responses under 3 short paragraphs. Be highly encouraging. Use the stats ab
     setInputText('');
     setIsTyping(true);
 
-    requestAnimationFrame(() => flatListRef.current?.scrollToEnd({ animated: true }));
+    requestAnimationFrame(() =>
+      flatListRef.current?.scrollToEnd({ animated: true })
+    );
 
     try {
       const messages = [
@@ -147,9 +155,8 @@ Keep responses under 3 short paragraphs. Be highly encouraging. Use the stats ab
         sender: 'ai',
         timestamp: new Date().toISOString(),
       });
-
     } catch (error) {
-      console.warn("AI API Error: ", error);
+      console.warn('AI API Error: ', error);
       addChatMessage({
         id: (Date.now() + 1).toString(),
         text: 'Sorry, I am having trouble connecting to the server right now. Please try again.',
@@ -158,18 +165,30 @@ Keep responses under 3 short paragraphs. Be highly encouraging. Use the stats ab
       });
     } finally {
       setIsTyping(false);
-      requestAnimationFrame(() => flatListRef.current?.scrollToEnd({ animated: true }));
+      requestAnimationFrame(() =>
+        flatListRef.current?.scrollToEnd({ animated: true })
+      );
     }
   };
 
+  // ─── Render message ───────────────────────────────────────────────────────
   const renderMessage = ({ item }) => {
     const isUser = item.sender === 'user';
 
     return (
-      <View style={[styles.messageWrapper, isUser ? styles.messageWrapperUser : styles.messageWrapperAI]}>
+      <View
+        style={[
+          styles.messageWrapper,
+          isUser ? styles.messageWrapperUser : styles.messageWrapperAI,
+        ]}
+      >
         {!isUser && (
           <View style={[styles.aiAvatar, { backgroundColor: COLORS.primary }]}>
-            <Ionicons name="sparkles" size={14} color={COLORS.onPrimary || '#0B1326'} />
+            <Ionicons
+              name="sparkles"
+              size={14}
+              color={COLORS.onPrimary || '#0B1326'}
+            />
           </View>
         )}
 
@@ -178,11 +197,24 @@ Keep responses under 3 short paragraphs. Be highly encouraging. Use the stats ab
             styles.messageBubble,
             isUser ? styles.userBubble : styles.aiBubble,
             isUser
-              ? { backgroundColor: COLORS.primary } // Vibrant Green for User
-              : { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border }, // Obsidian surface for AI
+              ? { backgroundColor: COLORS.primary }
+              : {
+                  backgroundColor: COLORS.surface,
+                  borderWidth: 1,
+                  borderColor: COLORS.border,
+                },
           ]}
         >
-          <Text style={[styles.messageText, { color: isUser ? (COLORS.onPrimary || '#0B1326') : COLORS.textPrimary }]}>
+          <Text
+            style={[
+              styles.messageText,
+              {
+                color: isUser
+                  ? COLORS.onPrimary || '#0B1326'
+                  : COLORS.textPrimary,
+              },
+            ]}
+          >
             {item.text}
           </Text>
         </View>
@@ -191,78 +223,155 @@ Keep responses under 3 short paragraphs. Be highly encouraging. Use the stats ab
   };
 
   return (
-    <KeyboardAvoidingView 
-        style={[styles.container, { backgroundColor: COLORS.background }]} 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : undefined}
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: COLORS.aiBackground}]}
+      behavior={Platform.OS === 'android' ? 'height' : 'padding'}
     >
-      {/* HEADER */}
-      <View style={[styles.header, { paddingTop: safeTopPadding, borderBottomColor: COLORS.border }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-down" size={28} color={COLORS.textPrimary} />
-        </TouchableOpacity>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View style={{ flex: 1, backgroundColor: COLORS.aiBackground }}>
 
-        <View style={styles.headerTitleContainer}>
-          <Text style={[styles.headerTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>
-            HealthMate AI
-          </Text>
-          {!isPremiumUser && (
-            <View style={[styles.badge, { backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1 }]}>
-              <Text style={[styles.badgeText, { color: COLORS.primary }]}>
-                {freeAiQuestionsRemaining} FREE LEFT
-              </Text>
-            </View>
-          )}
-        </View>
-        <View style={{ width: 40 }} />
-      </View>
+        {/* ── HEADER ── */}
+        <View
+          style={[
+            styles.header,
+            { paddingTop: safeTopPadding, borderBottomColor: COLORS.border },
+          ]}
+        >
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="chevron-down" size={28} color={COLORS.textPrimary} />
+          </TouchableOpacity>
 
-      {/* CHAT LIST */}
-      <FlatList
-        ref={flatListRef}
-        data={aiChatHistory}
-        keyExtractor={(item) => item.id}
-        renderItem={renderMessage}
-        style={styles.flatList}
-        contentContainerStyle={styles.chatList}
-        showsVerticalScrollIndicator={false}
-        keyboardDismissMode="interactive"
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-      />
-
-      {/* TYPING INDICATOR */}
-      {isTyping && (
-        <View style={styles.typingContainer}>
-          <View style={[styles.aiAvatar, { backgroundColor: COLORS.primary }]}>
-            <Ionicons name="sparkles" size={14} color={COLORS.onPrimary || '#0B1326'} />
-          </View>
-          <View style={[styles.aiBubble, { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, paddingVertical: 12, paddingHorizontal: 16 }]}>
-            <ActivityIndicator size="small" color={COLORS.textMuted} />
-          </View>
-        </View>
-      )}
-
-      {/* PREMIUM DOCKED INPUT PILL */}
-      <View style={[styles.inputDock, { backgroundColor: COLORS.background, paddingBottom: Math.max(insets.bottom, 12) }]}>
-          <View style={[styles.pillContainer, { backgroundColor: COLORS.inputField || COLORS.surface, borderColor: COLORS.border, paddingBottom: Platform.OS === 'ios' ? Math.max(insets.bottom, 12) : 12 }]}>
-              <TextInput 
-                  style={[styles.textInput, { color: COLORS.textPrimary }]} 
-                  placeholder="Ask me anything..." 
-                  placeholderTextColor={COLORS.textMuted} 
-                  value={inputText} 
-                  onChangeText={setInputText} 
-                  multiline 
-                  maxLength={500} 
-              />
-              <TouchableOpacity 
-                  style={[styles.sendButton, { backgroundColor: inputText.trim() ? COLORS.primary : 'transparent' }]} 
-                  onPress={handleSend} 
-                  disabled={!inputText.trim() || isTyping}
+          <View style={styles.headerTitleContainer}>
+            <Text
+              style={[
+                styles.headerTitle,
+                FONTS.sectionHeading,
+                { color: COLORS.textPrimary },
+              ]}
+            >
+              HealthMate AI
+            </Text>
+            {!isPremiumUser && (
+              <View
+                style={[
+                  styles.badge,
+                  {
+                    backgroundColor: COLORS.surface,
+                    borderColor: COLORS.border,
+                    borderWidth: 1,
+                  },
+                ]}
               >
-                  <Ionicons name="arrow-up" size={20} color={inputText.trim() ? (COLORS.onPrimary || '#0B1326') : COLORS.textMuted} />
-              </TouchableOpacity>
+                <Text style={[styles.badgeText, { color: COLORS.primary }]}>
+                  {freeAiQuestionsRemaining} FREE LEFT
+                </Text>
+              </View>
+            )}
           </View>
+
+          <View style={{ width: 40 }} />
+        </View>
+
+        {/* ── CHAT LIST ── */}
+        <FlatList
+          ref={flatListRef}
+          data={aiChatHistory}
+          keyExtractor={(item) => item.id}
+          renderItem={renderMessage}
+          style={styles.flatList}
+          contentContainerStyle={styles.chatList}
+          showsVerticalScrollIndicator={false}
+          keyboardDismissMode="interactive"
+          onContentSizeChange={() =>
+            flatListRef.current?.scrollToEnd({ animated: true })
+          }
+        />
+
+        {/* ── TYPING INDICATOR ── */}
+        {isTyping && (
+          <View style={styles.typingContainer}>
+            <View style={[styles.aiAvatar, { backgroundColor: COLORS.primary }]}>
+              <Ionicons
+                name="sparkles"
+                size={14}
+                color={COLORS.onPrimary || '#0B1326'}
+              />
+            </View>
+            <View
+              style={[
+                styles.aiBubble,
+                {
+                  backgroundColor: COLORS.surface,
+                  borderWidth: 1,
+                  borderColor: COLORS.border,
+                  paddingVertical: 12,
+                  paddingHorizontal: 16,
+                },
+              ]}
+            >
+              <ActivityIndicator size="small" color={COLORS.textMuted} />
+            </View>
+          </View>
+        )}
+
+        {/* ── INPUT DOCK ── */}
+        <View
+          style={[
+            styles.inputDock,
+            { backgroundColor: COLORS.aiBackground },
+          ]}
+        >
+          <View
+            style={[
+              styles.pillContainer,
+              {
+                backgroundColor: COLORS.inputField || COLORS.surface,
+                borderColor: COLORS.border,
+                marginBottom: Math.max(insets.bottom, 22),
+                marginTop: Math.max(insets.bottom, 12),
+                // paddingTop: Math.max(insets.bottom, 22),
+              },
+            ]}
+          >
+            <TextInput
+              style={[styles.textInput, { color: COLORS.textPrimary }]}
+              placeholder="Ask me anything..."
+              placeholderTextColor={COLORS.textMuted}
+              value={inputText}
+              onChangeText={setInputText}
+              multiline
+              maxLength={500}
+            />
+            <TouchableOpacity
+              style={[
+                styles.sendButton,
+                {
+                  backgroundColor: inputText.trim()
+                    ? COLORS.primary
+                    : 'transparent',
+                },
+              ]}
+              onPress={handleSend}
+              disabled={!inputText.trim() || isTyping}
+            >
+              <Ionicons
+                name="arrow-up"
+                size={20}
+                color={
+                  inputText.trim()
+                    ? COLORS.onPrimary || '#0B1326'
+                    : COLORS.textMuted
+                }
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
       </View>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }
@@ -304,7 +413,6 @@ const styles = StyleSheet.create({
   },
   chatList: {
     padding: 16,
-    paddingBottom: 24,
   },
   messageWrapper: {
     flexDirection: 'row',
@@ -352,6 +460,8 @@ const styles = StyleSheet.create({
   inputDock: {
     paddingHorizontal: 16,
     paddingTop: 8,
+    paddingBottom: 8,
+    marginBottom: -28,
   },
   pillContainer: {
     flexDirection: 'row',
@@ -361,8 +471,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'flex-end',
     minHeight: 48,
-  },
-  textInput: {
+  },  textInput: {
     flex: 1,
     minHeight: 36,
     maxHeight: 120,

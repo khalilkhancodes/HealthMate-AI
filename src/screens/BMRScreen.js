@@ -1,14 +1,14 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import {
-    Alert,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import { useTheme } from '../theme/theme';
@@ -22,7 +22,7 @@ const ACTIVITY_LEVELS = [
 ];
 
 export default function BMRScreen() {
-  const { COLORS, FONTS, isDark } = useTheme();
+  const { COLORS, FONTS, SHADOWS } = useTheme();
 
   const [gender, setGender] = useState('male');
   const [age, setAge] = useState('');
@@ -78,52 +78,49 @@ export default function BMRScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}> 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.card, { backgroundColor: COLORS.card, shadowColor: isDark ? COLORS.background : '#000000' }]}>
-          <Text style={[styles.sectionTitle, FONTS.sectionHeading]}>Gender</Text>
+        <View style={[styles.card, { backgroundColor: COLORS.card }, SHADOWS.small]}>
+          <Text style={[FONTS.sectionHeading, { color: COLORS.textPrimary, marginBottom: 12 }]}>Gender</Text>
           <View style={styles.genderRow}>
             <TouchableOpacity
               style={[
                 styles.genderButton,
-                { backgroundColor: isDark ? '#2A2A2A' : COLORS.inputField },
-                gender === 'male' && styles.genderButtonActive,
-                gender === 'male' && { backgroundColor: isDark ? '#1D2C3A' : '#E7F2FF', borderColor: isDark ? '#2D4D6A' : '#BBD8FF' },
+                { backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1 },
+                gender === 'male' && { backgroundColor: COLORS.primaryContainer, borderColor: COLORS.primary },
               ]}
               activeOpacity={0.85}
               onPress={() => setGender('male')}
             >
-              <View style={[styles.genderIconWrap, { backgroundColor: gender === 'male' ? (isDark ? '#21415D' : '#DCEBFF') : (isDark ? '#3A3A3A' : '#E5E7EB') }]}> 
-                <Ionicons name="male" size={22} color={gender === 'male' ? COLORS.primary : COLORS.textMuted} />
+              <View style={[styles.genderIconWrap, { backgroundColor: gender === 'male' ? COLORS.card : COLORS.border }]}> 
+                <Ionicons name="male" size={24} color={gender === 'male' ? COLORS.primary : COLORS.textMuted} />
               </View>
-              <Text style={[styles.genderText, { color: COLORS.textMuted }, gender === 'male' && styles.genderTextActive, gender === 'male' && { color: COLORS.primary }]}>
+              <Text style={[FONTS.subheading, { color: gender === 'male' ? COLORS.primary : COLORS.textMuted }]}>
                 Male
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
                 styles.genderButton,
-                { backgroundColor: isDark ? '#2A2A2A' : '#EFF4F9' },
-                gender === 'female' && styles.genderButtonActive,
-                gender === 'female' && { backgroundColor: isDark ? '#1D2C3A' : '#E7F2FF', borderColor: isDark ? '#2D4D6A' : '#BBD8FF' },
+                { backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1 },
+                gender === 'female' && { backgroundColor: COLORS.primaryContainer, borderColor: COLORS.primary },
               ]}
               activeOpacity={0.85}
               onPress={() => setGender('female')}
             >
-              <View style={[styles.genderIconWrap, { backgroundColor: gender === 'female' ? (isDark ? '#4A2A4A' : '#FCE7F3') : (isDark ? '#3A3A3A' : '#E5E7EB') }]}> 
-                <Ionicons name="female" size={22} color={gender === 'female' ? COLORS.primary : COLORS.textMuted} />
+              <View style={[styles.genderIconWrap, { backgroundColor: gender === 'female' ? COLORS.card : COLORS.border }]}> 
+                <Ionicons name="female" size={24} color={gender === 'female' ? COLORS.primary : COLORS.textMuted} />
               </View>
-              <Text style={[styles.genderText, { color: COLORS.textMuted }, gender === 'female' && styles.genderTextActive, gender === 'female' && { color: COLORS.primary }]}>
+              <Text style={[FONTS.subheading, { color: gender === 'female' ? COLORS.primary : COLORS.textMuted }]}>
                 Female
               </Text>
             </TouchableOpacity>
           </View>
 
-          <Text style={[styles.inputLabel, FONTS.bodyText, { color: COLORS.textMuted }]}>Age</Text>
+          <Text style={[FONTS.bodyText, { color: COLORS.textMuted, marginBottom: 8, fontWeight: '600' }]}>Age</Text>
           <TextInput
             style={[
               styles.input,
-              { backgroundColor: isDark ? '#2A2A2A' : COLORS.inputField, borderColor: 'transparent', color: COLORS.textMain },
-              showErrors && !age?.trim() && styles.inputError,
-              showErrors && !age?.trim() && { borderColor: '#EF4444', backgroundColor: '#FEF2F2' },
+              { backgroundColor: COLORS.inputBackground, borderColor: COLORS.border, color: COLORS.textPrimary },
+              showErrors && !age?.trim() && { borderColor: COLORS.error, backgroundColor: COLORS.error + '1A' },
             ]}
             placeholder="Enter age"
             placeholderTextColor={COLORS.textMuted}
@@ -132,13 +129,12 @@ export default function BMRScreen() {
             onChangeText={setAge}
           />
 
-          <Text style={[styles.inputLabel, FONTS.bodyText, { color: COLORS.textMuted }]}>Weight (kg)</Text>
+          <Text style={[FONTS.bodyText, { color: COLORS.textMuted, marginBottom: 8, fontWeight: '600' }]}>Weight (kg)</Text>
           <TextInput
             style={[
               styles.input,
-              { backgroundColor: isDark ? '#2A2A2A' : COLORS.inputField, borderColor: 'transparent', color: COLORS.textMain },
-              showErrors && !weight?.trim() && styles.inputError,
-              showErrors && !weight?.trim() && { borderColor: '#EF4444', backgroundColor: '#FEF2F2' },
+              { backgroundColor: COLORS.inputBackground, borderColor: COLORS.border, color: COLORS.textPrimary },
+              showErrors && !weight?.trim() && { borderColor: COLORS.error, backgroundColor: COLORS.error + '1A' },
             ]}
             placeholder="Enter weight"
             placeholderTextColor={COLORS.textMuted}
@@ -147,13 +143,12 @@ export default function BMRScreen() {
             onChangeText={setWeight}
           />
 
-          <Text style={[styles.inputLabel, FONTS.bodyText, { color: COLORS.textMuted }]}>Height (cm)</Text>
+          <Text style={[FONTS.bodyText, { color: COLORS.textMuted, marginBottom: 8, fontWeight: '600' }]}>Height (cm)</Text>
           <TextInput
             style={[
               styles.input,
-              { backgroundColor: isDark ? '#2A2A2A' : COLORS.inputField, borderColor: 'transparent', color: COLORS.textMain },
-              showErrors && !height?.trim() && styles.inputError,
-              showErrors && !height?.trim() && { borderColor: '#EF4444', backgroundColor: '#FEF2F2' },
+              { backgroundColor: COLORS.inputBackground, borderColor: COLORS.border, color: COLORS.textPrimary },
+              showErrors && !height?.trim() && { borderColor: COLORS.error, backgroundColor: COLORS.error + '1A' },
             ]}
             placeholder="Enter height"
             placeholderTextColor={COLORS.textMuted}
@@ -162,7 +157,7 @@ export default function BMRScreen() {
             onChangeText={setHeight}
           />
 
-          <Text style={[styles.sectionTitle, FONTS.sectionHeading, { color: COLORS.textMain }]}>Activity Level</Text>
+          <Text style={[FONTS.sectionHeading, { color: COLORS.textPrimary, marginTop: 12, marginBottom: 12 }]}>Activity Level</Text>
           {ACTIVITY_LEVELS.map((level) => {
             const selected = level.key === activityKey;
 
@@ -171,30 +166,28 @@ export default function BMRScreen() {
                 key={level.key}
                 style={[
                   styles.activityCard,
-                  { backgroundColor: isDark ? '#2A2A2A' : COLORS.inputField, borderColor: 'transparent' },
-                  selected && styles.activityCardActive,
-                  selected && { borderColor: COLORS.primary, backgroundColor: isDark ? '#1D2C3A' : '#EEF7FF' },
-                  showErrors && !activityKey && styles.inputError,
-                  showErrors && !activityKey && { borderColor: '#EF4444', backgroundColor: '#FEF2F2' },
+                  { backgroundColor: COLORS.surface, borderColor: COLORS.border },
+                  selected && { borderColor: COLORS.primary, backgroundColor: COLORS.primaryContainer },
+                  showErrors && !activityKey && { borderColor: COLORS.error, backgroundColor: COLORS.error + '1A' },
                 ]}
                 activeOpacity={0.85}
                 onPress={() => setActivityKey(level.key)}
               >
                 <View style={styles.activityCopy}>
-                  <View style={[styles.activityIconWrap, { backgroundColor: selected ? (isDark ? '#21415D' : '#DCEBFF') : (isDark ? '#3A3A3A' : '#E5E7EB') }]}> 
-                    <Ionicons name={selected ? 'pulse' : 'walk'} size={16} color={selected ? COLORS.primary : COLORS.textMuted} />
+                  <View style={[styles.activityIconWrap, { backgroundColor: selected ? COLORS.card : COLORS.border }]}> 
+                    <Ionicons name={selected ? 'pulse' : 'walk'} size={18} color={selected ? COLORS.primary : COLORS.textMuted} />
                   </View>
                   <View style={styles.activityTextWrap}>
-                    <Text style={[styles.activityText, { color: COLORS.textMain }, selected && styles.activityTextActive, selected && { color: COLORS.primary }]}> 
+                    <Text style={[FONTS.subheading, { color: selected ? COLORS.primary : COLORS.textPrimary }]}> 
                       {level.label}
                     </Text>
-                    <Text style={[styles.activityHint, { color: COLORS.textMuted }, selected && { color: COLORS.primary }]}> 
+                    <Text style={[FONTS.smallText, { color: COLORS.textMuted, marginTop: 2 }]}> 
                       Daily activity multiplier
                     </Text>
                   </View>
                 </View>
-                <View style={[styles.activityMultiplierPill, { backgroundColor: selected ? COLORS.primary : (isDark ? '#3A3A3A' : '#E2E8F0') }]}> 
-                  <Text style={[styles.activityMultiplier, { color: selected ? '#FFFFFF' : COLORS.textMuted }, selected && styles.activityTextActive]}> 
+                <View style={[styles.activityMultiplierPill, { backgroundColor: selected ? COLORS.primary : COLORS.border }]}> 
+                  <Text style={[FONTS.label, { color: selected ? COLORS.onPrimary : COLORS.textMuted, fontWeight: '700' }]}> 
                     x{level.multiplier}
                   </Text>
                 </View>
@@ -203,22 +196,23 @@ export default function BMRScreen() {
           })}
 
           <TouchableOpacity
-            style={[styles.calculateButton, { backgroundColor: COLORS.button }]}
+            style={[styles.calculateButton, { backgroundColor: COLORS.primary }]}
             activeOpacity={0.9}
             onPress={handleCalculateBMR}
           >
-            <Text style={[styles.calculateButtonText, FONTS.buttonText, { color: '#FFFFFF' }]}>Calculate BMR</Text>
+            <Text style={[FONTS.buttonText, { color: COLORS.onPrimary }]}>Calculate BMR</Text>
           </TouchableOpacity>
         </View>
 
         {resultCalories !== null && (
-          <View style={[styles.resultCard, { backgroundColor: COLORS.card, shadowColor: isDark ? COLORS.background : '#000000' }]}>
-            <Text style={[styles.resultLabel, FONTS.bodyText, { color: COLORS.textMuted }]}>Estimated Daily Calories</Text>
-            <Text style={[styles.resultValue, FONTS.bigNumbers, { color: COLORS.textMain }]}>{resultCalories.toLocaleString()}</Text>
-            <Text style={[styles.resultUnit, FONTS.sectionHeading, { color: COLORS.primary }]}>kcal / day</Text>
-            <View style={[styles.resultBadge, { backgroundColor: isDark ? '#1D2C3A' : '#EEF7FF' }]}> 
-              <Ionicons name="flame" size={16} color={COLORS.primary} />
-              <Text style={[styles.resultBadgeText, { color: COLORS.textMuted }]}>Based on your gender, age, size, and activity level</Text>
+          <View style={[styles.resultCard, { backgroundColor: COLORS.card }, SHADOWS.small]}>
+            <Text style={[FONTS.bodyText, { color: COLORS.textSecondary, marginBottom: 6 }]}>Estimated Daily Calories</Text>
+            <Text style={[FONTS.bigNumbers, { color: COLORS.textPrimary }]}>{resultCalories.toLocaleString()}</Text>
+            <Text style={[FONTS.sectionHeading, { color: COLORS.primary, marginTop: 4 }]}>kcal / day</Text>
+            
+            <View style={[styles.resultBadge, { backgroundColor: COLORS.secondaryContainer }]}> 
+              <Ionicons name="flame" size={16} color={COLORS.secondary} />
+              <Text style={[FONTS.smallText, { color: COLORS.textSecondary, flex: 1 }]}>Based on your gender, age, size, and activity level</Text>
             </View>
           </View>
         )}
@@ -232,82 +226,51 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 18,
-    paddingTop: 10,
-    paddingBottom: 100,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 40,
   },
   card: {
-    borderRadius: 20,
-    padding: 18,
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    elevation: 2,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 10,
+    borderRadius: 24,
+    padding: 24,
   },
   genderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 24,
   },
   genderButton: {
     width: '48%',
-    paddingVertical: 16,
+    borderRadius: 20,
+    paddingVertical: 20,
     paddingHorizontal: 12,
-    borderRadius: 14,
     alignItems: 'center',
-  },
-  genderButtonActive: {
-    borderWidth: 1,
   },
   genderIconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
-  },
-  genderText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  genderTextActive: {
-    fontWeight: '700',
-  },
-  inputLabel: {
-    fontSize: 14,
-    marginBottom: 6,
-    fontWeight: '600',
+    marginBottom: 12,
   },
   input: {
     borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     fontSize: 16,
-    marginBottom: 12,
-  },
-  inputError: {
+    marginBottom: 20,
   },
   activityCard: {
     borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 13,
-    paddingHorizontal: 14,
-    marginBottom: 8,
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  activityCardActive: {
   },
   activityCopy: {
     flexDirection: 'row',
@@ -316,86 +279,41 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   activityIconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    marginRight: 12,
   },
   activityTextWrap: {
     flex: 1,
   },
-  activityText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  activityHint: {
-    marginTop: 2,
-    fontSize: 12,
-    fontWeight: '500',
-  },
   activityMultiplierPill: {
     borderRadius: 999,
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-  },
-  activityMultiplier: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  activityTextActive: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
   },
   calculateButton: {
-    marginTop: 10,
-    borderRadius: 14,
-    paddingVertical: 14,
+    marginTop: 16,
+    borderRadius: 16,
+    paddingVertical: 16,
     alignItems: 'center',
-  },
-  calculateButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
   },
   resultCard: {
-    marginTop: 16,
-    borderRadius: 20,
-    paddingVertical: 20,
-    paddingHorizontal: 16,
+    marginTop: 20,
+    borderRadius: 24,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
     alignItems: 'center',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    elevation: 2,
-  },
-  resultLabel: {
-    fontSize: 14,
-    marginBottom: 6,
-  },
-  resultValue: {
-    fontSize: 38,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  resultUnit: {
-    fontSize: 16,
-    fontWeight: '800',
-    marginTop: 4,
   },
   resultBadge: {
-    marginTop: 14,
-    borderRadius: 999,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    marginTop: 20,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  resultBadgeText: {
-    fontSize: 12.5,
-    fontWeight: '600',
-    flex: 1,
+    gap: 12,
   },
 });

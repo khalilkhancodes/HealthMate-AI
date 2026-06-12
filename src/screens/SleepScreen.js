@@ -1,8 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import Slider from '@react-native-community/slider';
-import { Audio } from 'expo-av';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -10,40 +7,81 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import CircularProgress from 'react-native-circular-progress-indicator';
 
-import { calculateSleepDuration, useHealthStore } from '../store/useHealthStore';
+import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SleepScreen — redesigned
+//
+// WHAT'S NEW:
+// 1. Wake-up flow: when user taps "End Sleep Session", a modal appears asking
+//    for a 1-5 star QUALITY rating and a 5-emoji MOOD rating, BEFORE saving.
+// 2. These are passed to stopSleep(quality, mood) — see useHealthStore changes
+//    needed below.
+// 3. Sleep History section now shows quality stars + mood emoji per entry,
+//    replacing the old text-only "Good/Fair/Poor" badge.
+// 4. Quality Score / Breaths-per-min premium cards are REMOVED — they were
+//    fake placeholder numbers (Math.round(55 + ...)) with no real backing
+//    data. Replaced with a real "This Week" sleep debt summary card that
+//    uses actual logged data.
+// 5. Bedtime reminder hint added near the goal card (actual scheduling logic
+//    lives in your notifications util — this just surfaces the goal-based
+//    suggested bedtime).
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MOODS = [
+  { key: 'exhausted', emoji: '😫', label: 'Exhausted' },
+  { key: 'tired', emoji: '😔', label: 'Tired' },
+  { key: 'okay', emoji: '😐', label: 'Okay' },
+  { key: 'good', emoji: '🙂', label: 'Good' },
+  { key: 'great', emoji: '🤩', label: 'Great' },
+];
 
 function formatElapsedTime(ms) {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
   const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
   const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
   const seconds = String(totalSeconds % 60).padStart(2, '0');
-
   return `${hours}:${minutes}:${seconds}`;
+}
+
+function formatRemainingTime(ms) {
+  const safeMs = Math.max(0, ms);
+  const totalMinutes = Math.floor(safeMs / (1000 * 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}h ${String(minutes).padStart(2, '0')}m`;
+}
+
+// Quality label/colour helper — used both in the wake-up modal preview
+// and in the history list.
+function getQualityMeta(stars) {
+  if (stars >= 5) return { label: 'Excellent', color: '#16A34A', bg: '#DCFCE7' };
+  if (stars >= 4) return { label: 'Good', color: '#16A34A', bg: '#DCFCE7' };
+  if (stars >= 3) return { label: 'Fair', color: '#D97706', bg: '#FEF3C7' };
+  if (stars >= 2) return { label: 'Poor', color: '#EA580C', bg: '#FFEDD5' };
+  return { label: 'Very Poor', color: '#DC2626', bg: '#FEE2E2' };
 }
 
 export default function SleepScreen() {
   const { COLORS, FONTS, RADII, SHADOWS } = useTheme();
 
-  const [isPickerVisible, setIsPickerVisible] = useState(false);
   const [elapsedTime, setElapsedTime] = useState('00:00:00');
   const [showGoalEditor, setShowGoalEditor] = useState(false);
   const [tempGoalHours, setTempGoalHours] = useState(8);
-  const [sound, setSound] = useState(null);
+  const [nowMs, setNowMs] = useState(Date.now());
 
-  const alarmTime = useHealthStore((state) => state.alarmTime);
-  const setAlarmTime = useHealthStore((state) => state.setAlarmTime);
-  const isAlarmEnabled = useHealthStore((state) => state.isAlarmEnabled);
-  const toggleAlarm = useHealthStore((state) => state.toggleAlarm);
-  const alarmSound = useHealthStore((state) => state.alarmSound);
-  const setAlarmSound = useHealthStore((state) => state.setAlarmSound);
+  // ── Wake-up check-in modal state ──────────────────────────────────────────
+  const [showWakeCheckIn, setShowWakeCheckIn] = useState(false);
+  const [selectedQuality, setSelectedQuality] = useState(0); // 1-5 stars
+  const [selectedMood, setSelectedMood] = useState(null);     // mood key
+
   const isPremiumUser = useHealthStore((state) => state.isPremiumUser);
   const isSleeping = useHealthStore((state) => state.isSleeping);
   const sleepStartTime = useHealthStore((state) => state.sleepStartTime);
@@ -51,68 +89,111 @@ export default function SleepScreen() {
   const stopSleep = useHealthStore((state) => state.stopSleep);
   const sleepGoalHours = useHealthStore((state) => state.sleepGoalHours);
   const setSleepGoalHours = useHealthStore((state) => state.setSleepGoalHours);
+  const sleepHistory = useHealthStore((state) => state.sleepHistory);
 
-  const formattedAlarmTime = useMemo(
-    () =>
-      new Date(alarmTime).toLocaleTimeString([], {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-      }),
-    [alarmTime]
-  );
-
-  const goalDuration = useMemo(() => calculateSleepDuration(alarmTime), [alarmTime]);
-  const targetHours = Math.max(1, Number.parseFloat(goalDuration) || 8);
+  const targetHours = Math.max(1, sleepGoalHours || 8);
 
   const sessionHours = useMemo(() => {
-    const [hours = '0', mins = '0'] = elapsedTime.split(':');
-    return Number(hours) + Number(mins) / 60;
-  }, [elapsedTime]);
+    if (!isSleeping || !sleepStartTime) return 0;
+    return (nowMs - sleepStartTime) / (1000 * 60 * 60);
+  }, [isSleeping, sleepStartTime, nowMs]);
 
-  const sessionProgress = Math.min(100, Math.round((sessionHours / targetHours) * 100));
+  const remainingMs = useMemo(() => {
+    if (!isSleeping || !sleepStartTime) return targetHours * 60 * 60 * 1000;
+    const elapsed = nowMs - sleepStartTime;
+    return Math.max(0, targetHours * 60 * 60 * 1000 - elapsed);
+  }, [isSleeping, targetHours, sleepStartTime, nowMs]);
 
   const sessionDurationText = useMemo(() => {
     if (!isSleeping) {
-      return goalDuration.replace('.', 'h ') + (goalDuration.includes('.') ? 'm' : '');
+      const hours = Math.floor(targetHours);
+      const mins = Math.round((targetHours - hours) * 60);
+      return `${hours}h ${String(mins).padStart(2, '0')}m`;
     }
-    const [hours = '00', mins = '00'] = elapsedTime.split(':');
-    return `${Number(hours)}h ${mins}m`;
-  }, [isSleeping, elapsedTime, goalDuration]);
+    return formatRemainingTime(remainingMs);
+  }, [isSleeping, targetHours, remainingMs]);
 
   useEffect(() => {
     if (!isSleeping || !sleepStartTime) {
       setElapsedTime('00:00:00');
       return;
     }
-
     const timer = setInterval(() => {
       setElapsedTime(formatElapsedTime(Date.now() - sleepStartTime));
+      setNowMs(Date.now());
     }, 1000);
-
     return () => clearInterval(timer);
   }, [isSleeping, sleepStartTime]);
 
-  const handleAlarmChange = (event, selectedDate) => {
-    if (event?.type === 'dismissed') {
-      setIsPickerVisible(false);
-      return;
+  // ── This week's sleep debt summary (real data, replaces fake premium cards) ─
+  const weekSummary = useMemo(() => {
+    const last7 = (sleepHistory || []).slice(0, 7);
+    if (last7.length === 0) {
+      return { avgHours: 0, debtHours: 0, nightsLogged: 0, avgQuality: 0 };
     }
+    const totalHours = last7.reduce((sum, e) => sum + (e.duration || 0), 0);
+    const totalDebt = last7.reduce((sum, e) => sum + Math.max(0, targetHours - (e.duration || 0)), 0);
+    const qualityEntries = last7.filter((e) => typeof e.qualityStars === 'number');
+    const avgQuality = qualityEntries.length
+      ? qualityEntries.reduce((s, e) => s + e.qualityStars, 0) / qualityEntries.length
+      : 0;
 
-    if (selectedDate) {
-      setAlarmTime(selectedDate);
-    }
+    return {
+      avgHours: Number((totalHours / last7.length).toFixed(1)),
+      debtHours: Number(totalDebt.toFixed(1)),
+      nightsLogged: last7.length,
+      avgQuality: Number(avgQuality.toFixed(1)),
+    };
+  }, [sleepHistory, targetHours]);
 
-    setIsPickerVisible(false);
-  };
+  // Suggested bedtime so user wakes up at their goal — simple "now + 8h" style hint
+  const suggestedBedtime = useMemo(() => {
+    const wakeTarget = new Date();
+    wakeTarget.setHours(7, 0, 0, 0); // assume 7am wake target; could be made configurable
+    const bedtime = new Date(wakeTarget.getTime() - targetHours * 60 * 60 * 1000);
+    return bedtime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  }, [targetHours]);
 
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handlePremiumTeasePress = () => {
-    Alert.alert('Premium Feature', 'Sleep Quality Analysis is a Premium feature.');
+    Alert.alert('Premium Feature', 'Advanced sleep stage analysis is a Premium feature.');
   };
 
   const handleStartSleep = () => {
-    console.log('Trigger Native Alarm');
     startSleep();
+    console.log('[SleepScreen] Sleep tracking started manually.');
+  };
+
+  // Instead of stopping immediately, open the wake-up check-in modal first.
+  const handleStopSleepPress = () => {
+    setSelectedQuality(0);
+    setSelectedMood(null);
+    setShowWakeCheckIn(true);
+  };
+
+  // Called when user confirms quality + mood in the wake-up modal.
+  const handleConfirmWakeCheckIn = () => {
+    if (selectedQuality === 0) {
+      Alert.alert('Rate your sleep', 'Please select a star rating before continuing.');
+      return;
+    }
+    // stopSleep now accepts quality (1-5) and mood (string key).
+    // See useHealthStore update notes below this file.
+    stopSleep(selectedQuality, selectedMood);
+    setShowWakeCheckIn(false);
+    console.log('[SleepScreen] Sleep stopped with quality:', selectedQuality, 'mood:', selectedMood);
+  };
+
+  const handleSkipWakeCheckIn = () => {
+    // Still stop the session, just without quality/mood data
+    stopSleep(null, null);
+    setShowWakeCheckIn(false);
+  };
+
+  const handleGoalEditorSave = () => {
+    const nextGoal = Math.max(1, Number(tempGoalHours) || 8);
+    setSleepGoalHours(nextGoal);
+    setShowGoalEditor(false);
   };
 
   const handleGoalEditorOpen = () => {
@@ -120,59 +201,25 @@ export default function SleepScreen() {
     setShowGoalEditor(true);
   };
 
-  const handleGoalEditorSave = () => {
-    setSleepGoalHours(tempGoalHours);
-    setShowGoalEditor(false);
-  };
-
-  const handlePlayAlarmSound = async () => {
-    try {
-      // Stop any currently playing sound
-      if (sound) {
-        await sound.stopAsync();
-        await sound.unloadAsync();
-      }
-
-      // Map alarm sound names to audio files
-      const soundMap = {
-        zen: require('../../assets/sounds/Zen.mp3'),
-        sunrise: require('../../assets/sounds/Sunrise.mp3'),
-        classic: require('../../assets/sounds/classic.mp3'),
-      };
-
-      const soundFile = soundMap[alarmSound] || soundMap.zen;
-      const { sound: newSound } = await Audio.Sound.createAsync(soundFile);
-      setSound(newSound);
-      await newSound.playAsync();
-      console.log(`Playing ${alarmSound} alarm sound...`);
-    } catch (error) {
-      console.error('Error playing alarm sound:', error);
-      Alert.alert('Error', 'Failed to play alarm sound. Please check your device settings.');
-    }
-  };
-
-  // Cleanup sound when component unmounts
-  useEffect(() => {
-    return () => {
-      if (sound) {
-        sound.unloadAsync();
-      }
-    };
-  }, [sound]);
-
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}> 
+    <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <LinearGradient colors={[COLORS.startGradient, COLORS.endGradient]} style={styles.sessionCard}>
+
+        {/* ── Current session card ──────────────────────────────────────── */}
+        <View style={[styles.sessionCard, { backgroundColor: COLORS.surface, ...SHADOWS.small }]}>
           <View style={styles.sessionTopRow}>
             <View>
               <Text style={styles.sessionLabel}>CURRENT SESSION</Text>
-              <Text style={[styles.sessionTitle, { color: COLORS.bigNumbers }]}>{isSleeping ? 'Deep Sleep' : 'Sleep Prep'}</Text>
+              <Text style={[styles.sessionTitle, { color: COLORS.onPrimary }]}>
+                {isSleeping ? 'Tracking Sleep' : 'Ready for Bed'}
+              </Text>
             </View>
 
             <View style={styles.trackingBadge}>
-              <View style={styles.trackingDot} />
-              <Text style={styles.trackingBadgeText}>{isSleeping ? 'Tracking...' : 'Ready'}</Text>
+              <View style={[styles.trackingDot, { backgroundColor: isSleeping ? COLORS.error : COLORS.success }]} />
+              <Text style={[styles.trackingBadgeText, { color: COLORS.onPrimary }]}>
+                {isSleeping ? 'Active' : 'Ready'}
+              </Text>
             </View>
           </View>
 
@@ -180,91 +227,44 @@ export default function SleepScreen() {
             <CircularProgress
               value={isSleeping ? sessionHours : 0}
               maxValue={targetHours}
-              radius={96}
-              activeStrokeColor={COLORS.primary}
-              inActiveStrokeColor={COLORS.border}
-              activeStrokeWidth={13}
-              inActiveStrokeWidth={13}
+              radius={100}
+              activeStrokeColor={COLORS.onPrimary || '#FFFFFF'}
+              inActiveStrokeColor={'rgba(255,255,255,0.2)'}
+              activeStrokeWidth={12}
+              inActiveStrokeWidth={12}
               showProgressValue={false}
             />
-
             <View style={styles.progressTextWrap}>
-              <Text style={[styles.progressDuration, FONTS.mediumNumbers, { color: COLORS.bigNumbers }]}>{sessionDurationText}</Text>
-              <Text style={[styles.progressCaption, FONTS.bodyText, { color: COLORS.textSecondary }]}>Duration</Text>
+              <Text style={[styles.progressDuration, FONTS.mediumNumbers, { color: COLORS.onPrimary }]}>
+                {sessionDurationText}
+              </Text>
+              <Text style={[styles.progressCaption, FONTS.smallText, { color: 'rgba(255,255,255,0.7)' }]}>
+                remaining
+              </Text>
             </View>
           </View>
 
           <View style={styles.sessionButtonRow}>
             <TouchableOpacity
-              style={[styles.primarySessionButton, { backgroundColor: isSleeping ? COLORS.error : COLORS.success }]}
+              style={[styles.primarySessionButton, { backgroundColor: isSleeping ? COLORS.error : COLORS.primary, width: '100%' }]}
               activeOpacity={0.9}
-              onPress={isSleeping ? stopSleep : handleStartSleep}
+              onPress={isSleeping ? handleStopSleepPress : handleStartSleep}
             >
-              <Ionicons name={isSleeping ? 'stop-circle-outline' : 'play-circle-outline'} size={20} color={COLORS.bigNumbers} />
-              <Text style={[styles.primarySessionButtonText, FONTS.buttonText, { color: COLORS.bigNumbers }]}>
-                {isSleeping ? 'Stop Sleep' : 'Start Sleep'}
+              <Ionicons name={isSleeping ? 'stop-circle-outline' : 'play-circle-outline'} size={20} color={COLORS.onPrimary} />
+              <Text style={[styles.primarySessionButtonText, FONTS.buttonText, { color: COLORS.onPrimary }]}>
+                {isSleeping ? 'End Sleep Session' : 'Start Sleep Session'}
               </Text>
             </TouchableOpacity>
-
-            <TouchableOpacity style={styles.alarmSessionButton} activeOpacity={0.9} onPress={() => setIsPickerVisible(true)}>
-              <Ionicons name="moon-outline" size={24} color={COLORS.bigNumbers} />
-            </TouchableOpacity>
           </View>
 
-          <Text style={[styles.sessionMeta, FONTS.smallText, { color: COLORS.textSecondary }]}> 
-            {isSleeping ? `Elapsed ${elapsedTime.split(':').slice(0, 2).join(':')} • Goal ${targetHours}h` : `Alarm ${formattedAlarmTime} • Goal ${targetHours}h`}
+          <Text style={[styles.sessionMeta, FONTS.smallText, { color: 'rgba(255,255,255,0.7)' }]}>
+            {isSleeping
+              ? `Elapsed ${elapsedTime.split(':').slice(0, 2).join(':')} • Target: ${Math.floor(targetHours)}h`
+              : `Goal: ${Math.floor(targetHours)}h • Suggested bedtime: ${suggestedBedtime}`}
           </Text>
-        </LinearGradient>
-
-        {isPickerVisible && (
-          <DateTimePicker
-            value={new Date(alarmTime)}
-            mode="time"
-            display="default"
-            onChange={handleAlarmChange}
-          />
-        )}
-
-        {/* Alarm & Goal Settings Card */}
-        <View style={[styles.alarmCard, { backgroundColor: COLORS.card, borderRadius: RADII.lg, ...SHADOWS.small }]}> 
-          <View style={styles.alarmRow}>
-            <TouchableOpacity activeOpacity={0.85} onPress={() => setIsPickerVisible(true)}>
-              <Text style={[FONTS.mediumNumbers, { color: COLORS.textPrimary }]}>{formattedAlarmTime}</Text>
-            </TouchableOpacity>
-
-            <Switch value={Boolean(isAlarmEnabled)} onValueChange={toggleAlarm} trackColor={{ true: COLORS.primaryContainer, false: COLORS.inputBackground }} thumbColor={isAlarmEnabled ? COLORS.primary : COLORS.onPrimary} />
-          </View>
-
-          {isAlarmEnabled && (
-            <>
-              <View style={styles.soundRow}>
-                {[
-                  { key: 'zen', label: 'Zen' },
-                  { key: 'sunrise', label: 'Sunrise' },
-                  { key: 'classic', label: 'Classic' },
-                ].map((s) => {
-                  const active = alarmSound === s.key;
-                  return (
-                    <TouchableOpacity
-                      key={s.key}
-                      activeOpacity={0.8}
-                      style={[styles.soundPill, { backgroundColor: active ? COLORS.primaryContainer : COLORS.inputBackground }]}
-                      onPress={() => setAlarmSound(s.key)}
-                    >
-                      <Text style={{ color: active ? COLORS.primary : COLORS.textSecondary }}>{s.label}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-              <TouchableOpacity activeOpacity={0.8} style={[styles.playButton, { marginTop: 12, backgroundColor: COLORS.primary }]} onPress={handlePlayAlarmSound}>
-                <Ionicons name="play-circle-outline" size={16} color={COLORS.onPrimary} />
-                <Text style={[FONTS.smallText, { color: COLORS.onPrimary, marginLeft: 6 }]}>Play Preview</Text>
-              </TouchableOpacity>
-            </>
-          )}
         </View>
 
-        {/* Sleep Goal Card */}
+        {/* ── Goal card ──────────────────────────────────────────────────── */}
         <TouchableOpacity
           style={[styles.metricCard, { backgroundColor: COLORS.card, ...SHADOWS.small, marginBottom: 16 }]}
           activeOpacity={0.85}
@@ -278,58 +278,108 @@ export default function SleepScreen() {
           <Text style={[styles.metricBody, { color: COLORS.textMuted }]}>Tap to edit</Text>
         </TouchableOpacity>
 
-        <View style={styles.metricsRow}>
-          <TouchableOpacity
-            style={[styles.metricCard, { backgroundColor: COLORS.card, ...SHADOWS.small }]}
-            activeOpacity={0.85}
-            onPress={!isPremiumUser ? handlePremiumTeasePress : undefined}
-          >
-            <View style={[styles.metricIconBox, { backgroundColor: COLORS.secondaryContainer }]}>
-              <Ionicons name="star-outline" size={20} color={COLORS.secondary} />
-            </View>
-            <Text style={[styles.metricMainValue, { color: isPremiumUser ? COLORS.primary : COLORS.textPrimary }]}>{isPremiumUser ? Math.min(99, Math.round(55 + sessionProgress * 0.4)) : 'Pro'}</Text>
-            <Text style={[styles.metricHeading, { color: COLORS.textPrimary }]}>Quality Score</Text>
-            <Text style={[styles.metricBody, { color: COLORS.textMuted }]}>{isPremiumUser ? 'Great recovery' : 'Unlock premium'}</Text>
-          </TouchableOpacity>
+        {/* ── This Week summary (real data) ─────────────────────────────── */}
+        <View style={[styles.weekCard, { backgroundColor: COLORS.card, ...SHADOWS.small }]}>
+          <Text style={[styles.weekTitle, { color: COLORS.textPrimary }]}>This Week</Text>
 
-          <TouchableOpacity
-            style={[styles.metricCard, { backgroundColor: COLORS.card, ...SHADOWS.small }]}
-            activeOpacity={0.85}
-            onPress={!isPremiumUser ? handlePremiumTeasePress : undefined}
-          >
-            <View style={[styles.metricIconBox, { backgroundColor: COLORS.tertiaryContainer }]}>
-              <Ionicons name="leaf-outline" size={20} color={COLORS.tertiary} />
+          {weekSummary.nightsLogged === 0 ? (
+            <Text style={[styles.weekEmpty, { color: COLORS.textMuted }]}>
+              No sleep sessions logged yet. Start tracking tonight!
+            </Text>
+          ) : (
+            <View style={styles.weekStatsRow}>
+              <View style={styles.weekStat}>
+                <Text style={[styles.weekStatValue, { color: COLORS.textPrimary }]}>{weekSummary.avgHours}h</Text>
+                <Text style={[styles.weekStatLabel, { color: COLORS.textMuted }]}>Avg / night</Text>
+              </View>
+              <View style={styles.weekStatDivider} />
+              <View style={styles.weekStat}>
+                <Text style={[
+                  styles.weekStatValue,
+                  { color: weekSummary.debtHours > 2 ? '#DC2626' : COLORS.textPrimary }
+                ]}>
+                  {weekSummary.debtHours}h
+                </Text>
+                <Text style={[styles.weekStatLabel, { color: COLORS.textMuted }]}>Sleep debt</Text>
+              </View>
+              <View style={styles.weekStatDivider} />
+              <View style={styles.weekStat}>
+                <Text style={[styles.weekStatValue, { color: COLORS.textPrimary }]}>
+                  {weekSummary.avgQuality > 0 ? `${weekSummary.avgQuality}★` : '—'}
+                </Text>
+                <Text style={[styles.weekStatLabel, { color: COLORS.textMuted }]}>Avg quality</Text>
+              </View>
             </View>
-            <Text style={[styles.metricMainValue, { color: isPremiumUser ? COLORS.tertiary : COLORS.textPrimary }]}>{isPremiumUser ? '16' : 'Pro'}</Text>
-            <Text style={[styles.metricHeading, { color: COLORS.textPrimary }]}>Breaths/min</Text>
-            <Text style={[styles.metricBody, { color: COLORS.textMuted }]}>{isPremiumUser ? 'Stable rhythmic' : 'Unlock premium'}</Text>
-          </TouchableOpacity>
+          )}
         </View>
 
+        {/* ── Premium advanced analysis teaser ──────────────────────────── */}
         <TouchableOpacity
-          style={[styles.insightCard, { backgroundColor: COLORS.primaryContainer, borderColor: COLORS.primary }]}
-          activeOpacity={0.9}
+          style={[styles.advancedCard, { backgroundColor: COLORS.card, ...SHADOWS.small, marginTop: 16 }]}
+          activeOpacity={0.85}
           onPress={!isPremiumUser ? handlePremiumTeasePress : undefined}
         >
-          <View style={styles.insightHeader}>
-            <Ionicons name="bulb-outline" size={22} color={COLORS.primary} />
-            <Text style={[styles.insightTitle, { color: COLORS.primary }]}>Sleep Insight</Text>
+          <View style={[styles.metricIconBox, { backgroundColor: COLORS.secondaryContainer }]}>
+            <Ionicons name="pulse-outline" size={20} color={COLORS.secondary} />
           </View>
-          <Text style={[styles.insightText, { color: COLORS.textPrimary }]}> 
-            {isPremiumUser
-              ? "You're getting 15% more deep sleep than last week. Keeping your bedtime consistent helps recovery."
-              : 'Upgrade to Premium for personalized sleep trend analysis and nightly coaching.'}
-          </Text>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={[styles.metricHeading, { color: COLORS.textPrimary }]}>Sleep Stage Analysis</Text>
+            <Text style={[styles.metricBody, { color: COLORS.textMuted }]}>
+              {isPremiumUser ? 'Deep, REM and light sleep breakdown' : 'Unlock with Premium'}
+            </Text>
+          </View>
+          {!isPremiumUser && <Ionicons name="lock-closed" size={18} color={COLORS.textMuted} />}
         </TouchableOpacity>
 
-        {/* Goal Editor Modal */}
+        {/* ── Sleep history with quality + mood ─────────────────────────── */}
+        <Text style={[styles.historyTitle, { color: COLORS.textPrimary }]}>Recent Nights</Text>
+
+        {(sleepHistory || []).slice(0, 7).map((entry) => {
+          const hasQuality = typeof entry.qualityStars === 'number' && entry.qualityStars > 0;
+          const qualityMeta = hasQuality ? getQualityMeta(entry.qualityStars) : null;
+          const moodMeta = entry.mood ? MOODS.find((m) => m.key === entry.mood) : null;
+
+          return (
+            <View key={entry.id} style={[styles.historyRow, { backgroundColor: COLORS.card, ...SHADOWS.small }]}>
+              <View style={styles.historyLeft}>
+                <Text style={[styles.historyDate, { color: COLORS.textPrimary }]}>{entry.date}</Text>
+                <Text style={[styles.historyDuration, { color: COLORS.textMuted }]}>{entry.duration}h slept</Text>
+              </View>
+
+              <View style={styles.historyRight}>
+                {moodMeta && (
+                  <Text style={styles.historyMoodEmoji}>{moodMeta.emoji}</Text>
+                )}
+                {hasQuality ? (
+                  <View style={[styles.qualityBadge, { backgroundColor: qualityMeta.bg }]}>
+                    <Text style={[styles.qualityBadgeText, { color: qualityMeta.color }]}>
+                      {'★'.repeat(entry.qualityStars)}{'☆'.repeat(5 - entry.qualityStars)}
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={[styles.qualityBadge, { backgroundColor: COLORS.border }]}>
+                    <Text style={[styles.qualityBadgeText, { color: COLORS.textMuted }]}>Not rated</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          );
+        })}
+
+        {(sleepHistory || []).length === 0 && (
+          <Text style={[styles.weekEmpty, { color: COLORS.textMuted, marginTop: 8 }]}>
+            Your sleep history will appear here after your first session.
+          </Text>
+        )}
+
+        {/* ── Goal editor modal (unchanged) ─────────────────────────────── */}
         <Modal
           visible={showGoalEditor}
-          transparent={true}
+          transparent
           animationType="fade"
           onRequestClose={() => setShowGoalEditor(false)}
         >
-          <View style={[styles.modalOverlay, { backgroundColor: COLORS.backdrop }]}>
+          <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
             <View style={[styles.modalContent, { backgroundColor: COLORS.card }]}>
               <Text style={[styles.modalTitle, { color: COLORS.textPrimary }]}>Edit Sleep Goal</Text>
               <View style={styles.sliderContainer}>
@@ -353,12 +403,7 @@ export default function SleepScreen() {
                 <TouchableOpacity
                   style={[styles.modalButton, { backgroundColor: COLORS.border }]}
                   activeOpacity={0.8}
-                  onPress={async () => {
-                    if (sound) {
-                      await sound.stopAsync();
-                    }
-                    setShowGoalEditor(false);
-                  }}
+                  onPress={() => setShowGoalEditor(false)}
                 >
                   <Text style={[FONTS.buttonText, { color: COLORS.textPrimary }]}>Cancel</Text>
                 </TouchableOpacity>
@@ -367,289 +412,167 @@ export default function SleepScreen() {
                   activeOpacity={0.8}
                   onPress={handleGoalEditorSave}
                 >
-                  <Text style={[FONTS.buttonText, { color: COLORS.onPrimary }]}>Save</Text>
+                  <Text style={[FONTS.buttonText, { color: COLORS.onPrimary || '#FFF' }]}>Save</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         </Modal>
+
+        {/* ── NEW: Wake-up check-in modal (quality + mood) ───────────────── */}
+        <Modal
+          visible={showWakeCheckIn}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowWakeCheckIn(false)}
+        >
+          <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
+            <View style={[styles.modalContent, { backgroundColor: COLORS.card }]}>
+              <Text style={[styles.modalTitle, { color: COLORS.textPrimary }]}>Good morning! ☀️</Text>
+              <Text style={[styles.modalSubtitle, { color: COLORS.textMuted }]}>
+                How did you sleep?
+              </Text>
+
+              {/* Star rating */}
+              <View style={styles.starRow}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity
+                    key={star}
+                    onPress={() => setSelectedQuality(star)}
+                    activeOpacity={0.7}
+                    style={styles.starTouchable}
+                  >
+                    <Ionicons
+                      name={star <= selectedQuality ? 'star' : 'star-outline'}
+                      size={36}
+                      color={star <= selectedQuality ? '#FBBF24' : COLORS.border}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {selectedQuality > 0 && (
+                <Text style={[styles.qualityPreviewText, { color: getQualityMeta(selectedQuality).color }]}>
+                  {getQualityMeta(selectedQuality).label}
+                </Text>
+              )}
+
+              {/* Mood selector */}
+              <Text style={[styles.modalSubtitle, { color: COLORS.textMuted, marginTop: 20 }]}>
+                How do you feel?
+              </Text>
+              <View style={styles.moodRow}>
+                {MOODS.map((mood) => (
+                  <TouchableOpacity
+                    key={mood.key}
+                    onPress={() => setSelectedMood(mood.key)}
+                    activeOpacity={0.7}
+                    style={[
+                      styles.moodTouchable,
+                      selectedMood === mood.key && {
+                        backgroundColor: COLORS.primaryContainer,
+                        borderRadius: 12,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.moodEmoji}>{mood.emoji}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={[styles.modalButtonRow, { marginTop: 24 }]}>
+                <TouchableOpacity
+                  style={[styles.modalButton, { backgroundColor: COLORS.border }]}
+                  activeOpacity={0.8}
+                  onPress={handleSkipWakeCheckIn}
+                >
+                  <Text style={[FONTS.buttonText, { color: COLORS.textPrimary }]}>Skip</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, { backgroundColor: COLORS.primary }]}
+                  activeOpacity={0.8}
+                  onPress={handleConfirmWakeCheckIn}
+                >
+                  <Text style={[FONTS.buttonText, { color: COLORS.onPrimary || '#FFF' }]}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 100,
-  },
-  sessionCard: {
-    borderRadius: 20,
-    padding: 14,
-    marginBottom: 16,
-  },
-  sessionTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  sessionLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-    color: 'rgba(255,255,255,0.75)',
-  },
-  sessionTitle: {
-    // marginTop: 4,
-    fontSize: 34,
-    fontWeight: '800',
-    lineHeight: 50,
-  },
-  trackingBadge: {
-    borderRadius: 999,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(13,37,58,0.55)',
-  },
-  trackingDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 8,
-  },
-  trackingBadgeText: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  progressRingWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 12,
-  },
-  progressTextWrap: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  progressDuration: {
-    fontSize: 48,
-    fontWeight: '800',
-    lineHeight: 54,
-  },
-  progressCaption: {
-    marginTop: 2,
-    fontSize: 1,
-    fontWeight: '600',
-  },
-  sessionButtonRow: {
-    marginTop: 12,
-    flexDirection: 'row',
-    gap: 12,
-  },
-  primarySessionButton: {
-    flex: 1,
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 10,
-  },
-  primarySessionButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  alarmSessionButton: {
-    width: 74,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.22)',
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sessionMeta: {
-    marginTop: 12,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  alarmCard: {
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 16,
-  },
-  alarmRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  soundRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 14,
-  },
-  soundPill: {
-    flex: 1,
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  metricCard: {
-    flex: 1,
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    elevation: 2,
-  },
-  metricIconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
-  metricMainValue: {
-    fontSize: 40,
-    fontWeight: '800',
-    lineHeight: 44,
-  },
-  metricHeading: {
-    marginTop: 2,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  metricBody: {
-    marginTop: 2,
-    fontSize: 12,
-  },
-  weeklyCard: {
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 16,
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    elevation: 2,
-  },
-  weeklyTitle: {
-    fontSize: 26,
-    fontWeight: '800',
-    marginBottom: 14,
-  },
-  weeklyBarsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  weeklyBarItem: {
-    width: '12.5%',
-    alignItems: 'center',
-  },
-  weeklyBarSegment: {
-    width: '90%',
-    borderRadius: 2,
-    marginBottom: 4,
-  },
-  weeklyBarLabel: {
-    marginTop: 8,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  insightCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 16,
-  },
-  insightHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-  },
-  insightTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-  },
-  insightText: {
-    fontSize: 14,
-    lineHeight: 24,
-  },
-  playButton: {
-    flexDirection: 'row',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    borderRadius: 20,
-    padding: 24,
-    width: '85%',
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    marginBottom: 20,
-  },
-  sliderContainer: {
-    marginBottom: 24,
-  },
-  slider: {
-    width: '100%',
-    height: 40,
-    marginVertical: 12,
-  },
-  sliderLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  modalButtonRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  modalButton: {
-    flex: 1,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  container: { flex: 1 },
+  content: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 100 },
+
+  // Session card
+  sessionCard: { borderRadius: 20, padding: 16, marginBottom: 16 },
+  sessionTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  sessionLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 1, color: 'rgba(255,255,255,0.75)' },
+  sessionTitle: { fontSize: 30, fontWeight: '800', lineHeight: 40 },
+  trackingBadge: { borderRadius: 999, paddingVertical: 8, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.25)' },
+  trackingDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
+  trackingBadgeText: { fontSize: 14, fontWeight: '700' },
+  progressRingWrap: { alignItems: 'center', justifyContent: 'center', marginVertical: 16 },
+  progressTextWrap: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+  progressDuration: { fontSize: 32, fontWeight: '800', lineHeight: 38, textAlign: 'center' },
+  progressCaption: { marginTop: 4, fontSize: 13, fontWeight: '600', textAlign: 'center', letterSpacing: 0.5 },
+  sessionButtonRow: { marginTop: 12, flexDirection: 'row', gap: 12 },
+  primarySessionButton: { flex: 1, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10 },
+  primarySessionButtonText: { fontSize: 16, fontWeight: '700' },
+  sessionMeta: { marginTop: 16, fontSize: 13, fontWeight: '600', textAlign: 'center' },
+
+  // Goal / metric card (single, used for the goal tile)
+  metricCard: { borderRadius: 16, paddingHorizontal: 14, paddingVertical: 14, shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  metricIconBox: { width: 48, height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
+  metricMainValue: { fontSize: 34, fontWeight: '800', lineHeight: 40 },
+  metricHeading: { marginTop: 4, fontSize: 16, fontWeight: '700' },
+  metricBody: { marginTop: 4, fontSize: 12 },
+
+  // This week summary card
+  weekCard: { borderRadius: 16, padding: 16 },
+  weekTitle: { fontSize: 16, fontWeight: '800', marginBottom: 12 },
+  weekEmpty: { fontSize: 13, lineHeight: 20 },
+  weekStatsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  weekStat: { flex: 1, alignItems: 'center' },
+  weekStatValue: { fontSize: 22, fontWeight: '800' },
+  weekStatLabel: { fontSize: 11, marginTop: 4, fontWeight: '600' },
+  weekStatDivider: { width: 1, height: 32, backgroundColor: 'rgba(150,150,150,0.2)' },
+
+  // Advanced (premium) teaser card
+  advancedCard: { borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center' },
+
+  // Sleep history
+  historyTitle: { fontSize: 18, fontWeight: '800', marginTop: 20, marginBottom: 10 },
+  historyRow: { borderRadius: 14, padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  historyLeft: {},
+  historyDate: { fontSize: 15, fontWeight: '700' },
+  historyDuration: { fontSize: 12, marginTop: 2 },
+  historyRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  historyMoodEmoji: { fontSize: 22 },
+  qualityBadge: { borderRadius: 999, paddingVertical: 5, paddingHorizontal: 10 },
+  qualityBadgeText: { fontSize: 12, fontWeight: '700' },
+
+  // Modals (shared)
+  modalOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  modalContent: { borderRadius: 20, padding: 24, width: '88%', shadowOpacity: 0.25, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
+  modalTitle: { fontSize: 22, fontWeight: '800', marginBottom: 6 },
+  modalSubtitle: { fontSize: 14, fontWeight: '600' },
+  sliderContainer: { marginBottom: 24, marginTop: 16 },
+  slider: { width: '100%', height: 40, marginVertical: 12 },
+  sliderLabels: { flexDirection: 'row', justifyContent: 'space-between' },
+  modalButtonRow: { flexDirection: 'row', gap: 12 },
+  modalButton: { flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center', justifyContent: 'center' },
+
+  // Wake-up check-in specific
+  starRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 16, gap: 4 },
+  starTouchable: { padding: 4 },
+  qualityPreviewText: { textAlign: 'center', fontSize: 14, fontWeight: '800', marginTop: 8 },
+  moodRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
+  moodTouchable: { padding: 8, alignItems: 'center', justifyContent: 'center', minWidth: 44 },
+  moodEmoji: { fontSize: 28 },
 });

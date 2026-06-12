@@ -29,7 +29,8 @@ export default function WaterScreen() {
   const todaysDrinks = useHealthStore((state) => state.todaysDrinks);
   const getTotalWaterIntake = useHealthStore((state) => state.getTotalWaterIntake);
   const addWaterMl = useHealthStore((state) => state.addWaterMl);
-  const setWaterGoalMl = useHealthStore((state) => state.setWaterGoalMl);
+  const isWaterReminderEnabled = useHealthStore((state) => state.isWaterReminderEnabled);
+  const toggleWaterReminder = useHealthStore((state) => state.toggleWaterReminder);
 
   const totalIntake = getTotalWaterIntake();
   const normalizedGoal = waterGoal && waterGoal > 0 ? waterGoal : 1;
@@ -54,7 +55,6 @@ export default function WaterScreen() {
   const refreshDailyCelebrationState = useHealthStore((state) => state.refreshDailyCelebrationState);
   const checkAndHandleDailyReset = useHealthStore((state) => state.checkAndHandleDailyReset);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [remindersEnabled, setRemindersEnabled] = useState(true);
 
   useEffect(() => {
     checkAndHandleDailyReset();
@@ -164,8 +164,8 @@ export default function WaterScreen() {
             <Text style={[styles.reminderSubtitle, FONTS.cardText, { color: COLORS.textMuted }]}>Every 2 hours</Text>
           </View>
           <Switch
-            value={remindersEnabled}
-            onValueChange={setRemindersEnabled}
+            value={Boolean(isWaterReminderEnabled)}
+            onValueChange={toggleWaterReminder}
             trackColor={{ false: isDark ? '#334155' : '#E2E8F0', true: '#059669' }}
             thumbColor={'#FFFFFF'}
             ios_backgroundColor={isDark ? '#334155' : '#E2E8F0'}
@@ -174,7 +174,7 @@ export default function WaterScreen() {
 
         {/* History Section */}
         <View style={styles.historyHeadingRow}>
-          <Text style={[styles.sectionTitle, FONTS.sectionHeading, { color: COLORS.textPrimary, marginBottom: 0 }]}>Today's History</Text>
+          <Text style={[styles.sectionTitle, FONTS.sectionHeading, { color: COLORS.textPrimary, marginBottom: 0 }]}>Today&apos;s History</Text>
           <TouchableOpacity>
             <Text style={[styles.historyHeaderLabel, { color: '#059669' }]}>View All</Text>
           </TouchableOpacity>

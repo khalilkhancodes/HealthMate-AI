@@ -1,14 +1,14 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMemo, useState } from 'react';
 import {
-    Alert,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import { useHealthStore } from '../store/useHealthStore';
@@ -17,20 +17,14 @@ import { useTheme } from '../theme/theme';
 const MAX_BMI_DISPLAY = 40;
 
 function getBMICategory(bmi) {
-  if (bmi < 18.5) {
-    return 'Underweight';
-  }
-  if (bmi < 25) {
-    return 'Normal';
-  }
-  if (bmi < 30) {
-    return 'Overweight';
-  }
+  if (bmi < 18.5) return 'Underweight';
+  if (bmi < 25) return 'Normal';
+  if (bmi < 30) return 'Overweight';
   return 'Obese';
 }
 
 export default function BMIScreen() {
-  const { COLORS, FONTS, isDark } = useTheme();
+  const { COLORS, FONTS, SHADOWS } = useTheme();
 
   const [system, setSystem] = useState('metric');
   const [gender, setGender] = useState('male');
@@ -47,10 +41,7 @@ export default function BMIScreen() {
   const setBMI = useHealthStore((state) => state.setBMI);
 
   const markerLeft = useMemo(() => {
-    if (resultBMI === null) {
-      return '0%';
-    }
-
+    if (resultBMI === null) return '0%';
     const clamped = Math.max(0, Math.min(resultBMI, MAX_BMI_DISPLAY));
     return `${(clamped / MAX_BMI_DISPLAY) * 100}%`;
   }, [resultBMI]);
@@ -121,128 +112,79 @@ export default function BMIScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}> 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View
-          style={[
-            styles.card,
-            {
-              backgroundColor: COLORS.card,
-              shadowColor: isDark ? COLORS.background : '#000000',
-            },
-          ]}
-        >
-          <Text style={[styles.sectionTitle, FONTS.sectionHeading]}>Unit System</Text>
-          <View style={[styles.toggleRow, { backgroundColor: isDark ? '#2A2A2A' : COLORS.inputField }]}>
+        <View style={[styles.card, { backgroundColor: COLORS.card }, SHADOWS.small]}>
+          <Text style={[FONTS.sectionHeading, { color: COLORS.textPrimary, marginBottom: 12 }]}>Unit System</Text>
+          <View style={[styles.toggleRow, { backgroundColor: COLORS.surface }]}>
             <TouchableOpacity
               style={[
                 styles.toggleBtn,
-                system === 'metric' && styles.toggleBtnActive,
                 system === 'metric' && { backgroundColor: COLORS.card },
+                system === 'metric' && SHADOWS.small
               ]}
               onPress={() => setSystem('metric')}
               activeOpacity={0.85}
             >
-              <Text
-                style={[
-                  styles.toggleText,
-                  { color: COLORS.textMuted },
-                  system === 'metric' && styles.toggleTextActive,
-                  system === 'metric' && { color: COLORS.textPrimary },
-                ]}
-              >
+              <Text style={[FONTS.subheading, { color: system === 'metric' ? COLORS.textPrimary : COLORS.textMuted }]}>
                 Metric
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
                 styles.toggleBtn,
-                system === 'imperial' && styles.toggleBtnActive,
                 system === 'imperial' && { backgroundColor: COLORS.card },
+                system === 'imperial' && SHADOWS.small
               ]}
               onPress={() => setSystem('imperial')}
               activeOpacity={0.85}
             >
-              <Text
-                style={[
-                  styles.toggleText,
-                  { color: COLORS.textMuted },
-                  system === 'imperial' && styles.toggleTextActive,
-                  system === 'imperial' && { color: COLORS.textMain },
-                ]}
-              >
+              <Text style={[FONTS.subheading, { color: system === 'imperial' ? COLORS.textPrimary : COLORS.textMuted }]}>
                 Imperial
               </Text>
             </TouchableOpacity>
           </View>
 
-          <Text style={[styles.sectionTitle, FONTS.sectionHeading]}>Gender</Text>
+          <Text style={[FONTS.sectionHeading, { color: COLORS.textPrimary, marginBottom: 12 }]}>Gender</Text>
           <View style={styles.genderRow}>
             <TouchableOpacity
               style={[
                 styles.genderCard,
-                { backgroundColor: isDark ? '#2A2A2A' : '#EEF2F7' },
-                gender === 'male' && styles.genderCardActive,
-                gender === 'male' && {
-                  backgroundColor: isDark ? '#1D2C3A' : '#DCEBFF',
-                  borderColor: isDark ? '#2D4D6A' : '#B3D4FF',
-                },
+                { backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1 },
+                gender === 'male' && { backgroundColor: COLORS.primaryContainer, borderColor: COLORS.primary }
               ]}
               onPress={() => setGender('male')}
               activeOpacity={0.85}
             >
-              <View style={[styles.genderIconWrap, { backgroundColor: gender === 'male' ? (isDark ? '#21415D' : '#CFE3FF') : (isDark ? '#3A3A3A' : '#E2E8F0') }]}>
-                <Ionicons name="male" size={22} color={gender === 'male' ? COLORS.primary : COLORS.textMuted} />
+              <View style={[styles.genderIconWrap, { backgroundColor: gender === 'male' ? COLORS.card : COLORS.border }]}>
+                <Ionicons name="male" size={24} color={gender === 'male' ? COLORS.primary : COLORS.textMuted} />
               </View>
-              <Text
-                style={[
-                  styles.genderText,
-                  { color: COLORS.textMuted },
-                  gender === 'male' && styles.genderTextActive,
-                  gender === 'male' && { color: COLORS.primary },
-                ]}
-              >
+              <Text style={[FONTS.subheading, { color: gender === 'male' ? COLORS.primary : COLORS.textMuted }]}>
                 Male
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
                 styles.genderCard,
-                { backgroundColor: isDark ? '#2A2A2A' : '#EEF2F7' },
-                gender === 'female' && styles.genderCardActive,
-                gender === 'female' && {
-                  backgroundColor: isDark ? '#1D2C3A' : '#DCEBFF',
-                  borderColor: isDark ? '#2D4D6A' : '#B3D4FF',
-                },
+                { backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1 },
+                gender === 'female' && { backgroundColor: COLORS.primaryContainer, borderColor: COLORS.primary }
               ]}
               onPress={() => setGender('female')}
               activeOpacity={0.85}
             >
-              <View style={[styles.genderIconWrap, { backgroundColor: gender === 'female' ? (isDark ? '#4A2A4A' : '#FCE7F3') : (isDark ? '#3A3A3A' : '#E2E8F0') }]}>
-                <Ionicons name="female" size={22} color={gender === 'female' ? COLORS.primary : COLORS.textMuted} />
+              <View style={[styles.genderIconWrap, { backgroundColor: gender === 'female' ? COLORS.card : COLORS.border }]}>
+                <Ionicons name="female" size={24} color={gender === 'female' ? COLORS.primary : COLORS.textMuted} />
               </View>
-              <Text
-                style={[
-                  styles.genderText,
-                  { color: COLORS.textMuted },
-                  gender === 'female' && styles.genderTextActive,
-                  gender === 'female' && { color: COLORS.primary },
-                ]}
-              >
+              <Text style={[FONTS.subheading, { color: gender === 'female' ? COLORS.primary : COLORS.textMuted }]}>
                 Female
               </Text>
             </TouchableOpacity>
           </View>
 
-          <Text style={[styles.inputLabel, FONTS.bodyText, { color: COLORS.textMuted }]}>Age</Text>
+          <Text style={[FONTS.bodyText, { color: COLORS.textMuted, marginBottom: 8, fontWeight: '600' }]}>Age</Text>
           <TextInput
             style={[
               styles.input,
-              {
-                backgroundColor: isDark ? '#2A2A2A' : COLORS.inputField,
-                borderColor: 'transparent',
-                color: COLORS.textMain,
-              },
-              showErrors && !age?.trim() && styles.inputError,
-              showErrors && !age?.trim() && { borderColor: '#EF4444', backgroundColor: '#cbd8e7ff' },
+              { backgroundColor: COLORS.inputBackground, color: COLORS.textPrimary, borderColor: COLORS.border },
+              showErrors && !age?.trim() && { borderColor: COLORS.error, backgroundColor: COLORS.error + '1A' },
             ]}
             placeholder="Enter age"
             placeholderTextColor={COLORS.textMuted}
@@ -251,18 +193,15 @@ export default function BMIScreen() {
             onChangeText={setAge}
           />
 
-          <Text style={[styles.inputLabel, FONTS.bodyText, { color: COLORS.textMuted }]}>Height {system === 'metric' ? '(cm)' : '(ft / in)'}</Text>
+          <Text style={[FONTS.bodyText, { color: COLORS.textMuted, marginBottom: 8, fontWeight: '600' }]}>
+            Height {system === 'metric' ? '(cm)' : '(ft / in)'}
+          </Text>
           {system === 'metric' ? (
             <TextInput
               style={[
                 styles.input,
-                {
-                  backgroundColor: isDark ? '#2A2A2A' : COLORS.inputField,
-                  borderColor: 'transparent',
-                  color: COLORS.textMain,
-                },
-                showErrors && !heightCm?.trim() && styles.inputError,
-                showErrors && !heightCm?.trim() && { borderColor: '#EF4444', backgroundColor: '#cbd8e7ff' },
+                { backgroundColor: COLORS.inputBackground, color: COLORS.textPrimary, borderColor: COLORS.border },
+                showErrors && !heightCm?.trim() && { borderColor: COLORS.error, backgroundColor: COLORS.error + '1A' },
               ]}
               placeholder="Height in cm"
               placeholderTextColor={COLORS.textMuted}
@@ -276,16 +215,8 @@ export default function BMIScreen() {
                 style={[
                   styles.input,
                   styles.halfInput,
-                  {
-                    backgroundColor: isDark ? '#2A2A2A' : COLORS.inputField,
-                    borderColor: 'transparent',
-                    color: COLORS.textMain,
-                  },
-                  showErrors && !heightFeet?.trim() && !heightInches?.trim() && styles.inputError,
-                  showErrors && !heightFeet?.trim() && !heightInches?.trim() && {
-                    borderColor: '#EF4444',
-                    backgroundColor: '#cbd8e7ff',
-                  },
+                  { backgroundColor: COLORS.inputBackground, color: COLORS.textPrimary, borderColor: COLORS.border },
+                  showErrors && !heightFeet?.trim() && !heightInches?.trim() && { borderColor: COLORS.error, backgroundColor: COLORS.error + '1A' },
                 ]}
                 placeholder="Feet"
                 placeholderTextColor={COLORS.textMuted}
@@ -297,16 +228,8 @@ export default function BMIScreen() {
                 style={[
                   styles.input,
                   styles.halfInput,
-                  {
-                    backgroundColor: isDark ? '#2A2A2A' : COLORS.inputField,
-                    borderColor: 'transparent',
-                    color: COLORS.textMain,
-                  },
-                  showErrors && !heightFeet?.trim() && !heightInches?.trim() && styles.inputError,
-                  showErrors && !heightFeet?.trim() && !heightInches?.trim() && {
-                    borderColor: '#EF4444',
-                    backgroundColor: COLORS.inputField,
-                  },
+                  { backgroundColor: COLORS.inputBackground, color: COLORS.textPrimary, borderColor: COLORS.border },
+                  showErrors && !heightFeet?.trim() && !heightInches?.trim() && { borderColor: COLORS.error, backgroundColor: COLORS.error + '1A' },
                 ]}
                 placeholder="Inches"
                 placeholderTextColor={COLORS.textMuted}
@@ -317,17 +240,14 @@ export default function BMIScreen() {
             </View>
           )}
 
-          <Text style={[styles.inputLabel, FONTS.bodyText, { color: COLORS.textMuted }]}>Weight {system === 'metric' ? '(kg)' : '(lbs)'}</Text>
+          <Text style={[FONTS.bodyText, { color: COLORS.textMuted, marginBottom: 8, fontWeight: '600' }]}>
+            Weight {system === 'metric' ? '(kg)' : '(lbs)'}
+          </Text>
           <TextInput
             style={[
               styles.input,
-              {
-                backgroundColor: isDark ? '#2A2A2A' : COLORS.inputField,
-                borderColor: 'transparent',
-                color: COLORS.textMain,
-              },
-              showErrors && !weightInput?.trim() && styles.inputError,
-              showErrors && !weightInput?.trim() && { borderColor: '#EF4444', backgroundColor: '#cbd8e7ff' },
+              { backgroundColor: COLORS.inputBackground, color: COLORS.textPrimary, borderColor: COLORS.border },
+              showErrors && !weightInput?.trim() && { borderColor: COLORS.error, backgroundColor: COLORS.error + '1A' },
             ]}
             placeholder={system === 'metric' ? 'Weight in kg' : 'Weight in lbs'}
             placeholderTextColor={COLORS.textMuted}
@@ -337,43 +257,35 @@ export default function BMIScreen() {
           />
 
           <TouchableOpacity
-            style={[styles.calculateBtn, { backgroundColor: COLORS.button }]}
+            style={[styles.calculateBtn, { backgroundColor: COLORS.primary }]}
             onPress={handleCalculate}
             activeOpacity={0.9}
           >
-            <Text style={[styles.calculateBtnText, FONTS.buttonText, { color: '#FFFFFF' }]}>Calculate</Text>
+            <Text style={[FONTS.buttonText, { color: COLORS.onPrimary }]}>Calculate</Text>
           </TouchableOpacity>
         </View>
 
         {resultBMI !== null && (
-          <View
-            style={[
-              styles.resultCard,
-              {
-                backgroundColor: COLORS.card,
-                shadowColor: isDark ? COLORS.background : '#000000',
-              },
-            ]}
-          >
-            <Text style={[styles.resultTitle, FONTS.subheading]}>Your BMI</Text>
-            <Text style={[styles.bmiValue, FONTS.bigNumbers]}>{resultBMI.toFixed(1)}</Text>
-            <Text style={[styles.bmiCategory, FONTS.sectionHeading, { color: COLORS.primary }]}>{category}</Text>
+          <View style={[styles.resultCard, { backgroundColor: COLORS.card }, SHADOWS.small]}>
+            <Text style={[FONTS.subheading, { color: COLORS.textSecondary }]}>Your BMI</Text>
+            <Text style={[FONTS.bigNumbers, { color: COLORS.textPrimary, marginTop: 4 }]}>{resultBMI.toFixed(1)}</Text>
+            <Text style={[FONTS.sectionHeading, { color: COLORS.primary, marginBottom: 16 }]}>{category}</Text>
 
             <View style={styles.chartWrap}>
               <View style={[styles.marker, { left: markerLeft }]}> 
-                <Text style={[styles.markerText, { color: COLORS.textMain }]}>▼</Text>
+                <Text style={{ color: COLORS.textPrimary, fontSize: 16 }}>▼</Text>
               </View>
               <View style={styles.bar}>
-                <View style={[styles.segment, { backgroundColor: '#3B82F6' }]} />
-                <View style={[styles.segment, { backgroundColor: '#22C55E' }]} />
-                <View style={[styles.segment, { backgroundColor: '#F59E0B' }]} />
-                <View style={[styles.segment, { backgroundColor: '#EF4444' }]} />
+                <View style={[styles.segment, { backgroundColor: COLORS.info }]} />
+                <View style={[styles.segment, { backgroundColor: COLORS.success }]} />
+                <View style={[styles.segment, { backgroundColor: COLORS.warning }]} />
+                <View style={[styles.segment, { backgroundColor: COLORS.error }]} />
               </View>
               <View style={styles.legendRow}>
-                <Text style={[styles.legendText, { color: COLORS.textMuted }]}>{'<18.5'}</Text>
-                <Text style={[styles.legendText, { color: COLORS.textMuted }]}>{'18.5-24.9'}</Text>
-                <Text style={[styles.legendText, { color: COLORS.textMuted }]}>{'25-29.9'}</Text>
-                <Text style={[styles.legendText, { color: COLORS.textMuted }]}>{'30+'}</Text>
+                <Text style={[FONTS.label, { color: COLORS.textMuted }]}>{'<18.5'}</Text>
+                <Text style={[FONTS.label, { color: COLORS.textMuted }]}>{'18.5-24.9'}</Text>
+                <Text style={[FONTS.label, { color: COLORS.textMuted }]}>{'25-29.9'}</Text>
+                <Text style={[FONTS.label, { color: COLORS.textMuted }]}>{'30+'}</Text>
               </View>
             </View>
           </View>
@@ -388,86 +300,53 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 18,
-    paddingTop: 8,
+    paddingHorizontal: 20,
+    paddingTop: 16,
     paddingBottom: 100,
   },
   card: {
-    borderRadius: 20,
-    padding: 18,
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    elevation: 4,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 12,
+    borderRadius: 24,
+    padding: 24,
   },
   toggleRow: {
     flexDirection: 'row',
-    borderRadius: 14,
-    padding: 4,
-    marginBottom: 18,
+    borderRadius: 16,
+    padding: 6,
+    marginBottom: 24,
   },
   toggleBtn: {
     flex: 1,
-    borderRadius: 10,
-    paddingVertical: 10,
+    borderRadius: 12,
+    paddingVertical: 12,
     alignItems: 'center',
-  },
-  toggleBtnActive: {
-  },
-  toggleText: {
-    fontWeight: '600',
-  },
-  toggleTextActive: {
   },
   genderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 18,
+    marginBottom: 24,
   },
   genderCard: {
     width: '48%',
-    borderRadius: 14,
-    paddingVertical: 16,
+    borderRadius: 20,
+    paddingVertical: 20,
     paddingHorizontal: 12,
     alignItems: 'center',
   },
-  genderCardActive: {
-    borderWidth: 1,
-  },
   genderIconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
-  },
-  genderText: {
-    fontWeight: '600',
-  },
-  genderTextActive: {
-    fontWeight: '700',
-  },
-  inputLabel: {
-    fontSize: 14,
-    marginBottom: 8,
-    fontWeight: '600',
+    marginBottom: 12,
   },
   input: {
     borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     fontSize: 16,
-    marginBottom: 14,
+    marginBottom: 20,
   },
   dualInputRow: {
     flexDirection: 'row',
@@ -476,56 +355,29 @@ const styles = StyleSheet.create({
   halfInput: {
     width: '48%',
   },
-  inputError: {
-  },
   calculateBtn: {
-    borderRadius: 14,
-    paddingVertical: 14,
+    borderRadius: 16,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 6,
-  },
-  calculateBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
+    marginTop: 8,
   },
   resultCard: {
-    borderRadius: 20,
-    padding: 18,
-    marginTop: 16,
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    elevation: 4,
-  },
-  bmiValue: {
-    fontSize: 44,
-    fontWeight: '800',
-    marginTop: 2,
-  },
-  bmiCategory: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 14,
+    borderRadius: 24,
+    padding: 24,
+    marginTop: 20,
   },
   chartWrap: {
-    marginTop: 6,
     position: 'relative',
-    paddingTop: 16,
+    paddingTop: 20,
   },
   marker: {
     position: 'absolute',
-    top: -2,
-    marginLeft: -7,
+    top: 0,
+    marginLeft: -8,
     zIndex: 1,
   },
-  markerText: {
-    fontSize: 14,
-  },
   bar: {
-    height: 14,
+    height: 12,
     borderRadius: 999,
     overflow: 'hidden',
     flexDirection: 'row',
@@ -534,11 +386,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   legendRow: {
-    marginTop: 8,
+    marginTop: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  legendText: {
-    fontSize: 11,
   },
 });

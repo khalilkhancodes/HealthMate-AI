@@ -7,15 +7,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/theme';
 
 // Screens
+import ToolHeader from '../components/ToolHeader';
 import AIChatScreen from '../screens/AIChatScreen';
-import AnalyticsScreen from '../screens/AnalyticsScreen';
+import AnalyticsScreenPremium from '../screens/AnalyticsScreenPremium';
+import BMIScreen from '../screens/BMIScreen';
 import HelpScreen from '../screens/HelpScreen';
 import HomeScreen from '../screens/HomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import PaywallScreen from '../screens/PaywallScreen.js';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import SleepScreen from '../screens/SleepScreen';
+import StepScreen from '../screens/StepScreen';
 import StreakDetailsScreen from '../screens/StreakDetailsScreen';
+import WaterScreen from '../screens/WaterScreen';
 import ToolsNavigator from './ToolsNavigator';
 
 const Tab = createMaterialTopTabNavigator();
@@ -26,6 +31,13 @@ const iconMap = {
   Tools: 'construct',
   Analytics: 'analytics',
   Profile: 'person',
+};
+
+const TOOL_TITLES = {
+  WaterScreen: 'Water Tracker',
+  SleepScreen: 'Sleep Log',
+  BMIScreen: 'BMI Calculator',
+  StepScreen: 'Step Counter',
 };
 
 // 1. The Custom Floating Tab Bar Component
@@ -116,7 +128,7 @@ function TabNavigator() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Tools" component={ToolsNavigator} />
-      <Tab.Screen name="Analytics" component={AnalyticsScreen} />
+      <Tab.Screen name="Analytics" component={AnalyticsScreenPremium} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
@@ -124,6 +136,12 @@ function TabNavigator() {
 
 // 3. The Root Stack Navigator
 export default function AppNavigator() {
+  const { COLORS } = useTheme();
+
+  const renderToolHeader = (route, navigation) => (
+    <ToolHeader navigation={navigation} title={TOOL_TITLES[route.name] || route.name} />
+  );
+
   return (
     <Stack.Navigator initialRouteName="MainTabs" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTabs" component={TabNavigator} />
@@ -157,6 +175,60 @@ export default function AppNavigator() {
         component={StreakDetailsScreen}
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name="ProfileScreen"
+        component={ProfileScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AnalyticsScreenPremium"
+        component={AnalyticsScreenPremium}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="StepScreen"
+        component={StepScreen}
+        options={({ navigation, route }) => ({
+          headerShown: true,
+          header: () => renderToolHeader(route, navigation),
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: COLORS.background },
+          contentStyle: { backgroundColor: COLORS.background },
+        })}
+      />
+      <Stack.Screen
+        name="BMIScreen"
+        component={BMIScreen}
+        options={({ navigation, route }) => ({
+          headerShown: true,
+          header: () => renderToolHeader(route, navigation),
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: COLORS.background },
+          contentStyle: { backgroundColor: COLORS.background },
+        })}
+      />
+      <Stack.Screen
+        name="SleepScreen"
+        component={SleepScreen}
+        options={({ navigation, route }) => ({
+          headerShown: true,
+          header: () => renderToolHeader(route, navigation),
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: COLORS.background },
+          contentStyle: { backgroundColor: COLORS.background },
+        })}
+      />      
+      <Stack.Screen
+        name="WaterScreen"
+        component={WaterScreen}
+        options={({ navigation, route }) => ({
+          headerShown: true,
+          header: () => renderToolHeader(route, navigation),
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: COLORS.background },
+          contentStyle: { backgroundColor: COLORS.background },
+        })}
+      />      
       <Stack.Screen
         name="HelpScreen"
         component={HelpScreen}

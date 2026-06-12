@@ -1,40 +1,41 @@
 {
   "expo": {
-    "name": "healthmate-ai-temp",
+    "name": "HealthMate AI",
     "slug": "healthmate-ai-temp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/logo.png",
     "scheme": "healthmateaitemp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.healthmateaitemp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
+      "backgroundColor": "#0B1326",
       "permissions": [
         "android.permission.ACTIVITY_RECOGNITION"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/logo.png"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.healthmateaitemp"
     },
     "web": {
       "output": "single",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/logo.png"
     },
     "plugins": [
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -44,9 +45,17 @@
         }
       ],
       [
+        "expo-font",
+        {
+          "fonts": [
+            "node_modules/@expo-google-fonts/inter"
+          ]
+        }
+      ],
+      [
         "expo-notifications",
         {
-          "icon": "./assets/images/icon.png",
+          "icon": "./assets/logo.png",
           "color": "#5BB5EB"
         }
       ],
@@ -58,10 +67,11 @@
           }
         }
       ],
-        "@clerk/expo",
+      "@clerk/expo",
       "@react-native-community/datetimepicker",
       "expo-web-browser",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-font"
     ],
     "extra": {
       "eas": {

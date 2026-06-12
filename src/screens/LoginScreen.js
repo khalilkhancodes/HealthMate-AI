@@ -12,17 +12,27 @@ import {
 import { useSignInWithGoogle } from '@clerk/expo/google';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHealthStore } from '../store/useHealthStore';
-import { useTheme } from '../theme/theme';
+
+const COLORS = {
+  background: '#fdfdfb',
+  surface: '#ffffff',
+  primary: '#447055',
+  onPrimary: '#ffffff',
+  textPrimary: '#1f2937',
+  textMuted: '#6b7280',
+  border: '#e5e7eb',
+  waterbg: '#eef4ff',
+};
+
 
 export default function LoginScreen({ navigation }) {
-  useWarmUpBrowser(); // Pre-warm the browser for faster Google sign-in on Android
-  const { COLORS, FONTS, isDark } = useTheme();
+  useWarmUpBrowser();
   const setIsGuestMode = useHealthStore((state) => state.setIsGuestMode);
   const { startGoogleAuthenticationFlow } = useSignInWithGoogle();
 
   const handleGoogleSignIn = useCallback(async () => {
     console.log('➡️ Native Google sign-in pressed');
-    
+
     if (typeof startGoogleAuthenticationFlow !== 'function') {
       console.error('startGoogleAuthenticationFlow is missing');
       Alert.alert('Configuration Error', 'Google sign-in is not available.');
@@ -31,16 +41,14 @@ export default function LoginScreen({ navigation }) {
 
     try {
       console.log('Calling native startGoogleAuthenticationFlow...');
-      
-      // The native Android flow does not use redirect URLs
+
       const { createdSessionId, setActive } = await startGoogleAuthenticationFlow();
-      
+
       console.log('Session ID Returned:', createdSessionId);
 
-      // If successful, Credential Manager returns the session ID directly
       if (createdSessionId && setActive) {
         await setActive({ session: createdSessionId });
-        return; 
+        return;
       }
 
       console.warn('Native flow aborted or returned null session.');
@@ -56,52 +64,45 @@ export default function LoginScreen({ navigation }) {
     }
   }, [startGoogleAuthenticationFlow]);
 
-  // Handle Guest Mode
   const handleContinueAsGuest = useCallback(() => {
     setIsGuestMode(true);
-    // Guest mode navigation is handled in App.js by checking isGuestMode state
   }, [setIsGuestMode]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
       <View style={styles.content}>
-        {/* --- BRAND SECTION --- */}
         <View style={styles.brandWrap}>
-          <View style={[styles.logoCircle, { backgroundColor: isDark ? COLORS.surface : COLORS.waterbg }]}>
+          <View style={[styles.logoCircle, { backgroundColor: COLORS.waterbg }]}>
             <Ionicons name="heart" size={34} color={COLORS.primary} />
           </View>
-          <Text style={[styles.welcome, FONTS.mainHeading, { color: COLORS.textPrimary }]}>Welcome to HealthMate AI!</Text>
-          <Text style={[styles.subtitle, FONTS.bodyText, { color: COLORS.textMuted }]}>Your personal AI health companion</Text>
+          <Text style={[styles.welcome, { color: COLORS.textPrimary }]}>Welcome to HealthMate AI!</Text>
+          <Text style={[styles.subtitle, { color: COLORS.textMuted }]}>Your personal AI health companion</Text>
         </View>
 
-        {/* --- GOOGLE OAUTH BUTTON --- */}
         <TouchableOpacity
           style={[styles.googleButton, { backgroundColor: COLORS.primary }]}
           activeOpacity={0.9}
           onPress={handleGoogleSignIn}
         >
           <Ionicons name="logo-google" size={20} color={COLORS.onPrimary} />
-          <Text style={[styles.googleButtonText, FONTS.buttonText, { color: COLORS.onPrimary }]}>Continue with Google</Text>
+          <Text style={[styles.googleButtonText, { color: COLORS.onPrimary }]}>Continue with Google</Text>
         </TouchableOpacity>
 
-        {/* --- DIVIDER --- */}
         <View style={styles.dividerContainer}>
           <View style={[styles.divider, { backgroundColor: COLORS.border }]} />
-          <Text style={[styles.dividerText, FONTS.bodyText, { color: COLORS.textMuted }]}>or</Text>
+          <Text style={[styles.dividerText, { color: COLORS.textMuted }]}>or</Text>
           <View style={[styles.divider, { backgroundColor: COLORS.border }]} />
         </View>
 
-        {/* --- GUEST MODE BUTTON --- */}
         <TouchableOpacity
-          style={[styles.guestButton, { borderColor: COLORS.border, backgroundColor: COLORS.border }]}
+          style={[styles.guestButton, { borderColor: COLORS.border, backgroundColor: COLORS.surface }]}
           activeOpacity={0.8}
           onPress={handleContinueAsGuest}
         >
-          <Text style={[styles.guestButtonText, FONTS.subheading, { color: COLORS.textPrimary }]}>Continue as Guest</Text>
+          <Text style={[styles.guestButtonText, { color: COLORS.textPrimary }]}>Continue as Guest</Text>
         </TouchableOpacity>
 
-        {/* --- FOOTER TEXT --- */}
-        <Text style={[styles.footerText, FONTS.smallText, { color: COLORS.textMuted }]}>
+        <Text style={[styles.footerText, { color: COLORS.textMuted }]}>
           By continuing, you agree to our Terms of Service and Privacy Policy
         </Text>
       </View>

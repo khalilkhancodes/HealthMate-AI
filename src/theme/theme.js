@@ -21,12 +21,14 @@ const LIGHT = {
   sendMsgText: '#FFFFFF',
   
   // Text
+
+    // Text
   textPrimary: '#0F172A',
   textSecondary: '#334155',
   textMuted: '#64748B',
 
   // Brand
-  primary: '#126E56',
+  primary: '#447055',
   onPrimary: '#FFFFFF',
   primaryContainer: '#DDF3EE',
 
@@ -53,8 +55,8 @@ const LIGHT = {
   backdrop: 'rgba(2,6,23,0.45)',
 
   // Legacy aliases used across screens
-  startGradient: 'rgba(92, 131, 183, 1)',
-  endGradient: 'rgba(88, 145, 124, 1)',
+  startGradient: '#488b55ff',
+  endGradient: '#488b55ff',
   bigNumbers: '#FFFFFF',
   water: '#4AA9FF',
   sleep: '#FF9A4D',
@@ -75,14 +77,14 @@ const LIGHT = {
 
 const DARK = {
   // Surfaces
-  background: '#111314',
-  surface: '#0B1220',
-  card: '#222627',
+  background: '#0B1210',
+  surface: '#111A17',
+  card: '#17211D',
 
-  aiBackground: '#1f1f1e',
-  aiSendMsg: '#090909ff',
-  aiReceiveMsg: '#2a2a2aff',
-  aiMsgInput: '#2c2c2a',
+  aiBackground: '#0B1210',
+  aiSendMsg: '#126E56',
+  aiReceiveMsg: '#1E2A26',
+  aiMsgInput: '#17211D',
   sendMsgText: '#FFFFFF',
 
   // Text
@@ -91,51 +93,57 @@ const DARK = {
   textMuted: '#94A3B8',
 
   // Brand
-  primary: '#2FBF9B',
-  onPrimary: '#05231A',
-  primaryContainer: '#05372C',
+  primary: '#5FA36F',
+  onPrimary: '#FFFFFF',
+  primaryContainer: '#1C3327',
 
   secondary: '#94A3B8',
-  onSecondary: '#0B1220',
-  secondaryContainer: '#0E3A52',
+  onSecondary: '#0F172A',
+  secondaryContainer: '#1B2734',
 
-  tertiary: '#FFB784',
-  onTertiary: '#2D1700',
-  tertiaryContainer: '#44250D',
+  tertiary: '#FFAA5C',
+  onTertiary: '#2B1605',
+  tertiaryContainer: '#3A2410',
 
   // Status
-  success: '#4ADE80',
+  success: '#22C55E',
   error: '#F87171',
   warning: '#FBBF24',
   info: '#38BDF8',
 
   // UI
-  border: '#233240',
-  inputBackground: '#0D1B2A',
-  overlay: 'rgba(2,6,23,0.6)',
+  border: '#22302B',
+  inputBackground: '#1A2521',
+  overlay: 'rgba(255,255,255,0.04)',
 
   // Helpers
-  backdrop: 'rgba(0,0,0,0.6)',
+  backdrop: 'rgba(0,0,0,0.65)',
 
   // Legacy aliases used across screens
-  startGradient: 'rgba(92, 131, 183, 1)',
-  endGradient: 'rgba(88, 145, 124, 1)',
+  startGradient: '#488b55ff',
+  endGradient: '#488b55ff',
+
   bigNumbers: '#FFFFFF',
-  water: '#58B7FF',
-  sleep: '#FFB26B',
+
+  water: '#5AB8FF',
+  sleep: '#FFB067',
   steps: '#4ADE80',
   heart: '#FB7185',
+
   BMI: '#F8FAFC',
-  BMR: '#F59E0B',
-  sleepbg: '#29221A',
-  waterbg: '#0E2534',
-  stepsbg: '#17301E',
-  BMIbg: '#1B2430',
+  BMR: '#FDBA74',
+
+  sleepbg: '#1B2430',
+  waterbg: '#162433',
+  stepsbg: '#13261C',
+  BMIbg: '#1B222C',
+
   purple: '#A78BFA',
   orange: '#FB923C',
-  calories: '#F59E0B',
-  button: '#0F1720',
-  inputField: '#162235',
+  calories: '#F97316',
+
+  button: '#1F2A25',
+  inputField: '#1A2521',
 };
 
 const FONTS = {

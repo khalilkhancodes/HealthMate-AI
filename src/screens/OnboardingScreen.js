@@ -10,24 +10,24 @@ const slides = [
     key: 'track',
     badge: 'Precision Tracking',
     title: 'Track every health metric in one place',
-    text: 'Log sleep, steps, water, weight, and daily habits with a clean dashboard built for consistency.',
-    image: require('../../assets/Onboarding Screen/Precision_Tracking..png'),
+    // text: 'Log sleep, steps, water, weight, and daily habits with a clean dashboard built for consistency.',
+    image: require('../../assets/OnboardingScreen/stepCounter.png'),
     feature: 'Daily progress overview',
   },
   {
     key: 'ai',
     badge: 'AI Assistant',
     title: 'Get AI-powered guidance tailored to you',
-    text: 'Receive smart insights, health summaries, and next-step suggestions based on your routines and goals.',
-    image: require('../../assets/Onboarding Screen/Health.png'),
+    // text: 'Receive smart insights, health summaries, and next-step suggestions based on your routines and goals.',
+    image: require('../../assets/OnboardingScreen/waterIntake.png'),
     feature: 'AI health insights',
   },
   {
     key: 'goals',
     badge: 'Sleep & Recovery',
     title: 'Build better habits with guided sleep tracking',
-    text: 'Stay consistent with reminders, sleep goals, and recovery tracking that helps you feel better every day.',
-    image: require('../../assets/Onboarding Screen/Sleep.png'),
+    // text: 'Stay consistent with reminders, sleep goals, and recovery tracking that helps you feel better every day.',
+    image: require('../../assets/OnboardingScreen/sleepTracker.png'),
     feature: 'Better sleep routines',
   },
 ];
@@ -40,8 +40,8 @@ function SliderButton({ label, variant = 'primary', COLORS, FONTS }) {
       style={[
         styles.button,
         {
-          backgroundColor: isGhost ? COLORS.card : COLORS.primary,
-          borderColor: isGhost ? COLORS.border : COLORS.primary,
+          backgroundColor: isGhost ? COLORS.card : "#447055",
+          borderColor: isGhost ? COLORS.border : "#447055",
         },
       ]}
     >
@@ -49,7 +49,7 @@ function SliderButton({ label, variant = 'primary', COLORS, FONTS }) {
         style={[
           styles.buttonText,
           FONTS.buttonText,
-          { color: isGhost ? COLORS.textSecondary : COLORS.onPrimary },
+          { color: isGhost ? "#ffffff" : "#ffffff" },
         ]}
       >
         {label}
@@ -59,47 +59,24 @@ function SliderButton({ label, variant = 'primary', COLORS, FONTS }) {
 }
 
 export default function OnboardingScreen({ navigation }) {
-  const { COLORS, FONTS, isDark } = useTheme();
+  const { COLORS, FONTS } = useTheme();
 
   const renderItem = ({ item }) => (
-    <View style={[styles.slide, { backgroundColor: COLORS.background }]}> 
-      <View style={styles.backgroundGlow}>
-        <View
-          style={[
-            styles.glowCircle,
-            {
-              backgroundColor: isDark ? 'rgba(47,191,155,0.14)' : 'rgba(18,110,86,0.10)',
-              top: 48,
-              right: -72,
-            },
-          ]}
-        />
-        <View
-          style={[
-            styles.glowCircle,
-            {
-              backgroundColor: isDark ? 'rgba(56,189,248,0.12)' : 'rgba(14,165,233,0.10)',
-              bottom: 20,
-              left: -60,
-            },
-          ]}
-        />
-      </View>
-
-      <View style={[styles.heroCard, { backgroundColor: 'transparent', borderColor: COLORS.border }]}> 
-        <View style={styles.heroTopRow}>
-          <View style={[styles.badge, { backgroundColor: COLORS.primaryContainer }]}> 
+    <View style={[styles.slide, { backgroundColor: "#fdfdfb" }]}> 
+      <View style={styles.heroCard}>
+        {/* <View style={styles.heroTopRow}>
+          <View style={[styles.badge, { backgroundColor: "#000000" }]}> 
             <Ionicons name="sparkles-outline" size={14} color={COLORS.primary} />
             <Text style={[styles.badgeText, { color: COLORS.primary }]}>{item.badge}</Text>
           </View>
-          <View style={[styles.aiPill, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}> 
-            <Ionicons name="analytics-outline" size={14} color={COLORS.textSecondary} />
-            <Text style={[styles.aiPillText, { color: COLORS.textSecondary }]}>AI</Text>
+          <View style={[styles.aiPill, { backgroundColor: "#000000", borderColor: "#e0e0e0" }]}> 
+            <Ionicons name="analytics-outline" size={14} color="#ffffff" />
+            <Text style={[styles.aiPillText, { color: "#ffffff" }]}>AI</Text>
           </View>
-        </View>
+        </View> */}
 
         <LinearGradient
-          colors={isDark ? ['#122331', '#0D1724'] : ['#EAF8F4', '#DDF3EE']}
+          colors={['#EAF8F4', '#DDF3EE']}
           style={styles.imageFrame}
         >
           <View style={styles.imageAccent} />
@@ -107,22 +84,20 @@ export default function OnboardingScreen({ navigation }) {
         </LinearGradient>
 
         <View style={styles.textWrap}>
-          <Text style={[styles.title, FONTS.mainHeading, { color: COLORS.textPrimary }]}>{item.title}</Text>
-          <Text style={[styles.text, FONTS.bodyText, { color: COLORS.textSecondary }]}>{item.text}</Text>
+          <Text style={[styles.title, FONTS.subtitle, { color: "#111810" }]}>{item.title}</Text>
         </View>
 
         <View style={styles.featureRow}>
-          <View style={[styles.featureChip, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}> 
-            <Ionicons name="checkmark-circle-outline" size={15} color={COLORS.success} />
-            <Text style={[styles.featureText, { color: COLORS.textSecondary }]}>{item.feature}</Text>
+          <View style={[styles.featureChip, { borderColor: "#5f5c5cff" }]}> 
+            <Ionicons name="checkmark-circle-outline" size={15} color="#447055" />
+            <Text style={[styles.featureText, { color: "#272424ff" }]}>{item.feature}</Text>
           </View>
-          <View style={[styles.featureChip, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}> 
-            <Ionicons name="shield-checkmark-outline" size={15} color={COLORS.primary} />
-            <Text style={[styles.featureText, { color: COLORS.textSecondary }]}>Private & secure</Text>
+          <View style={[styles.featureChip, { borderColor: "#5f5c5cff" }]}> 
+            <Ionicons name="shield-checkmark-outline" size={15} color="#447055" />
+            <Text style={[styles.featureText, { color: "#272424ff" }]}>Private & secure</Text>
           </View>
         </View>
       </View>
-
     </View>
   );
 
@@ -131,10 +106,10 @@ export default function OnboardingScreen({ navigation }) {
       data={slides}
       renderItem={renderItem}
       bottomButton
-      renderNextButton={() => <SliderButton label="Next" COLORS={COLORS} FONTS={FONTS} />}
-      renderDoneButton={() => <SliderButton label="Get started" COLORS={COLORS} FONTS={FONTS} />}
+      renderNextButton={() => <SliderButton style={[styles.progressButton]} label="Next" COLORS={COLORS} FONTS={FONTS} />}
+      renderDoneButton={() => <SliderButton style={[styles.progressButton]} label="Get started" COLORS={COLORS} FONTS={FONTS} />}
       onDone={() => navigation.replace('LoginScreen')}
-      activeDotStyle={{ backgroundColor: COLORS.primary, width: 10, borderRadius: 999 }}
+      activeDotStyle={{ backgroundColor: "#447055", width: 10, borderRadius: 999 }}
       dotStyle={{ backgroundColor: COLORS.border }}
     />
   );
@@ -163,7 +138,7 @@ const styles = StyleSheet.create({
   badge: {
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 999,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -189,7 +164,7 @@ const styles = StyleSheet.create({
   imageFrame: {
     borderRadius: 16,
     overflow: 'hidden',
-    height: 220,
+    height: 400,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
@@ -216,8 +191,8 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   title: {
-    fontSize: 30,
-    fontWeight: '800',
+    fontSize: 16,
+    fontWeight: '500',
     lineHeight: 36,
     letterSpacing: -0.4,
     textAlign: 'left',
@@ -228,7 +203,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   featureRow: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     flexWrap: 'wrap',
     gap: 10,
     marginTop: 18,
@@ -241,6 +216,7 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     borderRadius: 999,
     borderWidth: 1,
+    alignSelf:"flex-start",
   },
   featureText: {
     fontSize: 13,

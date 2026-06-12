@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import ToolHeader from '../components/ToolHeader';
 import BMIScreen from '../screens/BMIScreen';
 import BMRScreen from '../screens/BMRScreen';
 import SleepScreen from '../screens/SleepScreen';
@@ -10,8 +11,20 @@ import { useTheme } from '../theme/theme';
 
 const Stack = createNativeStackNavigator();
 
+const TOOL_TITLES = {
+  BMIScreen: 'BMI Calculator',
+  BMRScreen: 'BMR Calculator',
+  WaterScreen: 'Water Tracker',
+  SleepScreen: 'Sleep Log',
+  StepScreen: 'Step Counter',
+};
+
 export default function ToolsNavigator() {
   const { COLORS, isDark } = useTheme();
+
+  const renderToolHeader = (route, navigation) => (
+    <ToolHeader navigation={navigation} title={TOOL_TITLES[route.name] || route.name} />
+  );
 
   return (
     <Stack.Navigator
@@ -43,27 +56,57 @@ export default function ToolsNavigator() {
       <Stack.Screen
         name="BMIScreen"
         component={BMIScreen}
-        options={{ title: 'BMI Calculator' }}
+        options={({ navigation, route }) => ({
+          headerShown: true,
+          header: () => renderToolHeader(route, navigation),
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: COLORS.background },
+          contentStyle: { backgroundColor: COLORS.background },
+        })}
       />
       <Stack.Screen
         name="BMRScreen"
         component={BMRScreen}
-        options={{ title: 'BMR Calculator' }}
+        options={({ navigation, route }) => ({
+          headerShown: true,
+          header: () => renderToolHeader(route, navigation),
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: COLORS.background },
+          contentStyle: { backgroundColor: COLORS.background },
+        })}
       />
       <Stack.Screen
         name="WaterScreen"
         component={WaterScreen}
-        options={{ title: 'Water Tracker' }}
+        options={({ navigation, route }) => ({
+          headerShown: true,
+          header: () => renderToolHeader(route, navigation),
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: COLORS.background },
+          contentStyle: { backgroundColor: COLORS.background },
+        })}
       />
       <Stack.Screen
         name="SleepScreen"
         component={SleepScreen}
-        options={{ title: 'Sleep Log' }}
+        options={({ navigation, route }) => ({
+          headerShown: true,
+          header: () => renderToolHeader(route, navigation),
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: COLORS.background },
+          contentStyle: { backgroundColor: COLORS.background },
+        })}
       />
       <Stack.Screen
         name="StepScreen"
         component={StepScreen}
-        options={{ title: 'Step Counter' }}
+        options={({ navigation, route }) => ({
+          headerShown: true,
+          header: () => renderToolHeader(route, navigation),
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: COLORS.background },
+          contentStyle: { backgroundColor: COLORS.background },
+        })}
       />
     </Stack.Navigator>
   );
