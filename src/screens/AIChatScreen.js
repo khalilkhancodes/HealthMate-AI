@@ -1,7 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
+
 import axios from 'axios';
+
 import { useEffect, useRef, useState } from 'react';
+
 import {
+
   ActivityIndicator,
   FlatList,
   Keyboard,
@@ -15,6 +19,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
@@ -38,7 +43,6 @@ export default function AIChatScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef(null);
   const { COLORS, FONTS, isDark } = useTheme();
-
   const {
     isPremiumUser,
     freeAiQuestionsRemaining,
@@ -53,6 +57,9 @@ export default function AIChatScreen({ navigation }) {
 
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState(
+    'Analyzing your health data...'
+  );
 
   const safeTopPadding =
     Platform.OS === 'android'
@@ -60,6 +67,29 @@ export default function AIChatScreen({ navigation }) {
       : insets.top + 10;
 
   // ─── Initial greeting ─────────────────────────────────────────────────────
+
+  const AI_LOADING_STATES = [
+    'Thinking...',
+    'Analyzing your data...',
+    'Reviewing your progress...',
+    'Checking hydration patterns...',
+    'Evaluating sleep quality...',
+    'Assessing activity levels...',
+    'Preparing your response...',
+  ];
+
+  const [dotCount, setDotCount] = useState(1);
+
+  useEffect(() => {
+    if (!isTyping) return;
+
+    const interval = setInterval(() => {
+      setDotCount(prev => (prev % 3) + 1);
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [isTyping]);
+
   useEffect(() => {
     if (aiChatHistory.length === 0) {
       addChatMessage(INITIAL_AI_GREETING);
@@ -67,6 +97,22 @@ export default function AIChatScreen({ navigation }) {
   }, [aiChatHistory.length, addChatMessage]);
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    let interval;
+    if (isTyping) {
+      let index = 0;
+      interval = setInterval(() => {
+        index = (index + 1) % AI_LOADING_STATES.length;
+        setLoadingMessage(AI_LOADING_STATES[index]);
+      }, 1200);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isTyping]);
+
   const buildSystemPrompt = () =>
     `You are HealthMate AI, an expert health coach.
 The user's current stats today:
@@ -76,65 +122,92 @@ The user's current stats today:
 Keep responses under 3 short paragraphs. Be highly encouraging. Use the stats above to give personalized advice.`;
 
   const callNvidiaChat = async (messages) => {
+
     if (!NVIDIA_INVOKE_URL || !NVIDIA_API_KEY) {
+
       throw new Error('Missing API Configuration. Check environment variables.');
+
     }
+
+
 
     const headers = {
+
       Authorization: `Bearer ${NVIDIA_API_KEY}`,
+
       'Content-Type': 'application/json',
+
       Accept: 'application/json',
+
     };
+
+
 
     const payload = {
+
       model: NVIDIA_MODEL,
+
       messages,
+
       max_tokens: 500,
+
       temperature: 0.70,
+
       top_p: 0.90,
+
       stream: false,
+
     };
 
+
+
     try {
+
       const response = await axios.post(NVIDIA_INVOKE_URL, payload, { headers });
+
       return (
+
         response.data?.choices?.[0]?.message?.content ||
+
         'Sorry, I could not generate a response.'
+
       );
+
     } catch (error) {
+
       throw new Error(
+
         error?.response?.data?.message || error?.message || 'NVIDIA API error'
+
       );
+
     }
+
   };
+
+
 
   const handleSend = async () => {
     if (!inputText.trim()) return;
-
     Keyboard.dismiss();
-
     if (!isPremiumUser && freeAiQuestionsRemaining <= 0) {
       navigation.navigate('PaywallScreen');
       return;
     }
-
     if (!isPremiumUser) decrementAiQuestions();
-
     const userMessage = {
       id: Date.now().toString(),
       text: inputText.trim(),
       sender: 'user',
       timestamp: new Date().toISOString(),
     };
-
     addChatMessage(userMessage);
     setInputText('');
     setIsTyping(true);
-
+    setLoadingMessage(AI_LOADING_STATES[0]);
     requestAnimationFrame(() =>
       flatListRef.current?.scrollToEnd({ animated: true })
     );
-
     try {
       const messages = [
         { role: 'system', content: buildSystemPrompt() },
@@ -146,9 +219,7 @@ Keep responses under 3 short paragraphs. Be highly encouraging. Use the stats ab
           })),
         { role: 'user', content: userMessage.text },
       ];
-
       const assistantText = await callNvidiaChat(messages);
-
       addChatMessage({
         id: (Date.now() + 1).toString(),
         text: assistantText,
@@ -172,257 +243,379 @@ Keep responses under 3 short paragraphs. Be highly encouraging. Use the stats ab
   };
 
   // ─── Render message ───────────────────────────────────────────────────────
+
   const renderMessage = ({ item }) => {
+
     const isUser = item.sender === 'user';
 
+
+
     return (
+
       <View
+
         style={[
+
           styles.messageWrapper,
+
           isUser ? styles.messageWrapperUser : styles.messageWrapperAI,
+
         ]}
+
       >
+
         {!isUser && (
+
           <View style={[styles.aiAvatar, { backgroundColor: COLORS.primary }]}>
+
             <Ionicons
+
               name="sparkles"
+
               size={14}
+
               color={COLORS.onPrimary || '#0B1326'}
+
             />
+
           </View>
+
         )}
 
+
+
         <View
+
           style={[
+
             styles.messageBubble,
+
             isUser ? styles.userBubble : styles.aiBubble,
+
             isUser
+
               ? { backgroundColor: COLORS.primary }
+
               : {
-                  backgroundColor: COLORS.surface,
-                  borderWidth: 1,
-                  borderColor: COLORS.border,
-                },
-          ]}
-        >
-          <Text
-            style={[
-              styles.messageText,
-              {
-                color: isUser
-                  ? COLORS.onPrimary || '#0B1326'
-                  : COLORS.textPrimary,
+
+                backgroundColor: COLORS.surface,
+
+                borderWidth: 1,
+
+                borderColor: COLORS.border,
+
               },
+
+          ]}
+
+        >
+
+          <Text
+
+            style={[
+
+              styles.messageText,
+
+              {
+
+                color: isUser
+
+                  ? COLORS.onPrimary || '#0B1326'
+
+                  : COLORS.textPrimary,
+
+              },
+
             ]}
+
           >
+
             {item.text}
+
           </Text>
+
         </View>
+
       </View>
+
     );
+
   };
+
+
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: COLORS.aiBackground}]}
+      style={[styles.container, { backgroundColor: COLORS.aiBackground }]}
       behavior={Platform.OS === 'android' ? 'height' : 'padding'}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={{ flex: 1 }}>
         <View style={{ flex: 1, backgroundColor: COLORS.aiBackground }}>
 
-        {/* ── HEADER ── */}
-        <View
-          style={[
-            styles.header,
-            { paddingTop: safeTopPadding, borderBottomColor: COLORS.border },
-          ]}
-        >
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
+          {/* ── HEADER ── */}
+          <View
+            style={[
+              styles.header,
+              { paddingTop: safeTopPadding, borderBottomColor: COLORS.border },
+            ]}
           >
-            <Ionicons name="chevron-down" size={28} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-
-          <View style={styles.headerTitleContainer}>
-            <Text
-              style={[
-                styles.headerTitle,
-                FONTS.sectionHeading,
-                { color: COLORS.textPrimary },
-              ]}
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
             >
-              HealthMate AI
-            </Text>
-            {!isPremiumUser && (
+              <Ionicons name="chevron-down" size={28} color={COLORS.textPrimary} />
+            </TouchableOpacity>
+            <View style={styles.headerTitleContainer}>
+
+              <Text
+
+                style={[
+                  styles.headerTitle,
+                  FONTS.sectionHeading,
+                  { color: COLORS.textPrimary },
+                ]}
+              >
+                HealthMate AI
+              </Text>
+              {!isPremiumUser && (
+                <View
+                  style={[
+                    styles.badge,
+                    {
+                      backgroundColor: COLORS.surface,
+                      borderColor: COLORS.border,
+                      borderWidth: 1,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.badgeText, { color: COLORS.primary }]}>
+                    {freeAiQuestionsRemaining} FREE LEFT
+                  </Text>
+                </View>
+              )}
+            </View>
+            <View style={{ width: 40 }} />
+          </View>
+
+          {/* ── CHAT LIST ── */}
+          <FlatList
+            ref={flatListRef}
+            data={aiChatHistory}
+            keyExtractor={(item) => item.id}
+            renderItem={renderMessage}
+            style={styles.flatList}
+            contentContainerStyle={styles.chatList}
+            showsVerticalScrollIndicator={false}
+            keyboardDismissMode="interactive"
+            onContentSizeChange={() => {
+              if (isTyping) {
+                flatListRef.current?.scrollToEnd({ animated: true });
+              }
+            }}
+          />
+
+
+
+          {/* ── TYPING INDICATOR ── */}
+          {isTyping && (
+            <View style={styles.typingContainer}>
+              <View style={[styles.aiAvatar, { backgroundColor: COLORS.primary }]}>
+                <Ionicons
+                  name="sparkles"
+                  size={14}
+                  color={COLORS.onPrimary || '#0B1326'}
+                />
+              </View>
               <View
                 style={[
-                  styles.badge,
+                  styles.aiBubble,
                   {
                     backgroundColor: COLORS.surface,
-                    borderColor: COLORS.border,
                     borderWidth: 1,
+                    borderColor: COLORS.border,
+                    paddingVertical: 12,
+                    paddingHorizontal: 16,
                   },
                 ]}
               >
-                <Text style={[styles.badgeText, { color: COLORS.primary }]}>
-                  {freeAiQuestionsRemaining} FREE LEFT
-                </Text>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}
+                >
+                  <ActivityIndicator
+                    size="small"
+                    color={COLORS.primary}
+                    style={{ marginRight: 10 }}
+                  />
+
+                  <Text
+                    style={{
+                      color: COLORS.textPrimary,
+                      fontSize: 14,
+                      flexShrink: 1,
+                    }}
+                  >
+                    {loadingMessage}
+                    {'.'.repeat(dotCount)}
+                  </Text>
+                </View>
               </View>
-            )}
-          </View>
-
-          <View style={{ width: 40 }} />
-        </View>
-
-        {/* ── CHAT LIST ── */}
-        <FlatList
-          ref={flatListRef}
-          data={aiChatHistory}
-          keyExtractor={(item) => item.id}
-          renderItem={renderMessage}
-          style={styles.flatList}
-          contentContainerStyle={styles.chatList}
-          showsVerticalScrollIndicator={false}
-          keyboardDismissMode="interactive"
-          onContentSizeChange={() =>
-            flatListRef.current?.scrollToEnd({ animated: true })
-          }
-        />
-
-        {/* ── TYPING INDICATOR ── */}
-        {isTyping && (
-          <View style={styles.typingContainer}>
-            <View style={[styles.aiAvatar, { backgroundColor: COLORS.primary }]}>
-              <Ionicons
-                name="sparkles"
-                size={14}
-                color={COLORS.onPrimary || '#0B1326'}
-              />
             </View>
-            <View
-              style={[
-                styles.aiBubble,
-                {
-                  backgroundColor: COLORS.surface,
-                  borderWidth: 1,
-                  borderColor: COLORS.border,
-                  paddingVertical: 12,
-                  paddingHorizontal: 16,
-                },
-              ]}
-            >
-              <ActivityIndicator size="small" color={COLORS.textMuted} />
-            </View>
-          </View>
-        )}
+          )}
 
-        {/* ── INPUT DOCK ── */}
-        <View
-          style={[
-            styles.inputDock,
-            { backgroundColor: COLORS.aiBackground },
-          ]}
-        >
+          {/* ── INPUT DOCK ── */}
           <View
             style={[
-              styles.pillContainer,
-              {
-                backgroundColor: COLORS.inputField || COLORS.surface,
-                borderColor: COLORS.border,
-                marginBottom: Math.max(insets.bottom, 22),
-                marginTop: Math.max(insets.bottom, 12),
-                // paddingTop: Math.max(insets.bottom, 22),
-              },
+              styles.inputDock,
+              { backgroundColor: COLORS.aiBackground },
             ]}
           >
-            <TextInput
-              style={[styles.textInput, { color: COLORS.textPrimary }]}
-              placeholder="Ask me anything..."
-              placeholderTextColor={COLORS.textMuted}
-              value={inputText}
-              onChangeText={setInputText}
-              multiline
-              maxLength={500}
-            />
-            <TouchableOpacity
+            <View
               style={[
-                styles.sendButton,
+                styles.pillContainer,
                 {
-                  backgroundColor: inputText.trim()
-                    ? COLORS.primary
-                    : 'transparent',
+                  backgroundColor: COLORS.inputField || COLORS.surface,
+                  borderColor: COLORS.border,
+                  marginBottom: Math.max(insets.bottom, 22),
+                  marginTop: Math.max(insets.bottom, 12),
+                  // paddingTop: Math.max(insets.bottom, 22),
                 },
               ]}
-              onPress={handleSend}
-              disabled={!inputText.trim() || isTyping}
             >
-              <Ionicons
-                name="arrow-up"
-                size={20}
-                color={
-                  inputText.trim()
-                    ? COLORS.onPrimary || '#0B1326'
-                    : COLORS.textMuted
-                }
+              <TextInput
+                style={[styles.textInput, { color: COLORS.textPrimary }]}
+                placeholder="Ask me anything..."
+                placeholderTextColor={COLORS.textMuted}
+                value={inputText}
+                onChangeText={setInputText}
+                multiline
+                maxLength={500}
               />
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.sendButton,
+                  {
+                    backgroundColor: inputText.trim()
+                      ? COLORS.primary
+                      : 'transparent',
+                  },
+                ]}
+                onPress={handleSend}
+                disabled={!inputText.trim() || isTyping}
+              >
+                <Ionicons
+                  name="arrow-up"
+                  size={20}
+                  color={
+                    inputText.trim()
+                      ? COLORS.onPrimary || '#0B1326'
+                      : COLORS.textMuted
+                  }
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-
       </View>
-      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }
 
+
+
 const styles = StyleSheet.create({
+
   container: {
+
     flex: 1,
+
   },
+
   header: {
+
     flexDirection: 'row',
+
     alignItems: 'center',
+
     justifyContent: 'space-between',
+
     paddingHorizontal: 16,
+
     paddingBottom: 16,
+
     borderBottomWidth: 1,
+
   },
+
   backButton: {
+
     padding: 4,
+
   },
+
   headerTitleContainer: {
+
     alignItems: 'center',
+
   },
+
   headerTitle: {
+
     fontSize: 18,
+
     fontWeight: '700',
+
   },
+
   badge: {
+
     marginTop: 4,
+
     paddingHorizontal: 8,
+
     paddingVertical: 2,
+
     borderRadius: 12,
+
   },
+
   badgeText: {
+
     fontSize: 10,
+
     fontWeight: '700',
+
   },
+
   flatList: {
+
     flex: 1,
+
   },
+
   chatList: {
+
     padding: 16,
+
   },
+
   messageWrapper: {
+
     flexDirection: 'row',
+
     marginBottom: 16,
+
     maxWidth: '85%',
+
   },
+
   messageWrapperUser: {
     alignSelf: 'flex-end',
     justifyContent: 'flex-end',
   },
+
   messageWrapperAI: {
     alignSelf: 'flex-start',
     alignItems: 'flex-start',
@@ -436,33 +629,40 @@ const styles = StyleSheet.create({
     marginRight: 8,
     marginBottom: 4,
   },
+
   messageBubble: {
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 20,
   },
+
   userBubble: {
     borderBottomRightRadius: 4,
   },
+
   aiBubble: {
     borderBottomLeftRadius: 4,
   },
+
   messageText: {
     fontSize: 15,
     lineHeight: 22,
   },
+
   typingContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
     marginBottom: 16,
     alignItems: 'flex-start',
   },
+
   inputDock: {
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 8,
     marginBottom: -28,
   },
+
   pillContainer: {
     flexDirection: 'row',
     borderRadius: 24,
@@ -471,7 +671,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'flex-end',
     minHeight: 48,
-  },  textInput: {
+  }, textInput: {
     flex: 1,
     minHeight: 36,
     maxHeight: 120,
@@ -489,4 +689,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 8,
   },
-});
+}); 

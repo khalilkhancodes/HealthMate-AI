@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { startStepCounterUpdate, stopStepCounterUpdate } from '@dongminyu/react-native-step-counter';
+import { Pedometer } from 'expo-sensors';
+import { Platform } from 'react-native';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import {
@@ -16,6 +17,8 @@ export const getTodayDate = () => {
   const day = String(now.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
+
+let pedometerSubscription = null;
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
@@ -157,15 +160,32 @@ export const useHealthStore = create(
       achievements: getDefaultAchievements(),
       lastDailyResetDate: getTodayDate(),
       shouldPromptDailyGoalUpdate: false,
-      dailyGoalSuggestion: null,
       needsDailyReview: false,
       insightText: '',
       lastActiveDate: getTodayDate(),
+
+      // Personal Demographics & Goals
+      name: '',
+      gender: 'other',
+      age: '',
+      heightCm: 0,
+      weightKg: 0,
+      targetWeightKg: 0,
+      activityLevel: 'moderate',
+      primaryGoal: 'general',
+
+      // Target Metrics
       waterGoalMl: 2500,
       stepGoal: 6000,
       sleepGoalHours: 8,
+      calorieGoal: 2000,
+      bmi: 0,
+      bmr: 0,
+      tdee: 0,
+
       currentWaterMl: 0,
       dailySteps: 0,
+      stepCountOffset: 0,
       isStepTracking: false,
       waterIntake: 0,
       waterGoal: null,
@@ -185,9 +205,6 @@ export const useHealthStore = create(
       sleepGoal: null,
       isSleeping: false,
       sleepStartTime: null,
-      weight: 0,
-      height: 0,
-      bmi: 0,
       aiChatHistory: [],
       _hasHydrated: false,
       isGuestMode: false,
@@ -197,7 +214,37 @@ export const useHealthStore = create(
       isDarkMode: false,
       themePreference: 'system',
       freeAiQuestionsRemaining: 5,
+      decrementAiQuestions: () =>
+        set((state) => ({
+          freeAiQuestionsRemaining: Math.max(
+            0,
+            state.freeAiQuestionsRemaining - 1
+          ),
+        })),
 
+      requestPedometerPermission: async () => {
+        try {
+          // 1. Check if the hardware sensor even exists
+          const available = await Pedometer.isAvailableAsync();
+          if (!available) {
+            console.warn('[Pedometer] Hardware sensor not available on this device.');
+            return false;
+          }
+
+          // 2. Request the Android 10+ Physical Activity runtime permission
+          const { status } = await Pedometer.requestPermissionsAsync();
+          if (status !== 'granted') {
+            console.warn('[Pedometer] User denied Physical Activity permission.');
+            return false;
+          }
+
+          return true;
+        } catch (error) {
+          console.error('[Pedometer] Error requesting permissions:', error);
+          return false;
+        }
+      },
+      
       // --- STATS CALCULATION MODULE ---
       getStepStats: () => {
         const daily = get().dailySteps || 0;
@@ -210,44 +257,114 @@ export const useHealthStore = create(
         };
       },
 
-      setWaterGoalMl: (ml) => {
-        set({ waterGoalMl: ml, waterGoal: ml });
-        const totalWater = get().currentWaterMl ?? get().waterIntake ?? 0;
-        if (ml > 0 && totalWater >= ml) get().processDailyGoalCompletion('water');
-      },
+      setName: (name) => set({ name }),
+      setGender: (gender) => set({ gender }),
+      setAge: (age) => set({ age }),
+      setPrimaryGoal: (goal) => set({ primaryGoal: goal }),
+      setHeightCm: (heightCm) => set({ heightCm }),
+      setWeightKg: (weightKg) => set({ weightKg }),
+      setTargetWeightKg: (targetWeightKg) => set({ targetWeightKg }),
+      setActivityLevel: (activityLevel) => set({ activityLevel }),
+
       setStepGoal: (steps) => {
         set({ stepGoal: steps });
         const totalSteps = get().dailySteps ?? 0;
         if (steps > 0 && totalSteps >= steps) get().processDailyGoalCompletion('steps');
       },
+      setWaterGoalMl: (ml) => {
+        set({ waterGoalMl: ml, waterGoal: ml });
+        const totalWater = get().currentWaterMl ?? get().waterIntake ?? 0;
+        if (ml > 0 && totalWater >= ml) get().processDailyGoalCompletion('water');
+      },
       setSleepGoalHours: (hours) => set({ sleepGoalHours: hours, sleepGoal: hours }),
       completeSetup: () => set({ hasCompletedSetup: true }),
       setHasCelebratedToday: (value) => set({ hasCelebratedToday: value }),
       dismissDailyGoalPrompt: () => set({ shouldPromptDailyGoalUpdate: false }),
-      applyDailyGoalSuggestion: () => {
-        const suggestion = get().dailyGoalSuggestion;
-        if (!suggestion) {
-          set({ shouldPromptDailyGoalUpdate: false });
-          return;
+
+      // --- ALGORITHMIC ENGINE ---
+      calculateBMI: () => {
+        const { weightKg, heightCm } = get();
+        if (!weightKg || !heightCm) {
+          set({ bmi: 0 });
+          return 0;
         }
+        const calculatedBMI = weightKg / ((heightCm / 100) * (heightCm / 100));
+        const finalBmi = Number(calculatedBMI.toFixed(1));
+        set({ bmi: finalBmi });
+        return finalBmi;
+      },
+
+      calculateBMR: () => {
+        const { weightKg, heightCm, age, gender, activityLevel } = get();
+        if (!weightKg || !heightCm || !age) {
+          set({ bmr: 0, tdee: 0 });
+          return { bmr: 0, tdee: 0 };
+        }
+
+        let bmrCalc = (10 * weightKg) + (6.25 * heightCm) - (5 * Number(age));
+        bmrCalc = gender === 'male' ? bmrCalc + 5 : bmrCalc - 161;
+
+        let multiplier = 1.2;
+        if (activityLevel === 'light') multiplier = 1.375;
+        else if (activityLevel === 'moderate') multiplier = 1.55;
+        else if (activityLevel === 'active') multiplier = 1.725;
+
+        const tdeeCalc = Math.round(bmrCalc * multiplier);
+        set({ bmr: Math.round(bmrCalc), tdee: tdeeCalc });
+        return { bmr: Math.round(bmrCalc), tdee: tdeeCalc };
+      },
+
+      getCalculatedBaselines: () => {
+        const { weightKg, activityLevel, primaryGoal, dailySteps } = get();
+        const safeWeight = Number(weightKg) || 70;
+
+        let suggestedSteps = 6000;
+        if (activityLevel === 'sedentary') suggestedSteps = 5000;
+        else if (activityLevel === 'light') suggestedSteps = 7500;
+        else if (activityLevel === 'moderate') suggestedSteps = 10000;
+        else if (activityLevel === 'active') suggestedSteps = 12000;
+
+        if (primaryGoal === 'lose_weight') suggestedSteps += 2000;
+        if (dailySteps > suggestedSteps) suggestedSteps = Math.ceil(dailySteps / 500) * 500 + 500;
+        suggestedSteps = clamp(suggestedSteps, 3000, 20000);
+
+        let suggestedWater = Math.round(safeWeight * 35);
+        if (activityLevel === 'moderate' || activityLevel === 'active') suggestedWater += 500;
+        suggestedWater = clamp(Math.round(suggestedWater / 100) * 100, 1500, 6000);
+
+        let suggestedSleep = 8;
+        if (primaryGoal === 'improve_sleep') suggestedSleep = 8.5;
+
+        return { suggestedSteps, suggestedWater, suggestedSleep };
+      },
+
+      generateInitialGoals: () => {
+        get().calculateBMI();
+        get().calculateBMR();
+        const baselines = get().getCalculatedBaselines();
+        const { tdee, primaryGoal } = get();
+
+        let calculatedCalories = tdee || 2000;
+        if (primaryGoal === 'lose_weight') calculatedCalories -= 500;
+        else if (primaryGoal === 'gain_weight') calculatedCalories += 500;
+
         set({
-          stepGoal: suggestion.steps,
-          waterGoalMl: suggestion.waterMl,
-          waterGoal: suggestion.waterMl,
-          sleepGoalHours: suggestion.sleepHours,
-          sleepGoal: suggestion.sleepHours,
-          shouldPromptDailyGoalUpdate: false,
+          stepGoal: baselines.suggestedSteps,
+          waterGoalMl: baselines.suggestedWater,
+          waterGoal: baselines.suggestedWater,
+          sleepGoalHours: baselines.suggestedSleep,
+          sleepGoal: baselines.suggestedSleep,
+          calorieGoal: calculatedCalories
         });
       },
+
       checkAndHandleDailyReset: () => {
         const today = getTodayDate();
-        const { lastDailyResetDate, dailySteps, stepGoal, currentWaterMl, waterIntake, waterGoalMl, waterGoal, sleepDuration, sleepGoalHours, sleepGoal, weeklyProgress } = get();
+        const { lastDailyResetDate, weeklyProgress } = get();
 
         if (lastDailyResetDate === today) return false;
 
         const daysDiff = getDaysDiff(lastDailyResetDate, today) ?? 1;
-        const suggestion = buildDailyGoalSuggestion({ dailySteps, stepGoal, currentWaterMl, waterIntake, waterGoalMl, waterGoal, sleepDuration, sleepGoalHours, sleepGoal });
-
         const todayIndex = getMonSunIndex(new Date());
         const nextWeeklyProgress = Array.isArray(weeklyProgress) && weeklyProgress.length === 7 ? [...weeklyProgress] : [false, false, false, false, false, false, false];
 
@@ -258,10 +375,9 @@ export const useHealthStore = create(
 
         set({
           lastDailyResetDate: today,
-          shouldPromptDailyGoalUpdate: true,
-          dailyGoalSuggestion: suggestion,
           hasCelebratedToday: false,
           dailySteps: 0,
+          stepCountOffset: 0,
           waterIntake: 0,
           currentWaterMl: 0,
           todaysDrinks: [],
@@ -338,8 +454,10 @@ export const useHealthStore = create(
         }
         nextWeeklyProgress[todayIndex] = false;
 
-        // Force a restart of the native step counter on a new day to reset its internal baseline
-        stopStepCounterUpdate();
+        if (pedometerSubscription) {
+          pedometerSubscription.remove();
+          pedometerSubscription = null;
+        }
 
         set({
           lastActiveDate: today,
@@ -348,6 +466,7 @@ export const useHealthStore = create(
           currentStreak: nextCurrentStreak,
           hasCelebratedToday: false,
           dailySteps: 0,
+          stepCountOffset: 0,
           waterIntake: 0,
           currentWaterMl: 0,
           todaysDrinks: [],
@@ -374,9 +493,7 @@ export const useHealthStore = create(
         try {
           await scheduleWaterReminders();
           await scheduleMorningCheckIn();
-        } catch (err) {
-          console.warn('Failed to schedule daily notifications', err);
-        }
+        } catch (err) {}
       },
       addWaterMl: (ml) => {
         const drink = {
@@ -437,7 +554,35 @@ export const useHealthStore = create(
         }));
         get().logDailyData('water', get().getTotalWaterIntake());
       },
-      getTotalWaterIntake: () => get().todaysDrinks.reduce((total, drink) => total + (drink.amount || 0), 0),
+      getTotalWaterIntake: () =>
+        get().todaysDrinks.reduce((total, drink) => total + (typeof drink.netHydration === 'number' ? drink.netHydration : (drink.amount || 0)), 0),
+      addCategorizedDrink: (type, rawAmount, multiplier = 1) => {
+        const net = Math.round((rawAmount || 0) * (typeof multiplier === 'number' ? multiplier : 1));
+        const drink = {
+          id: Date.now().toString(),
+          type: type || 'other',
+          amount: rawAmount || 0,
+          multiplier: typeof multiplier === 'number' ? multiplier : 1,
+          netHydration: net,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+
+        set((state) => ({
+          todaysDrinks: [...state.todaysDrinks, drink],
+          consumedDrinks: [...state.consumedDrinks, drink],
+          waterIntake: state.waterIntake + net,
+          currentWaterMl: (state.currentWaterMl || 0) + net,
+        }));
+
+        const { waterGoalMl, waterGoal, currentWaterMl, waterIntake } = get();
+        const activeWaterGoal = waterGoalMl ?? waterGoal ?? 0;
+        const latestWater = currentWaterMl || waterIntake || 0;
+        if (activeWaterGoal > 0 && latestWater >= activeWaterGoal) {
+          get().processDailyGoalCompletion('water');
+          cancelWaterReminders().catch((err) => console.warn('Failed to cancel water reminders', err));
+        }
+        get().logDailyData('water', get().getTotalWaterIntake());
+      },
       addDrink: (type, amount) => get().logDrink(type, amount),
       addWater: (amount) => get().logDrink('water', amount),
       totalHydration: () => get().getTotalWaterIntake(),
@@ -454,7 +599,7 @@ export const useHealthStore = create(
         try {
           if (newState) await scheduleWaterReminders();
           else await cancelWaterReminders();
-        } catch (err) {}
+        } catch (_err) {}
       },
       toggleMorningCheckIn: async () => {
         const newState = !get().isMorningCheckInEnabled;
@@ -462,46 +607,81 @@ export const useHealthStore = create(
         try {
           if (newState) await scheduleMorningCheckIn();
           else await cancelMorningCheckIn();
-        } catch (err) {}
+        } catch (_err) {}
       },
       setAlarmSound: (sound) => set({ alarmSound: sound }),
 
-      // --- NEW HARDWARE STEP TRACKING CORE ---
+      // --- EXPO-SENSORS PEDOMETER CORE (ANDROID COMPATIBLE) ---
       startLiveStepTracking: async () => {
         if (get().isStepTracking) return true;
-
-        console.log('[Pedometer] Initializing Raw Hardware Sensor...');
-
+      
         try {
-          // Instructs the native module to query steps starting from midnight today
-          const startOfToday = new Date();
-          startOfToday.setHours(0, 0, 0, 0);
+          const available = await Pedometer.isAvailableAsync();
+      
+          if (!available) {
+            console.warn('Pedometer not available');
+            return false;
+          }
 
-          startStepCounterUpdate(startOfToday, (data) => {
-            const newDailyTotal = data.steps;
-
-            if (newDailyTotal > get().dailySteps) {
-              set({ dailySteps: newDailyTotal });
-              
-              const goal = get().stepGoal || 0;
-              if (goal > 0 && newDailyTotal >= goal) {
-                get().processDailyGoalCompletion('steps');
-              }
+          let historicalSteps = 0;
+      
+          // 🛑 FIX: getStepCountAsync is not natively supported on Android.
+          if (Platform.OS === 'ios') {
+            const startOfToday = new Date();
+            startOfToday.setHours(0, 0, 0, 0);
+            try {
+              const historicalData = await Pedometer.getStepCountAsync(
+                startOfToday,
+                new Date()
+              );
+              historicalSteps = historicalData.steps;
+            } catch (err) {
+              console.log('Could not fetch historical steps:', err);
+            }
+          } else {
+            // Android uses the persisted state to resume counting
+            historicalSteps = get().dailySteps || 0;
+          }
+      
+          set({
+            dailySteps: historicalSteps,
+            stepCountOffset: historicalSteps,
+          });
+      
+          pedometerSubscription = Pedometer.watchStepCount(({ steps }) => {
+            const totalSteps = (get().stepCountOffset || 0) + steps;
+      
+            set({
+              dailySteps: totalSteps,
+            });
+      
+            const goal = get().stepGoal || 0;
+      
+            if (goal > 0 && totalSteps >= goal) {
+              get().processDailyGoalCompletion('steps');
             }
           });
-
-          set({ isStepTracking: true });
+      
+          set({
+            isStepTracking: true,
+          });
+      
           return true;
         } catch (error) {
-          console.error('[Pedometer] Failed to start hardware sensor:', error);
+          console.error('Pedometer Error:', error);
           return false;
         }
       },
 
       stopLiveStepTracking: () => {
-        stopStepCounterUpdate();
-        set({ isStepTracking: false });
-        console.log('[Pedometer] Hardware sensor tracking stopped');
+        if (pedometerSubscription) {
+          pedometerSubscription.remove();
+          pedometerSubscription = null;
+        }
+      
+        set({
+          isStepTracking: false,
+        });
       },
 
       startSleep: () => set({ isSleeping: true, sleepStartTime: Date.now() }),
@@ -532,20 +712,19 @@ export const useHealthStore = create(
 
         get().logDailyData('sleep', updatedTodaySleep);
       },
-      setWeight: (weight) => set({ weight }),
-      setHeight: (height) => set({ height }),
+      setWeight: (weight) => set({ weight, weightKg: weight }),
+      setHeight: (height) =>
+        set({
+          height,
+          heightCm: Number.isFinite(Number(height)) ? Number(height) * 100 : 0,
+        }),
       setBMI: (bmi) => set({ bmi }),
-      calculateBMI: () => {
-        const { weight, height } = get();
-        if (!weight || !height) {
-          set({ bmi: 0 });
-          return;
-        }
-        const calculatedBMI = weight / (height * height);
-        set({ bmi: Number(calculatedBMI.toFixed(1)) });
-      },
       clearGuestMode: () => {
-        stopStepCounterUpdate();
+        if (pedometerSubscription) {
+          pedometerSubscription.remove();
+          pedometerSubscription = null;
+        }
+
         return set({
           isGuestMode: false,
           user: null,
@@ -555,7 +734,7 @@ export const useHealthStore = create(
       },
     }),
     {
-      name: 'healthmate-storage-v5', 
+      name: 'healthmate-storage-v7', 
       storage: createJSONStorage(() => AsyncStorage),
       onRehydrateStorage: () => (state) => {
         state?.checkDailyReset?.();

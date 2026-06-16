@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 
+import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
 
 const ACTIVITY_LEVELS = [
@@ -18,37 +19,38 @@ const ACTIVITY_LEVELS = [
   { key: 'light', label: 'Light', multiplier: 1.375 },
   { key: 'moderate', label: 'Moderate', multiplier: 1.55 },
   { key: 'active', label: 'Active', multiplier: 1.725 },
-  { key: 'very-active', label: 'Very Active', multiplier: 1.9 },
 ];
 
 export default function BMRScreen() {
   const { COLORS, FONTS, SHADOWS } = useTheme();
 
-  const [gender, setGender] = useState('male');
-  const [age, setAge] = useState('');
-  const [weight, setWeight] = useState('');
-  const [height, setHeight] = useState('');
-  const [activityKey, setActivityKey] = useState('moderate');
-  const [resultCalories, setResultCalories] = useState(null);
+  const storeAge = useHealthStore((s) => s.age);
+  const storeGender = useHealthStore((s) => s.gender);
+  const storeHeightCm = useHealthStore((s) => s.heightCm);
+  const storeWeightKg = useHealthStore((s) => s.weightKg);
+  const storeActivityLevel = useHealthStore((s) => s.activityLevel);
+  const storeTDEE = useHealthStore((s) => s.tdee);
+
+  const setWeightKg = useHealthStore((state) => state.setWeightKg);
+  const setHeightCm = useHealthStore((state) => state.setHeightCm);
+  const setAge = useHealthStore((state) => state.setAge);
+  const setGenderStore = useHealthStore((state) => state.setGender);
+  const setActivityLevelStore = useHealthStore((state) => state.setActivityLevel);
+  const calculateBMRStore = useHealthStore((state) => state.calculateBMR);
+  const calculateBMIStore = useHealthStore((state) => state.calculateBMI);
+
+  const [gender, setGender] = useState(storeGender || 'male');
+  const [age, setAgeLocal] = useState(storeAge ? String(storeAge) : '');
+  const [weight, setWeight] = useState(storeWeightKg ? String(storeWeightKg) : '');
+  const [height, setHeight] = useState(storeHeightCm ? String(storeHeightCm) : '');
+  const [activityKey, setActivityKey] = useState(storeActivityLevel || 'moderate');
+  const [resultCalories, setResultCalories] = useState(storeTDEE || null);
   const [showErrors, setShowErrors] = useState(false);
 
   const handleCalculateBMR = () => {
-    const activityLevel = activityKey;
-
-    if (!weight?.trim() || !height?.trim() || !age?.trim() || !gender || !activityLevel) {
+    if (!weight?.trim() || !height?.trim() || !age?.trim() || !gender || !activityKey) {
       setShowErrors(true);
       Alert.alert('Missing Information', 'Please fill out all fields before calculating.');
-      return;
-    }
-
-    const hasAge = !!age?.trim();
-    const hasWeight = !!weight?.trim();
-    const hasHeight = !!height?.trim();
-    const hasActivityLevel = !!activityKey;
-
-    if (!hasAge || !hasWeight || !hasHeight || !hasActivityLevel) {
-      setShowErrors(true);
-      Alert.alert('Incomplete Data', 'Please fill in all fields to calculate your BMR.');
       return;
     }
 
@@ -62,17 +64,19 @@ export default function BMRScreen() {
       return;
     }
 
-    const baseBMR =
-      gender === 'male'
-        ? 10 * parsedWeight + 6.25 * parsedHeight - 5 * parsedAge + 5
-        : 10 * parsedWeight + 6.25 * parsedHeight - 5 * parsedAge - 161;
-
-    const activityMultiplier =
-      ACTIVITY_LEVELS.find((item) => item.key === activityKey)?.multiplier || 1.55;
-
-    const totalCalories = baseBMR * activityMultiplier;
     setShowErrors(false);
-    setResultCalories(Math.round(totalCalories));
+
+    // Sync to Global Engine
+    setWeightKg(Number(parsedWeight.toFixed(1)));
+    setHeightCm(Number(parsedHeight.toFixed(1)));
+    setAge(Number(parsedAge));
+    setGenderStore(gender);
+    setActivityLevelStore(activityKey);
+
+    calculateBMIStore();
+    const metrics = calculateBMRStore();
+    
+    setResultCalories(metrics.tdee);
   };
 
   return (
@@ -93,9 +97,7 @@ export default function BMRScreen() {
               <View style={[styles.genderIconWrap, { backgroundColor: gender === 'male' ? COLORS.card : COLORS.border }]}> 
                 <Ionicons name="male" size={24} color={gender === 'male' ? COLORS.primary : COLORS.textMuted} />
               </View>
-              <Text style={[FONTS.subheading, { color: gender === 'male' ? COLORS.primary : COLORS.textMuted }]}>
-                Male
-              </Text>
+              <Text style={[FONTS.subheading, { color: gender === 'male' ? COLORS.primary : COLORS.textMuted }]}>Male</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
@@ -109,9 +111,7 @@ export default function BMRScreen() {
               <View style={[styles.genderIconWrap, { backgroundColor: gender === 'female' ? COLORS.card : COLORS.border }]}> 
                 <Ionicons name="female" size={24} color={gender === 'female' ? COLORS.primary : COLORS.textMuted} />
               </View>
-              <Text style={[FONTS.subheading, { color: gender === 'female' ? COLORS.primary : COLORS.textMuted }]}>
-                Female
-              </Text>
+              <Text style={[FONTS.subheading, { color: gender === 'female' ? COLORS.primary : COLORS.textMuted }]}>Female</Text>
             </TouchableOpacity>
           </View>
 
@@ -126,7 +126,7 @@ export default function BMRScreen() {
             placeholderTextColor={COLORS.textMuted}
             keyboardType="numeric"
             value={age}
-            onChangeText={setAge}
+            onChangeText={setAgeLocal}
           />
 
           <Text style={[FONTS.bodyText, { color: COLORS.textMuted, marginBottom: 8, fontWeight: '600' }]}>Weight (kg)</Text>
@@ -178,18 +178,12 @@ export default function BMRScreen() {
                     <Ionicons name={selected ? 'pulse' : 'walk'} size={18} color={selected ? COLORS.primary : COLORS.textMuted} />
                   </View>
                   <View style={styles.activityTextWrap}>
-                    <Text style={[FONTS.subheading, { color: selected ? COLORS.primary : COLORS.textPrimary }]}> 
-                      {level.label}
-                    </Text>
-                    <Text style={[FONTS.smallText, { color: COLORS.textMuted, marginTop: 2 }]}> 
-                      Daily activity multiplier
-                    </Text>
+                    <Text style={[FONTS.subheading, { color: selected ? COLORS.primary : COLORS.textPrimary }]}>{level.label}</Text>
+                    <Text style={[FONTS.smallText, { color: COLORS.textMuted, marginTop: 2 }]}>Daily activity multiplier</Text>
                   </View>
                 </View>
                 <View style={[styles.activityMultiplierPill, { backgroundColor: selected ? COLORS.primary : COLORS.border }]}> 
-                  <Text style={[FONTS.label, { color: selected ? COLORS.onPrimary : COLORS.textMuted, fontWeight: '700' }]}> 
-                    x{level.multiplier}
-                  </Text>
+                  <Text style={[FONTS.label, { color: selected ? COLORS.onPrimary : COLORS.textMuted, fontWeight: '700' }]}>x{level.multiplier}</Text>
                 </View>
               </TouchableOpacity>
             );
@@ -200,13 +194,13 @@ export default function BMRScreen() {
             activeOpacity={0.9}
             onPress={handleCalculateBMR}
           >
-            <Text style={[FONTS.buttonText, { color: COLORS.onPrimary }]}>Calculate BMR</Text>
+            <Text style={[FONTS.buttonText, { color: COLORS.onPrimary }]}>Update & Calculate TDEE</Text>
           </TouchableOpacity>
         </View>
 
         {resultCalories !== null && (
           <View style={[styles.resultCard, { backgroundColor: COLORS.card }, SHADOWS.small]}>
-            <Text style={[FONTS.bodyText, { color: COLORS.textSecondary, marginBottom: 6 }]}>Estimated Daily Calories</Text>
+            <Text style={[FONTS.bodyText, { color: COLORS.textSecondary, marginBottom: 6 }]}>Estimated Daily Calories (TDEE)</Text>
             <Text style={[FONTS.bigNumbers, { color: COLORS.textPrimary }]}>{resultCalories.toLocaleString()}</Text>
             <Text style={[FONTS.sectionHeading, { color: COLORS.primary, marginTop: 4 }]}>kcal / day</Text>
             
@@ -222,98 +216,19 @@ export default function BMRScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 40,
-  },
-  card: {
-    borderRadius: 24,
-    padding: 24,
-  },
-  genderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  genderButton: {
-    width: '48%',
-    borderRadius: 20,
-    paddingVertical: 20,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-  },
-  genderIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    fontSize: 16,
-    marginBottom: 20,
-  },
-  activityCard: {
-    borderWidth: 1,
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginBottom: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  activityCopy: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    paddingRight: 12,
-  },
-  activityIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  activityTextWrap: {
-    flex: 1,
-  },
-  activityMultiplierPill: {
-    borderRadius: 999,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  calculateButton: {
-    marginTop: 16,
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  resultCard: {
-    marginTop: 20,
-    borderRadius: 24,
-    paddingVertical: 24,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-  },
-  resultBadge: {
-    marginTop: 20,
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
+  container: { flex: 1 },
+  content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 100 },
+  card: { borderRadius: 24, padding: 24 },
+  genderRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
+  genderButton: { width: '48%', borderRadius: 20, paddingVertical: 20, paddingHorizontal: 12, alignItems: 'center' },
+  genderIconWrap: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  input: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 16, fontSize: 16, marginBottom: 20 },
+  activityCard: { borderWidth: 1, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 16, marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  activityCopy: { flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 12 },
+  activityIconWrap: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  activityTextWrap: { flex: 1 },
+  activityMultiplierPill: { borderRadius: 999, paddingVertical: 6, paddingHorizontal: 12 },
+  calculateButton: { marginTop: 16, borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
+  resultCard: { marginTop: 20, borderRadius: 24, paddingVertical: 24, paddingHorizontal: 20, alignItems: 'center' },
+  resultBadge: { marginTop: 20, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
 });

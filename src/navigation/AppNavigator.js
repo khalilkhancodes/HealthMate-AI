@@ -22,6 +22,7 @@ import StepScreen from '../screens/StepScreen';
 import StreakDetailsScreen from '../screens/StreakDetailsScreen';
 import WaterScreen from '../screens/WaterScreen';
 import ToolsNavigator from './ToolsNavigator';
+import NotificationsScreen from '../screens/NotificationsScreen';
 
 const Tab = createMaterialTopTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -232,6 +233,11 @@ export default function AppNavigator() {
       <Stack.Screen
         name="HelpScreen"
         component={HelpScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="NotificationsScreen"
+        component={NotificationsScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

@@ -7,10 +7,10 @@ import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import AuthNavigator from './src/navigation/AuthNavigator';
-import SetupGoalsScreen from './src/screens/SetupGoalsScreen';
+import OnboardingWizardScreen from './src/screens/OnboardingWizardScreen';
 import { useHealthStore } from './src/store/useHealthStore';
 import {
-    requestNotificationPermissions,
+  requestNotificationPermissions,
 } from './src/utils/notifications';
 import { tokenCache } from './src/utils/tokenCache';
 
@@ -22,7 +22,6 @@ if (!publishableKey) {
   );
 }
 
-// Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
 function MainApp() {
@@ -31,7 +30,6 @@ function MainApp() {
   const { isSignedIn } = useAuth({ treatPendingAsSignedOut: false });
   const _hasHydrated = useHealthStore((state) => state._hasHydrated);
 
-  // Load Inter fonts
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -47,20 +45,16 @@ function MainApp() {
         console.log('[App] Notification permissions not granted');
         return;
       }
-      console.log('[App] Notification permissions granted - boot notification scheduling disabled for MVP');
     };
-
     setupNotifications();
   }, []);
 
-  // Hide splash screen only when fonts are loaded and store is hydrated
   useEffect(() => {
     if (fontsLoaded && _hasHydrated) {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, _hasHydrated]);
 
-  // If the store or fonts are still loading, show a spinner instead of the app
   if (!_hasHydrated || !fontsLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -74,12 +68,13 @@ function MainApp() {
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        {isAuthenticated && !hasCompletedSetup ? (
-          <SetupGoalsScreen />
-        ) : isGuestMode ? (
-          <AppNavigator />
+        {/* STRICT ROUTING GATEWAY */}
+        {!isAuthenticated ? (
+          <AuthNavigator />
+        ) : !hasCompletedSetup ? (
+          <OnboardingWizardScreen />
         ) : (
-          isSignedIn ? <AppNavigator /> : <AuthNavigator />
+          <AppNavigator />
         )}
       </NavigationContainer>
     </SafeAreaProvider>

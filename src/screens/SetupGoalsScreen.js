@@ -7,7 +7,6 @@ import { useTheme } from '../theme/theme';
 export default function SetupGoalsScreen({ navigation }) {
   const { COLORS, FONTS, SPACING, RADII } = useTheme();
 
-  // Read current defaults from store
   const stepGoalStore = useHealthStore((s) => s.stepGoal);
   const waterGoalStore = useHealthStore((s) => s.waterGoalMl ?? s.waterGoal ?? 2500);
   const sleepGoalStore = useHealthStore((s) => s.sleepGoalHours ?? s.sleepGoal ?? 8);
@@ -16,6 +15,7 @@ export default function SetupGoalsScreen({ navigation }) {
   const setWaterGoalMl = useHealthStore((s) => s.setWaterGoalMl);
   const setSleepGoalHours = useHealthStore((s) => s.setSleepGoalHours);
   const completeSetup = useHealthStore((s) => s.completeSetup);
+  const getCalculatedBaselines = useHealthStore((s) => s.getCalculatedBaselines);
 
   const [stepGoal, setStepGoalLocal] = useState(stepGoalStore || 6000);
   const [waterLiters, setWaterLiters] = useState((waterGoalStore || 2500) / 1000);
@@ -28,28 +28,12 @@ export default function SetupGoalsScreen({ navigation }) {
   };
 
   const applyAISuggestion = () => {
-    const safeStepGoal = stepGoalStore || 6000;
-    let suggestedSteps = safeStepGoal;
-    if (stepGoal >= safeStepGoal) suggestedSteps = safeStepGoal + 500;
-    else if (stepGoal < safeStepGoal * 0.6) suggestedSteps = Math.max(3000, Math.round((stepGoal || safeStepGoal) / 100) * 100);
-    suggestedSteps = Math.min(20000, Math.max(3000, Math.round(suggestedSteps / 100) * 100));
-
-    const safeWater = waterGoalStore || 2500;
-    const actualWater = Math.round((waterLiters || safeWater / 1000) * 1000);
-    let suggestedWater = safeWater;
-    if (actualWater >= safeWater) suggestedWater = safeWater + 250;
-    else if (actualWater < safeWater * 0.6) suggestedWater = Math.max(1000, Math.round((actualWater || safeWater) / 250) * 250);
-    suggestedWater = Math.min(6000, Math.max(1000, Math.round(suggestedWater / 250) * 250));
-
-    const safeSleep = sleepGoalStore || 8;
-    let suggestedSleep = safeSleep;
-    if (sleepHours >= safeSleep) suggestedSleep = safeSleep + 0.5;
-    else if (sleepHours < safeSleep * 0.75) suggestedSleep = Math.max(4, Number((sleepHours || safeSleep).toFixed(1)));
-    suggestedSleep = Math.min(12, Math.max(4, Math.round(suggestedSleep * 2) / 2));
-
-    setStepGoalLocal(suggestedSteps);
-    setWaterLiters(suggestedWater / 1000);
-    setSleepHoursLocal(suggestedSleep);
+    // Generate intelligent baselines from current demographic and behavioral data
+    const smartBaselines = getCalculatedBaselines();
+    
+    setStepGoalLocal(smartBaselines.suggestedSteps);
+    setWaterLiters(smartBaselines.suggestedWater / 1000);
+    setSleepHoursLocal(smartBaselines.suggestedSleep);
   };
 
   const handleSave = () => {
@@ -112,7 +96,7 @@ export default function SetupGoalsScreen({ navigation }) {
             <Slider
               style={{ width: '100%', height: 40 }}
               minimumValue={0.5}
-              maximumValue={5}
+              maximumValue={6}
               step={0.1}
               minimumTrackTintColor={COLORS.water}
               maximumTrackTintColor={COLORS.border}
@@ -121,7 +105,7 @@ export default function SetupGoalsScreen({ navigation }) {
             />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Text style={[FONTS.smallText, { color: COLORS.textMuted }]}>1.0 L</Text>
-              <Text style={[FONTS.smallText, { color: COLORS.textMuted }]}>5.0 L</Text>
+              <Text style={[FONTS.smallText, { color: COLORS.textMuted }]}>6.0 L</Text>
             </View>
           </View>
         </View>
@@ -171,7 +155,7 @@ export default function SetupGoalsScreen({ navigation }) {
             activeOpacity={0.9}
             onPress={() => applyAISuggestion()}
           >
-            <Text style={[styles.secondaryBtnText, { color: COLORS.onPrimary || '#FFF' }]}>Use AI Suggestion</Text>
+            <Text style={[styles.secondaryBtnText, { color: COLORS.onPrimary || '#FFF' }]}>Smart Auto-Fill</Text>
           </TouchableOpacity>
         </View>
 
@@ -196,27 +180,14 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingTop: 50 },
   title: { fontSize: 22, marginBottom: 12 },
-
-  card: {
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 12,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-
+  card: { borderRadius: 12, padding: 10, marginBottom: 12, borderWidth: 1, overflow: 'hidden' },
   cardRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   iconCircle: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-
-  label: { fontSize: 16, marginBottom: 2 },
-  value: { fontSize: 18, marginBottom: 6 },
-
   actionRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
   ghostBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1, alignItems: 'center', marginRight: 10 },
   ghostBtnText: { fontSize: 15, fontWeight: '600' },
   secondaryBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', marginLeft: 10 },
   secondaryBtnText: { fontSize: 15, fontWeight: '700', color: '#FFF' },
-
   saveButton: { marginTop: 18, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
   saveText: { fontSize: 16, fontWeight: '700' },
 });

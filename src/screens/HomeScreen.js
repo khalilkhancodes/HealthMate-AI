@@ -96,7 +96,21 @@ export default function HomeScreen({ navigation }) {
   // Initialize background services and permissions
   useEffect(() => {
     requestNotificationPermissions();
-    void useHealthStore.getState().startLiveStepTracking();
+    
+    // Create an async initializer for the pedometer
+    const initializePedometer = async () => {
+      const store = useHealthStore.getState();
+      
+      // 1. Trigger the OS permission prompt
+      const hasPermission = await store.requestPedometerPermission();
+      
+      // 2. Only start the tracker if the user tapped "Allow"
+      if (hasPermission) {
+        await store.startLiveStepTracking();
+      }
+    };
+
+    initializePedometer();
   }, []);
 
   useAuth();

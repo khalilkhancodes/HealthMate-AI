@@ -56,7 +56,7 @@ export default function StepScreen({ navigation }) {
             <Text style={[FONTS.smallText, { color: COLORS.textMuted }]}>{`of ${stepGoal.toLocaleString()}`}</Text>
           </View>
         </View>
-
+wa
         <View style={[styles.goalPillCard, { backgroundColor: COLORS.surface }]}> 
           <View style={styles.goalPillLeft}>
             <View style={[styles.goalIconWrap, { backgroundColor: COLORS.primaryContainer }]}>

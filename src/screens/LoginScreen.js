@@ -1,17 +1,18 @@
-import { useWarmUpBrowser } from '../utils/useWarmUpBrowser';
+import { useSignInWithGoogle } from '@clerk/expo/google';
+import { useAuth } from '@clerk/expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import {
   Alert,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from 'react-native';
-
-import { useSignInWithGoogle } from '@clerk/expo/google';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHealthStore } from '../store/useHealthStore';
+import { useState } from 'react';
 
 const COLORS = {
   background: '#fdfdfb',
@@ -24,68 +25,118 @@ const COLORS = {
   waterbg: '#eef4ff',
 };
 
-
 export default function LoginScreen({ navigation }) {
-  useWarmUpBrowser();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { isSignedIn } = useAuth();
+  const clearGuestMode = useHealthStore((state) => state.clearGuestMode);
   const setIsGuestMode = useHealthStore((state) => state.setIsGuestMode);
   const { startGoogleAuthenticationFlow } = useSignInWithGoogle();
 
-  const handleGoogleSignIn = useCallback(async () => {
-    console.log('➡️ Native Google sign-in pressed');
-
-    if (typeof startGoogleAuthenticationFlow !== 'function') {
-      console.error('startGoogleAuthenticationFlow is missing');
-      Alert.alert('Configuration Error', 'Google sign-in is not available.');
-      return;
+  // ✅ When Clerk confirms sign-in, clear guest mode and close modal
+  useEffect(() => {
+    if (isSignedIn) {
+      clearGuestMode();
+      // Dismiss the modal — App.js will re-route to AppNavigator automatically
+      if (navigation?.canGoBack()) {
+        navigation.goBack();
+      }
     }
+  }, [isSignedIn]);
+
+  const handleGoogleSignIn = useCallback(async () => {
+    if (isLoading) return;
+    setIsLoading(true);
 
     try {
-      console.log('Calling native startGoogleAuthenticationFlow...');
+      const result = await startGoogleAuthenticationFlow();
 
-      const { createdSessionId, setActive } = await startGoogleAuthenticationFlow();
-
-      console.log('Session ID Returned:', createdSessionId);
-
-      if (createdSessionId && setActive) {
-        await setActive({ session: createdSessionId });
+      if (!result) {
+        // User cancelled or flow returned nothing
+        setIsLoading(false);
         return;
       }
 
-      console.warn('Native flow aborted or returned null session.');
-    } catch (err) {
-      const message = err?.code === 'SIGN_IN_CANCELLED' || err?.code === '-5'
-        ? 'Google sign-in was cancelled.'
-        : err?.message || 'An error occurred during native Google sign-in.';
+      const { createdSessionId, setActive } = result;
 
-      if (err?.code !== 'SIGN_IN_CANCELLED' && err?.code !== '-5') {
-        console.error('❌ Google sign-in error:', err);
-        Alert.alert('Google Sign-In Error', message);
+      if (createdSessionId && setActive) {
+        await setActive({ session: createdSessionId });
+        // ✅ useEffect above will fire once isSignedIn becomes true
+        return;
+      }
+
+      // Flow completed but no session (e.g. cancelled)
+      setIsLoading(false);
+
+    } catch (err) {
+      setIsLoading(false);
+
+      const isCancelled =
+        err?.code === 'SIGN_IN_CANCELLED' ||
+        err?.code === '-5' ||
+        err?.message?.includes('cancelled');
+
+      if (!isCancelled) {
+        console.error('Google sign-in error:', err);
+        Alert.alert(
+          'Sign-In Failed',
+          err?.message || 'Something went wrong. Please try again.'
+        );
       }
     }
-  }, [startGoogleAuthenticationFlow]);
+  }, [startGoogleAuthenticationFlow, isLoading]);
 
   const handleContinueAsGuest = useCallback(() => {
     setIsGuestMode(true);
-  }, [setIsGuestMode]);
+    if (navigation?.canGoBack()) {
+      navigation.goBack();
+    }
+  }, [setIsGuestMode, navigation]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
       <View style={styles.content}>
+
+        {/* Close button (since it's a modal) */}
+        {navigation?.canGoBack() && (
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => navigation.goBack()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="close" size={24} color={COLORS.textMuted} />
+          </TouchableOpacity>
+        )}
+
         <View style={styles.brandWrap}>
           <View style={[styles.logoCircle, { backgroundColor: COLORS.waterbg }]}>
             <Ionicons name="heart" size={34} color={COLORS.primary} />
           </View>
-          <Text style={[styles.welcome, { color: COLORS.textPrimary }]}>Welcome to HealthMate AI!</Text>
-          <Text style={[styles.subtitle, { color: COLORS.textMuted }]}>Your personal AI health companion</Text>
+          <Text style={[styles.welcome, { color: COLORS.textPrimary }]}>
+            Welcome to HealthMate AI!
+          </Text>
+          <Text style={[styles.subtitle, { color: COLORS.textMuted }]}>
+            Your personal AI health companion
+          </Text>
         </View>
 
         <TouchableOpacity
-          style={[styles.googleButton, { backgroundColor: COLORS.primary }]}
+          style={[
+            styles.googleButton,
+            { backgroundColor: isLoading ? '#6a9e80' : COLORS.primary },
+          ]}
           activeOpacity={0.9}
           onPress={handleGoogleSignIn}
+          disabled={isLoading}
         >
-          <Ionicons name="logo-google" size={20} color={COLORS.onPrimary} />
-          <Text style={[styles.googleButtonText, { color: COLORS.onPrimary }]}>Continue with Google</Text>
+          {isLoading ? (
+            <ActivityIndicator size="small" color={COLORS.onPrimary} />
+          ) : (
+            <Ionicons name="logo-google" size={20} color={COLORS.onPrimary} />
+          )}
+          <Text style={[styles.googleButtonText, { color: COLORS.onPrimary }]}>
+            {isLoading ? 'Signing in...' : 'Continue with Google'}
+          </Text>
         </TouchableOpacity>
 
         <View style={styles.dividerContainer}>
@@ -95,11 +146,17 @@ export default function LoginScreen({ navigation }) {
         </View>
 
         <TouchableOpacity
-          style={[styles.guestButton, { borderColor: COLORS.border, backgroundColor: COLORS.surface }]}
+          style={[
+            styles.guestButton,
+            { borderColor: COLORS.border, backgroundColor: COLORS.surface },
+          ]}
           activeOpacity={0.8}
           onPress={handleContinueAsGuest}
+          disabled={isLoading}
         >
-          <Text style={[styles.guestButtonText, { color: COLORS.textPrimary }]}>Continue as Guest</Text>
+          <Text style={[styles.guestButtonText, { color: COLORS.textPrimary }]}>
+            Continue as Guest
+          </Text>
         </TouchableOpacity>
 
         <Text style={[styles.footerText, { color: COLORS.textMuted }]}>
@@ -118,6 +175,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     justifyContent: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    zIndex: 10,
+    padding: 4,
   },
   brandWrap: {
     alignItems: 'center',

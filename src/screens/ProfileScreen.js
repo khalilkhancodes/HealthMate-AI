@@ -138,10 +138,6 @@ export default function ProfileScreen({ navigation }) {
                 { backgroundColor: COLORS.primary },
               ]}
               onPress={() => {
-                if (isGuestMode) {
-                  clearGuestMode();
-                }
-
                 navigation.navigate('LoginNavigator');
               }}
             >
@@ -289,7 +285,7 @@ export default function ProfileScreen({ navigation }) {
             subtitle="Reminders and alerts"
             iconBg="#FFF3E6"
             iconColor="#F97316"
-            onPress={() => console.log('Notifications')}
+            onPress={() => navigation.navigate('NotificationsScreen')}
           />
         </View>
 

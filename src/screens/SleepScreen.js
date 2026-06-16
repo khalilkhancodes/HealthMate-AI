@@ -4,11 +4,14 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Modal,
+  Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TouchableOpacity,
+  NativeModules,
   View,
 } from 'react-native';
 import CircularProgress from 'react-native-circular-progress-indicator';
@@ -16,83 +19,88 @@ import CircularProgress from 'react-native-circular-progress-indicator';
 import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SleepScreen — redesigned
-//
-// WHAT'S NEW:
-// 1. Wake-up flow: when user taps "End Sleep Session", a modal appears asking
-//    for a 1-5 star QUALITY rating and a 5-emoji MOOD rating, BEFORE saving.
-// 2. These are passed to stopSleep(quality, mood) — see useHealthStore changes
-//    needed below.
-// 3. Sleep History section now shows quality stars + mood emoji per entry,
-//    replacing the old text-only "Good/Fair/Poor" badge.
-// 4. Quality Score / Breaths-per-min premium cards are REMOVED — they were
-//    fake placeholder numbers (Math.round(55 + ...)) with no real backing
-//    data. Replaced with a real "This Week" sleep debt summary card that
-//    uses actual logged data.
-// 5. Bedtime reminder hint added near the goal card (actual scheduling logic
-//    lives in your notifications util — this just surfaces the goal-based
-//    suggested bedtime).
-// ─────────────────────────────────────────────────────────────────────────────
+const { AlarmModule } = NativeModules;
+
+// ── Constants ──────────────────────────────────────────────────────────────────
 
 const MOODS = [
   { key: 'exhausted', emoji: '😫', label: 'Exhausted' },
-  { key: 'tired', emoji: '😔', label: 'Tired' },
-  { key: 'okay', emoji: '😐', label: 'Okay' },
-  { key: 'good', emoji: '🙂', label: 'Good' },
-  { key: 'great', emoji: '🤩', label: 'Great' },
+  { key: 'tired',     emoji: '😔', label: 'Tired'     },
+  { key: 'okay',      emoji: '😐', label: 'Okay'      },
+  { key: 'good',      emoji: '🙂', label: 'Good'      },
+  { key: 'great',     emoji: '🤩', label: 'Great'     },
 ];
+
+/**
+ * Ringtones bundled in android/app/src/main/res/raw/
+ * The `id` must match the filename WITHOUT extension (e.g. alarm1.mp3 → "alarm1").
+ */
+const RINGTONES = [
+  { id: 'alarm1', label: '🔔 Morning Bells'  },
+  { id: 'alarm2', label: '🌅 Gentle Rise'    },
+  { id: 'alarm3', label: '⚡ Rise & Shine'   },
+];
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function formatElapsedTime(ms) {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+  const hours   = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
   const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
   const seconds = String(totalSeconds % 60).padStart(2, '0');
   return `${hours}:${minutes}:${seconds}`;
 }
 
 function formatRemainingTime(ms) {
-  const safeMs = Math.max(0, ms);
+  const safeMs       = Math.max(0, ms);
   const totalMinutes = Math.floor(safeMs / (1000 * 60));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
+  const hours        = Math.floor(totalMinutes / 60);
+  const minutes      = totalMinutes % 60;
   return `${hours}h ${String(minutes).padStart(2, '0')}m`;
 }
 
-// Quality label/colour helper — used both in the wake-up modal preview
-// and in the history list.
 function getQualityMeta(stars) {
   if (stars >= 5) return { label: 'Excellent', color: '#16A34A', bg: '#DCFCE7' };
-  if (stars >= 4) return { label: 'Good', color: '#16A34A', bg: '#DCFCE7' };
-  if (stars >= 3) return { label: 'Fair', color: '#D97706', bg: '#FEF3C7' };
-  if (stars >= 2) return { label: 'Poor', color: '#EA580C', bg: '#FFEDD5' };
-  return { label: 'Very Poor', color: '#DC2626', bg: '#FEE2E2' };
+  if (stars >= 4) return { label: 'Good',      color: '#16A34A', bg: '#DCFCE7' };
+  if (stars >= 3) return { label: 'Fair',      color: '#D97706', bg: '#FEF3C7' };
+  if (stars >= 2) return { label: 'Poor',      color: '#EA580C', bg: '#FFEDD5' };
+  return             { label: 'Very Poor',  color: '#DC2626', bg: '#FEE2E2' };
 }
 
+// ── Screen ─────────────────────────────────────────────────────────────────────
+
 export default function SleepScreen() {
-  const { COLORS, FONTS, RADII, SHADOWS } = useTheme();
+  const { COLORS, FONTS, SHADOWS } = useTheme();
 
-  const [elapsedTime, setElapsedTime] = useState('00:00:00');
-  const [showGoalEditor, setShowGoalEditor] = useState(false);
-  const [tempGoalHours, setTempGoalHours] = useState(8);
-  const [nowMs, setNowMs] = useState(Date.now());
+  // ── Local state ──────────────────────────────────────────────────────────────
+  const [elapsedTime,     setElapsedTime]     = useState('00:00:00');
+  const [showGoalEditor,  setShowGoalEditor]  = useState(false);
+  const [tempGoalHours,   setTempGoalHours]   = useState(8);
+  const [nowMs,           setNowMs]           = useState(Date.now());
 
-  // ── Wake-up check-in modal state ──────────────────────────────────────────
+  // Alarm settings
+  const [isAlarmEnabled,     setIsAlarmEnabled]     = useState(true);
+  const [selectedRingtone,   setSelectedRingtone]   = useState('alarm1');
+  const [showRingtonePicker, setShowRingtonePicker] = useState(false);
+
+  // Wake-up check-in
   const [showWakeCheckIn, setShowWakeCheckIn] = useState(false);
-  const [selectedQuality, setSelectedQuality] = useState(0); // 1-5 stars
-  const [selectedMood, setSelectedMood] = useState(null);     // mood key
+  const [selectedQuality, setSelectedQuality] = useState(0);
+  const [selectedMood,    setSelectedMood]    = useState(null);
 
-  const isPremiumUser = useHealthStore((state) => state.isPremiumUser);
-  const isSleeping = useHealthStore((state) => state.isSleeping);
-  const sleepStartTime = useHealthStore((state) => state.sleepStartTime);
-  const startSleep = useHealthStore((state) => state.startSleep);
-  const stopSleep = useHealthStore((state) => state.stopSleep);
-  const sleepGoalHours = useHealthStore((state) => state.sleepGoalHours);
-  const setSleepGoalHours = useHealthStore((state) => state.setSleepGoalHours);
-  const sleepHistory = useHealthStore((state) => state.sleepHistory);
+  // ── Store ────────────────────────────────────────────────────────────────────
+  const isPremiumUser    = useHealthStore((s) => s.isPremiumUser);
+  const isSleeping       = useHealthStore((s) => s.isSleeping);
+  const sleepStartTime   = useHealthStore((s) => s.sleepStartTime);
+  const startSleep       = useHealthStore((s) => s.startSleep);
+  const stopSleep        = useHealthStore((s) => s.stopSleep);
+  const sleepGoalHours   = useHealthStore((s) => s.sleepGoalHours);
+  const setSleepGoalHours = useHealthStore((s) => s.setSleepGoalHours);
+  const sleepHistory     = useHealthStore((s) => s.sleepHistory);
 
   const targetHours = Math.max(1, sleepGoalHours || 8);
 
+  // ── Derived values ───────────────────────────────────────────────────────────
   const sessionHours = useMemo(() => {
     if (!isSleeping || !sleepStartTime) return 0;
     return (nowMs - sleepStartTime) / (1000 * 60 * 60);
@@ -100,24 +108,47 @@ export default function SleepScreen() {
 
   const remainingMs = useMemo(() => {
     if (!isSleeping || !sleepStartTime) return targetHours * 60 * 60 * 1000;
-    const elapsed = nowMs - sleepStartTime;
-    return Math.max(0, targetHours * 60 * 60 * 1000 - elapsed);
+    return Math.max(0, targetHours * 60 * 60 * 1000 - (nowMs - sleepStartTime));
   }, [isSleeping, targetHours, sleepStartTime, nowMs]);
 
   const sessionDurationText = useMemo(() => {
     if (!isSleeping) {
       const hours = Math.floor(targetHours);
-      const mins = Math.round((targetHours - hours) * 60);
+      const mins  = Math.round((targetHours - hours) * 60);
       return `${hours}h ${String(mins).padStart(2, '0')}m`;
     }
     return formatRemainingTime(remainingMs);
   }, [isSleeping, targetHours, remainingMs]);
 
+  const suggestedBedtime = useMemo(() => {
+    const wakeTarget = new Date();
+    wakeTarget.setHours(7, 0, 0, 0);
+    const bedtime = new Date(wakeTarget.getTime() - targetHours * 60 * 60 * 1000);
+    return bedtime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  }, [targetHours]);
+
+  const weekSummary = useMemo(() => {
+    const last7 = (sleepHistory || []).slice(0, 7);
+    if (last7.length === 0) return { avgHours: 0, debtHours: 0, nightsLogged: 0, avgQuality: 0 };
+
+    const totalHours = last7.reduce((sum, e) => sum + (e.duration || 0), 0);
+    const totalDebt  = last7.reduce((sum, e) => sum + Math.max(0, targetHours - (e.duration || 0)), 0);
+    const qEntries   = last7.filter((e) => typeof e.qualityStars === 'number');
+    const avgQuality = qEntries.length
+      ? qEntries.reduce((s, e) => s + e.qualityStars, 0) / qEntries.length
+      : 0;
+
+    return {
+      avgHours:     Number((totalHours / last7.length).toFixed(1)),
+      debtHours:    Number(totalDebt.toFixed(1)),
+      nightsLogged: last7.length,
+      avgQuality:   Number(avgQuality.toFixed(1)),
+    };
+  }, [sleepHistory, targetHours]);
+
+  // ── Ticker ───────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!isSleeping || !sleepStartTime) {
-      setElapsedTime('00:00:00');
-      return;
-    }
+    if (!isSleeping || !sleepStartTime) { setElapsedTime('00:00:00'); return; }
     const timer = setInterval(() => {
       setElapsedTime(formatElapsedTime(Date.now() - sleepStartTime));
       setNowMs(Date.now());
@@ -125,87 +156,60 @@ export default function SleepScreen() {
     return () => clearInterval(timer);
   }, [isSleeping, sleepStartTime]);
 
-  // ── This week's sleep debt summary (real data, replaces fake premium cards) ─
-  const weekSummary = useMemo(() => {
-    const last7 = (sleepHistory || []).slice(0, 7);
-    if (last7.length === 0) {
-      return { avgHours: 0, debtHours: 0, nightsLogged: 0, avgQuality: 0 };
-    }
-    const totalHours = last7.reduce((sum, e) => sum + (e.duration || 0), 0);
-    const totalDebt = last7.reduce((sum, e) => sum + Math.max(0, targetHours - (e.duration || 0)), 0);
-    const qualityEntries = last7.filter((e) => typeof e.qualityStars === 'number');
-    const avgQuality = qualityEntries.length
-      ? qualityEntries.reduce((s, e) => s + e.qualityStars, 0) / qualityEntries.length
-      : 0;
-
-    return {
-      avgHours: Number((totalHours / last7.length).toFixed(1)),
-      debtHours: Number(totalDebt.toFixed(1)),
-      nightsLogged: last7.length,
-      avgQuality: Number(avgQuality.toFixed(1)),
-    };
-  }, [sleepHistory, targetHours]);
-
-  // Suggested bedtime so user wakes up at their goal — simple "now + 8h" style hint
-  const suggestedBedtime = useMemo(() => {
-    const wakeTarget = new Date();
-    wakeTarget.setHours(7, 0, 0, 0); // assume 7am wake target; could be made configurable
-    const bedtime = new Date(wakeTarget.getTime() - targetHours * 60 * 60 * 1000);
-    return bedtime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-  }, [targetHours]);
-
-  // ── Handlers ──────────────────────────────────────────────────────────────
-  const handlePremiumTeasePress = () => {
-    Alert.alert('Premium Feature', 'Advanced sleep stage analysis is a Premium feature.');
-  };
-
+  // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleStartSleep = () => {
+    if (isAlarmEnabled && Platform.OS === 'android' && AlarmModule) {
+      const triggerTime = Date.now() + targetHours * 60 * 60 * 1000;
+      AlarmModule.setAlarm(triggerTime, selectedRingtone);
+
+      const timeString = new Date(triggerTime).toLocaleTimeString([], {
+        hour: '2-digit', minute: '2-digit',
+      });
+      Alert.alert(
+        '⏰ Alarm Set',
+        `We'll wake you at ${timeString} with "${RINGTONES.find((r) => r.id === selectedRingtone)?.label}".`,
+      );
+    } else {
+      console.log('[SleepScreen] Silent session started (alarm disabled).');
+    }
     startSleep();
-    console.log('[SleepScreen] Sleep tracking started manually.');
   };
 
-  // Instead of stopping immediately, open the wake-up check-in modal first.
   const handleStopSleepPress = () => {
+    if (Platform.OS === 'android' && AlarmModule) {
+      AlarmModule.cancelAlarm();
+    }
     setSelectedQuality(0);
     setSelectedMood(null);
     setShowWakeCheckIn(true);
   };
 
-  // Called when user confirms quality + mood in the wake-up modal.
   const handleConfirmWakeCheckIn = () => {
     if (selectedQuality === 0) {
       Alert.alert('Rate your sleep', 'Please select a star rating before continuing.');
       return;
     }
-    // stopSleep now accepts quality (1-5) and mood (string key).
-    // See useHealthStore update notes below this file.
     stopSleep(selectedQuality, selectedMood);
     setShowWakeCheckIn(false);
-    console.log('[SleepScreen] Sleep stopped with quality:', selectedQuality, 'mood:', selectedMood);
   };
 
   const handleSkipWakeCheckIn = () => {
-    // Still stop the session, just without quality/mood data
     stopSleep(null, null);
     setShowWakeCheckIn(false);
   };
 
-  const handleGoalEditorSave = () => {
-    const nextGoal = Math.max(1, Number(tempGoalHours) || 8);
-    setSleepGoalHours(nextGoal);
-    setShowGoalEditor(false);
-  };
+  const handleGoalEditorOpen  = () => { setTempGoalHours(sleepGoalHours || 8); setShowGoalEditor(true); };
+  const handleGoalEditorSave  = () => { setSleepGoalHours(Math.max(1, Number(tempGoalHours) || 8)); setShowGoalEditor(false); };
+  const handlePremiumTeasePress = () => Alert.alert('Premium Feature', 'Advanced sleep stage analysis is a Premium feature.');
 
-  const handleGoalEditorOpen = () => {
-    setTempGoalHours(sleepGoalHours || 8);
-    setShowGoalEditor(true);
-  };
+  const currentRingtoneName = RINGTONES.find((r) => r.id === selectedRingtone)?.label ?? '—';
 
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-        {/* ── Current session card ──────────────────────────────────────── */}
+        {/* ── Session card ── */}
         <View style={[styles.sessionCard, { backgroundColor: COLORS.surface, ...SHADOWS.small }]}>
           <View style={styles.sessionTopRow}>
             <View>
@@ -214,7 +218,6 @@ export default function SleepScreen() {
                 {isSleeping ? 'Tracking Sleep' : 'Ready for Bed'}
               </Text>
             </View>
-
             <View style={styles.trackingBadge}>
               <View style={[styles.trackingDot, { backgroundColor: isSleeping ? COLORS.error : COLORS.success }]} />
               <Text style={[styles.trackingBadgeText, { color: COLORS.onPrimary }]}>
@@ -244,13 +247,63 @@ export default function SleepScreen() {
             </View>
           </View>
 
+          {/* ── Alarm toggle row ── */}
+          {!isSleeping && (
+            <View style={[styles.alarmToggleRow, { backgroundColor: 'rgba(0,0,0,0.18)', borderRadius: 14 }]}>
+              <View style={styles.alarmToggleLeft}>
+                <Ionicons
+                  name={isAlarmEnabled ? 'alarm-outline' : 'alarm-off-outline'}
+                  size={20}
+                  color={isAlarmEnabled ? COLORS.onPrimary : 'rgba(255,255,255,0.45)'}
+                />
+                <View style={{ marginLeft: 10 }}>
+                  <Text style={[styles.alarmToggleLabel, { color: COLORS.onPrimary }]}>
+                    Wake-up Alarm
+                  </Text>
+                  <Text style={[styles.alarmToggleSub, { color: 'rgba(255,255,255,0.6)' }]}>
+                    {isAlarmEnabled ? `Rings after ${Math.floor(targetHours)}h` : 'Alarm off — silent session'}
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={isAlarmEnabled}
+                onValueChange={setIsAlarmEnabled}
+                trackColor={{ false: 'rgba(255,255,255,0.2)', true: 'rgba(255,255,255,0.55)' }}
+                thumbColor={isAlarmEnabled ? '#FFFFFF' : 'rgba(255,255,255,0.4)'}
+              />
+            </View>
+          )}
+
+          {/* ── Ringtone picker trigger (only when alarm enabled & not sleeping) ── */}
+          {!isSleeping && isAlarmEnabled && (
+            <TouchableOpacity
+              style={[styles.ringtoneTrigger, { backgroundColor: 'rgba(0,0,0,0.18)', borderRadius: 14 }]}
+              activeOpacity={0.8}
+              onPress={() => setShowRingtonePicker(true)}
+            >
+              <Ionicons name="musical-notes-outline" size={18} color={COLORS.onPrimary} />
+              <Text style={[styles.ringtoneTriggerText, { color: COLORS.onPrimary }]}>
+                {currentRingtoneName}
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={'rgba(255,255,255,0.6)'} />
+            </TouchableOpacity>
+          )}
+
+          {/* ── Start / Stop button ── */}
           <View style={styles.sessionButtonRow}>
             <TouchableOpacity
-              style={[styles.primarySessionButton, { backgroundColor: isSleeping ? COLORS.error : COLORS.primary, width: '100%' }]}
+              style={[
+                styles.primarySessionButton,
+                { backgroundColor: isSleeping ? COLORS.error : COLORS.primary, width: '100%' },
+              ]}
               activeOpacity={0.9}
               onPress={isSleeping ? handleStopSleepPress : handleStartSleep}
             >
-              <Ionicons name={isSleeping ? 'stop-circle-outline' : 'play-circle-outline'} size={20} color={COLORS.onPrimary} />
+              <Ionicons
+                name={isSleeping ? 'stop-circle-outline' : 'play-circle-outline'}
+                size={20}
+                color={COLORS.onPrimary}
+              />
               <Text style={[styles.primarySessionButtonText, FONTS.buttonText, { color: COLORS.onPrimary }]}>
                 {isSleeping ? 'End Sleep Session' : 'Start Sleep Session'}
               </Text>
@@ -264,7 +317,7 @@ export default function SleepScreen() {
           </Text>
         </View>
 
-        {/* ── Goal card ──────────────────────────────────────────────────── */}
+        {/* ── Goal card ── */}
         <TouchableOpacity
           style={[styles.metricCard, { backgroundColor: COLORS.card, ...SHADOWS.small, marginBottom: 16 }]}
           activeOpacity={0.85}
@@ -278,10 +331,9 @@ export default function SleepScreen() {
           <Text style={[styles.metricBody, { color: COLORS.textMuted }]}>Tap to edit</Text>
         </TouchableOpacity>
 
-        {/* ── This Week summary (real data) ─────────────────────────────── */}
+        {/* ── Week summary ── */}
         <View style={[styles.weekCard, { backgroundColor: COLORS.card, ...SHADOWS.small }]}>
           <Text style={[styles.weekTitle, { color: COLORS.textPrimary }]}>This Week</Text>
-
           {weekSummary.nightsLogged === 0 ? (
             <Text style={[styles.weekEmpty, { color: COLORS.textMuted }]}>
               No sleep sessions logged yet. Start tracking tonight!
@@ -294,10 +346,7 @@ export default function SleepScreen() {
               </View>
               <View style={styles.weekStatDivider} />
               <View style={styles.weekStat}>
-                <Text style={[
-                  styles.weekStatValue,
-                  { color: weekSummary.debtHours > 2 ? '#DC2626' : COLORS.textPrimary }
-                ]}>
+                <Text style={[styles.weekStatValue, { color: weekSummary.debtHours > 2 ? '#DC2626' : COLORS.textPrimary }]}>
                   {weekSummary.debtHours}h
                 </Text>
                 <Text style={[styles.weekStatLabel, { color: COLORS.textMuted }]}>Sleep debt</Text>
@@ -313,7 +362,7 @@ export default function SleepScreen() {
           )}
         </View>
 
-        {/* ── Premium advanced analysis teaser ──────────────────────────── */}
+        {/* ── Premium / sleep stage card ── */}
         <TouchableOpacity
           style={[styles.advancedCard, { backgroundColor: COLORS.card, ...SHADOWS.small, marginTop: 16 }]}
           activeOpacity={0.85}
@@ -331,25 +380,22 @@ export default function SleepScreen() {
           {!isPremiumUser && <Ionicons name="lock-closed" size={18} color={COLORS.textMuted} />}
         </TouchableOpacity>
 
-        {/* ── Sleep history with quality + mood ─────────────────────────── */}
+        {/* ── Sleep history ── */}
         <Text style={[styles.historyTitle, { color: COLORS.textPrimary }]}>Recent Nights</Text>
 
         {(sleepHistory || []).slice(0, 7).map((entry) => {
-          const hasQuality = typeof entry.qualityStars === 'number' && entry.qualityStars > 0;
+          const hasQuality  = typeof entry.qualityStars === 'number' && entry.qualityStars > 0;
           const qualityMeta = hasQuality ? getQualityMeta(entry.qualityStars) : null;
-          const moodMeta = entry.mood ? MOODS.find((m) => m.key === entry.mood) : null;
+          const moodMeta    = entry.mood ? MOODS.find((m) => m.key === entry.mood) : null;
 
           return (
             <View key={entry.id} style={[styles.historyRow, { backgroundColor: COLORS.card, ...SHADOWS.small }]}>
-              <View style={styles.historyLeft}>
-                <Text style={[styles.historyDate, { color: COLORS.textPrimary }]}>{entry.date}</Text>
-                <Text style={[styles.historyDuration, { color: COLORS.textMuted }]}>{entry.duration}h slept</Text>
+              <View>
+                <Text style={[styles.historyDate,     { color: COLORS.textPrimary }]}>{entry.date}</Text>
+                <Text style={[styles.historyDuration, { color: COLORS.textMuted   }]}>{entry.duration}h slept</Text>
               </View>
-
               <View style={styles.historyRight}>
-                {moodMeta && (
-                  <Text style={styles.historyMoodEmoji}>{moodMeta.emoji}</Text>
-                )}
+                {moodMeta && <Text style={styles.historyMoodEmoji}>{moodMeta.emoji}</Text>}
                 {hasQuality ? (
                   <View style={[styles.qualityBadge, { backgroundColor: qualityMeta.bg }]}>
                     <Text style={[styles.qualityBadgeText, { color: qualityMeta.color }]}>
@@ -372,7 +418,9 @@ export default function SleepScreen() {
           </Text>
         )}
 
-        {/* ── Goal editor modal (unchanged) ─────────────────────────────── */}
+        {/* ════════════════════════════════════════════════════════════════════
+            MODAL: Goal editor
+        ════════════════════════════════════════════════════════════════════ */}
         <Modal
           visible={showGoalEditor}
           transparent
@@ -419,7 +467,59 @@ export default function SleepScreen() {
           </View>
         </Modal>
 
-        {/* ── NEW: Wake-up check-in modal (quality + mood) ───────────────── */}
+        {/* ════════════════════════════════════════════════════════════════════
+            MODAL: Ringtone picker
+        ════════════════════════════════════════════════════════════════════ */}
+        <Modal
+          visible={showRingtonePicker}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowRingtonePicker(false)}
+        >
+          <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }]}>
+            <View style={[styles.bottomSheet, { backgroundColor: COLORS.card }]}>
+              <Text style={[styles.modalTitle, { color: COLORS.textPrimary, marginBottom: 16 }]}>
+                🎵 Choose Ringtone
+              </Text>
+
+              {RINGTONES.map((tone) => (
+                <TouchableOpacity
+                  key={tone.id}
+                  style={[
+                    styles.ringtoneRow,
+                    {
+                      backgroundColor:
+                        selectedRingtone === tone.id ? COLORS.primaryContainer : 'transparent',
+                      borderRadius: 12,
+                    },
+                  ]}
+                  activeOpacity={0.75}
+                  onPress={() => {
+                    setSelectedRingtone(tone.id);
+                    setShowRingtonePicker(false);
+                  }}
+                >
+                  <Text style={[styles.ringtoneName, { color: COLORS.textPrimary }]}>{tone.label}</Text>
+                  {selectedRingtone === tone.id && (
+                    <Ionicons name="checkmark-circle" size={22} color={COLORS.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: COLORS.border, marginTop: 12 }]}
+                activeOpacity={0.8}
+                onPress={() => setShowRingtonePicker(false)}
+              >
+                <Text style={[FONTS.buttonText, { color: COLORS.textPrimary }]}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* ════════════════════════════════════════════════════════════════════
+            MODAL: Wake-up check-in
+        ════════════════════════════════════════════════════════════════════ */}
         <Modal
           visible={showWakeCheckIn}
           transparent
@@ -429,9 +529,7 @@ export default function SleepScreen() {
           <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
             <View style={[styles.modalContent, { backgroundColor: COLORS.card }]}>
               <Text style={[styles.modalTitle, { color: COLORS.textPrimary }]}>Good morning! ☀️</Text>
-              <Text style={[styles.modalSubtitle, { color: COLORS.textMuted }]}>
-                How did you sleep?
-              </Text>
+              <Text style={[styles.modalSubtitle, { color: COLORS.textMuted }]}>How did you sleep?</Text>
 
               {/* Star rating */}
               <View style={styles.starRow}>
@@ -505,6 +603,8 @@ export default function SleepScreen() {
   );
 }
 
+// ── Styles ─────────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 100 },
@@ -521,19 +621,31 @@ const styles = StyleSheet.create({
   progressTextWrap: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   progressDuration: { fontSize: 32, fontWeight: '800', lineHeight: 38, textAlign: 'center' },
   progressCaption: { marginTop: 4, fontSize: 13, fontWeight: '600', textAlign: 'center', letterSpacing: 0.5 },
-  sessionButtonRow: { marginTop: 12, flexDirection: 'row', gap: 12 },
+
+  // Alarm toggle
+  alarmToggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 12, marginBottom: 10 },
+  alarmToggleLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  alarmToggleLabel: { fontSize: 15, fontWeight: '700' },
+  alarmToggleSub: { fontSize: 12, marginTop: 2 },
+
+  // Ringtone trigger
+  ringtoneTrigger: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 12, marginBottom: 10, gap: 10 },
+  ringtoneTriggerText: { flex: 1, fontSize: 14, fontWeight: '600' },
+
+  // Session button
+  sessionButtonRow: { marginTop: 4, flexDirection: 'row', gap: 12 },
   primarySessionButton: { flex: 1, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10 },
   primarySessionButtonText: { fontSize: 16, fontWeight: '700' },
   sessionMeta: { marginTop: 16, fontSize: 13, fontWeight: '600', textAlign: 'center' },
 
-  // Goal / metric card (single, used for the goal tile)
-  metricCard: { borderRadius: 16, paddingHorizontal: 14, paddingVertical: 14, shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  // Metric / goal card
+  metricCard: { borderRadius: 16, paddingHorizontal: 14, paddingVertical: 14, elevation: 2 },
   metricIconBox: { width: 48, height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
   metricMainValue: { fontSize: 34, fontWeight: '800', lineHeight: 40 },
   metricHeading: { marginTop: 4, fontSize: 16, fontWeight: '700' },
   metricBody: { marginTop: 4, fontSize: 12 },
 
-  // This week summary card
+  // Week card
   weekCard: { borderRadius: 16, padding: 16 },
   weekTitle: { fontSize: 16, fontWeight: '800', marginBottom: 12 },
   weekEmpty: { fontSize: 13, lineHeight: 20 },
@@ -543,13 +655,12 @@ const styles = StyleSheet.create({
   weekStatLabel: { fontSize: 11, marginTop: 4, fontWeight: '600' },
   weekStatDivider: { width: 1, height: 32, backgroundColor: 'rgba(150,150,150,0.2)' },
 
-  // Advanced (premium) teaser card
+  // Advanced card
   advancedCard: { borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center' },
 
-  // Sleep history
+  // History
   historyTitle: { fontSize: 18, fontWeight: '800', marginTop: 20, marginBottom: 10 },
   historyRow: { borderRadius: 14, padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  historyLeft: {},
   historyDate: { fontSize: 15, fontWeight: '700' },
   historyDuration: { fontSize: 12, marginTop: 2 },
   historyRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -559,7 +670,7 @@ const styles = StyleSheet.create({
 
   // Modals (shared)
   modalOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  modalContent: { borderRadius: 20, padding: 24, width: '88%', shadowOpacity: 0.25, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
+  modalContent: { borderRadius: 20, padding: 24, width: '88%', elevation: 8 },
   modalTitle: { fontSize: 22, fontWeight: '800', marginBottom: 6 },
   modalSubtitle: { fontSize: 14, fontWeight: '600' },
   sliderContainer: { marginBottom: 24, marginTop: 16 },
@@ -568,7 +679,12 @@ const styles = StyleSheet.create({
   modalButtonRow: { flexDirection: 'row', gap: 12 },
   modalButton: { flex: 1, borderRadius: 12, paddingVertical: 14, alignItems: 'center', justifyContent: 'center' },
 
-  // Wake-up check-in specific
+  // Bottom sheet (ringtone picker)
+  bottomSheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40, width: '100%' },
+  ringtoneRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 12, marginBottom: 4 },
+  ringtoneName: { fontSize: 16, fontWeight: '600' },
+
+  // Wake-up check-in
   starRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 16, gap: 4 },
   starTouchable: { padding: 4 },
   qualityPreviewText: { textAlign: 'center', fontSize: 14, fontWeight: '800', marginTop: 8 },
