@@ -30,7 +30,7 @@ export default function PrivacyPolicyScreen({ navigation }) {
             <Ionicons name="arrow-back" size={30} color={COLORS.primary} />
           </TouchableOpacity>
 
-          <Text style={[styles.brandText, FONTS.sectionHeading, { color: COLORS.primary }]}>HealthMate</Text>
+          <Text style={[styles.brandText, FONTS.sectionHeading, { color: COLORS.primary }]}>HealthMate AI</Text>
 
           <View style={[styles.bookCircle, { backgroundColor: isDark ? '#27475A' : '#2E5870' }]}>
             <Ionicons name="book-outline" size={20} color="#FFFFFF" />

@@ -498,7 +498,7 @@ export default function HomeScreen({ navigation }) {
 
               <View style={styles.scoreRingWrap}>
                 <View style={[styles.scoreHeartGhost, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.09)' }]}>
-                  <Ionicons name="heart-outline" size={74} color={isDark ? 'rgba(255,255,255,0.10)' : 'rgba(15,23,42,0.10)'} />
+                  <Ionicons name="heart-outline" size={74} color={isDark ? 'rgba(255, 255, 255, 0.13)' : 'rgba(15, 23, 42, 0.12)'} />
                 </View>
                 <View style={[styles.scoreRing, { borderColor: COLORS.primary }]}>
                   <Text style={[styles.scoreValue, { color: COLORS.textPrimary }]}>{healthScore}</Text>

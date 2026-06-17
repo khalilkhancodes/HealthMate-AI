@@ -59,7 +59,7 @@ export default function HelpScreen({ navigation }) {
             <View style={[styles.avatar, { backgroundColor: COLORS.primaryContainer }]}> 
               <Ionicons name="person-outline" size={20} color={COLORS.primary} />
             </View>
-            <Text style={[styles.brandText, FONTS.sectionHeading, { color: COLORS.primary }]}>HealthMate</Text>
+            <Text style={[styles.brandText, FONTS.sectionHeading, { color: COLORS.primary }]}>HealthMate AI</Text>
           </View>
 
           <TouchableOpacity style={styles.headerIconButton} activeOpacity={0.8} onPress={() => navigation.navigate('Profile')}>
@@ -106,10 +106,10 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
     marginBottom: 24,
   },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, width: '70%'},
   avatar: {
     width: 50,
     height: 50,
@@ -124,6 +124,7 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
+      marginLeft: 'auto',
   },
   title: {
     textAlign: 'center',

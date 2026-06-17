@@ -23,6 +23,11 @@ import StreakDetailsScreen from '../screens/StreakDetailsScreen';
 import WaterScreen from '../screens/WaterScreen';
 import ToolsNavigator from './ToolsNavigator';
 import NotificationsScreen from '../screens/NotificationsScreen';
+import AIHubScreen from '../screens/AIHubScreen';
+import AIIngredientScreen from '../screens/AIIngredientScreen'
+import AICalorieScreen from '../screens/AICalorieScreen'
+import AIDoctorScreen from '../screens/AIDoctorScreen'
+import AIMealPlannerScreen from '../screens/AIMealPlannerScreen'
 
 const Tab = createMaterialTopTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -130,6 +135,7 @@ function TabNavigator() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Tools" component={ToolsNavigator} />
       <Tab.Screen name="Analytics" component={AnalyticsScreenPremium} />
+      <Tab.Screen name="AI Hub" component={AIHubScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
@@ -243,6 +249,26 @@ export default function AppNavigator() {
       <Stack.Screen
         name="PrivacyPolicyScreen"
         component={PrivacyPolicyScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AIIngredientScreen"
+        component={AIIngredientScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AIDoctorScreen"
+        component={AIDoctorScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AICalorieScreen"
+        component={AICalorieScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AIMealPlannerScreen"
+        component={AIMealPlannerScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>
