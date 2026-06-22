@@ -5,22 +5,17 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
-
 /*
 const WEEK_DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-
 const toDateString = (date) => format(date, 'yyyy-MM-dd');
-
 const buildCalendarCells = (monthView, completionHistory, selectedDateString) => {
   const monthStart = startOfMonth(monthView);
   const monthEnd = endOfMonth(monthView);
   const leadingEmptyCells = (getDay(monthStart) + 6) % 7;
   const daysInMonth = monthEnd.getDate();
   const today = new Date();
-
   const cells = [];
   for (let i = 0; i < leadingEmptyCells; i += 1) cells.push(null);
-
   for (let day = 1; day <= daysInMonth; day += 1) {
     const date = new Date(monthStart.getFullYear(), monthStart.getMonth(), day);
     const dateString = toDateString(date);
@@ -32,17 +27,13 @@ const buildCalendarCells = (monthView, completionHistory, selectedDateString) =>
       isSelected: selectedDateString === dateString,
     });
   }
-
   while (cells.length % 7 !== 0) cells.push(null);
   return cells;
 };
-
 function CalendarDayCell({ cell, COLORS }) {
   if (!cell) return <View style={styles.calendarCell} />;
-
   const focused = cell.isSelected || cell.isToday;
   const completed = Boolean(cell.completed);
-
   return (
     <View style={styles.calendarCell}>
       <View
@@ -331,28 +322,23 @@ function CalendarDayCell({ cell, COLORS }) {
 });
 */
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
 const formatAchievementDate = (value) => {
   if (!value) return '';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
   return format(date, 'MMM d, yyyy');
 };
-
 const toDateString = (date) => format(date, 'yyyy-MM-dd');
-
 const buildCalendarCells = (monthView, completionHistory) => {
   const monthStart = startOfMonth(monthView);
   const monthEnd = endOfMonth(monthView);
   const leadingEmptyCells = (getDay(monthStart) + 6) % 7;
   const daysInMonth = monthEnd.getDate();
   const today = new Date();
-
   const cells = [];
   for (let i = 0; i < leadingEmptyCells; i += 1) {
     cells.push(null);
   }
-
   for (let day = 1; day <= daysInMonth; day += 1) {
     const date = new Date(monthStart.getFullYear(), monthStart.getMonth(), day);
     const dateString = toDateString(date);
@@ -364,20 +350,16 @@ const buildCalendarCells = (monthView, completionHistory) => {
       isCurrentMonth: isSameMonth(date, today),
     });
   }
-
   while (cells.length % 7 !== 0) {
     cells.push(null);
   }
-
   return cells;
 };
-
 function AchievementBadge({ item, COLORS, FONTS }) {
   const unlocked = Boolean(item.earnedDate);
   const iconBg = unlocked ? '#F59E0B' : COLORS.surface;
   const iconColor = unlocked ? '#FFFFFF' : COLORS.textMuted;
   const textColor = unlocked ? COLORS.textPrimary : COLORS.textMuted;
-
   return (
     <View style={styles.badgeItem}>
       <View
@@ -400,12 +382,10 @@ function AchievementBadge({ item, COLORS, FONTS }) {
     </View>
   );
 }
-
 function CalendarDayCell({ cell, COLORS }) {
   if (!cell) {
     return <View style={styles.calendarCell} />;
   }
-
   return (
     <View style={styles.calendarCell}>
       <View
@@ -430,18 +410,15 @@ function CalendarDayCell({ cell, COLORS }) {
           {cell.date.getDate()}
         </Text>
       </View>
-
       {cell.isToday ? <View style={[styles.todayDot, { backgroundColor: COLORS.warning }]} /> : <View style={styles.todayDotPlaceholder} />}
     </View>
   );
 }
-
 export default function StreakDetailsScreen({ navigation, route }) {
   const { COLORS, FONTS } = useTheme();
   const currentStreak = useHealthStore((state) => state.currentStreak);
   const achievements = useHealthStore((state) => state.achievements);
   const completionHistory = useHealthStore((state) => state.completionHistory || {});
-
   const initialMonthView = useMemo(() => {
     const routeDate = route?.params?.date ? new Date(route.params.date) : new Date();
     if (Number.isNaN(routeDate.getTime())) {
@@ -449,9 +426,7 @@ export default function StreakDetailsScreen({ navigation, route }) {
     }
     return startOfMonth(routeDate);
   }, [route?.params?.date]);
-
   const [currentMonthView, setCurrentMonthView] = useState(initialMonthView);
-
   useEffect(() => {
     if (route?.params?.date) {
       const routeDate = new Date(route.params.date);
@@ -460,27 +435,22 @@ export default function StreakDetailsScreen({ navigation, route }) {
       }
     }
   }, [route?.params?.date]);
-
   const todayMonthStart = useMemo(() => startOfMonth(new Date()), []);
   const currentViewMonthStart = startOfMonth(currentMonthView);
   const canGoNext = currentViewMonthStart.getTime() < todayMonthStart.getTime();
-
   const calendarCells = useMemo(
     () => buildCalendarCells(currentMonthView, completionHistory),
     [currentMonthView, completionHistory]
   );
-
   const goPreviousMonth = () => {
     setCurrentMonthView((prev) => startOfMonth(subMonths(prev, 1)));
   };
-
   const goNextMonth = () => {
     setCurrentMonthView((prev) => {
       const next = startOfMonth(addMonths(prev, 1));
       return next.getTime() <= todayMonthStart.getTime() ? next : prev;
     });
   };
-
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: COLORS.background }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
@@ -488,24 +458,19 @@ export default function StreakDetailsScreen({ navigation, route }) {
           <TouchableOpacity style={styles.backButton} activeOpacity={0.75} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
-
           <Text style={[styles.headerTitle, FONTS.mainHeading, { color: COLORS.textPrimary }]} numberOfLines={1}>
             Streak & Achievements
           </Text>
-
           <View style={styles.headerSpacer} />
         </View>
-
         <View style={styles.centerBlock}>
           <Text style={styles.fireEmoji}>🔥</Text>
           <Text style={[FONTS.bigNumbers, { color: COLORS.textPrimary }]}>{currentStreak} Days</Text>
         </View>
-
         <View style={[styles.card, { backgroundColor: COLORS.card, borderColor: COLORS.border }]}>
           <View style={styles.cardHeader}>
             {/* <Text style={[FONTS.sectionHeading, { color: COLORS.textPrimary }]}>Monthly Overview</Text> */}
           </View>
-
           <View style={styles.monthNavRow}>
             <TouchableOpacity
               style={[styles.monthNavButton, { borderColor: COLORS.border, backgroundColor: COLORS.surface }]}
@@ -514,11 +479,9 @@ export default function StreakDetailsScreen({ navigation, route }) {
             >
               <Ionicons name="chevron-back" size={20} color={COLORS.textPrimary} />
             </TouchableOpacity>
-
             <Text style={[styles.monthLabel, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>
               {format(currentMonthView, 'MMMM yyyy')}
             </Text>
-
             <TouchableOpacity
               style={[
                 styles.monthNavButton,
@@ -535,7 +498,6 @@ export default function StreakDetailsScreen({ navigation, route }) {
               <Ionicons name="chevron-forward" size={20} color={COLORS.textPrimary} />
             </TouchableOpacity>
           </View>
-
           <View style={styles.calendarHeaderRow}>
             {WEEK_DAYS.map((day) => (
               <Text key={day} style={[styles.calendarHeaderText, FONTS.smallText, { color: COLORS.textMuted }]}>
@@ -543,14 +505,12 @@ export default function StreakDetailsScreen({ navigation, route }) {
               </Text>
             ))}
           </View>
-
           <View style={styles.calendarGrid}>
             {calendarCells.map((cell, idx) => (
               <CalendarDayCell key={`${cell?.dateString || 'empty'}-${idx}`} cell={cell} COLORS={COLORS} />
             ))}
           </View>
         </View>
-
         <View style={[styles.card, { backgroundColor: COLORS.card, borderColor: COLORS.border }]}>
           <View style={styles.cardHeader}>
             <Text style={[FONTS.sectionHeading, { color: COLORS.textPrimary }]}>Achievements</Text>
@@ -558,7 +518,6 @@ export default function StreakDetailsScreen({ navigation, route }) {
               <Text style={[FONTS.subheading, { color: COLORS.primary }]}>See all &gt;</Text>
             </TouchableOpacity>
           </View>
-
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.badgeRow}>
             {(achievements || []).map((item) => (
               <AchievementBadge key={item.id} item={item} COLORS={COLORS} FONTS={FONTS} />
@@ -569,7 +528,6 @@ export default function StreakDetailsScreen({ navigation, route }) {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

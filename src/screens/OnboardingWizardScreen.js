@@ -1,4 +1,7 @@
+import { useUser } from '@clerk/expo';
+import Slider from '@react-native-community/slider';
 import { useMemo, useState } from 'react';
+// import { useUser } from '@clerk/expo';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -38,8 +41,9 @@ const STEP_TITLES = {
   1: 'Basics',
   2: 'Body Metrics',
   3: 'Activity Level',
-  4: 'Health Goal',
+  4: 'Health Goals',
   5: 'Summary',
+  6: 'Review Goals',
 };
 
 const INPUT_STYLE = (COLORS) => ({
@@ -51,6 +55,9 @@ const INPUT_STYLE = (COLORS) => ({
 
 export default function OnboardingWizardScreen() {
   const { COLORS, FONTS, RADII, SHADOWS } = useTheme();
+  
+  // Connect Clerk to pull Google Identity if available
+  const { user } = useUser();
 
   const storeName = useHealthStore((s) => s.name);
   const storeGender = useHealthStore((s) => s.gender);
@@ -69,29 +76,64 @@ export default function OnboardingWizardScreen() {
   const setTargetWeightKg = useHealthStore((s) => s.setTargetWeightKg);
   const setActivityLevel = useHealthStore((s) => s.setActivityLevel);
   const setPrimaryGoal = useHealthStore((s) => s.setPrimaryGoal);
+  
   const calculateBMI = useHealthStore((s) => s.calculateBMI);
   const generateInitialGoals = useHealthStore((s) => s.generateInitialGoals);
   const completeSetup = useHealthStore((s) => s.completeSetup);
 
+  const setStepGoal = useHealthStore((s) => s.setStepGoal);
+  const setWaterGoalMl = useHealthStore((s) => s.setWaterGoalMl);
+  const setSleepGoalHours = useHealthStore((s) => s.setSleepGoalHours);
+
   const [step, setStep] = useState(1);
-  const [name, setNameLocal] = useState(storeName || '');
+  
+  // If store is empty, fallback to Clerk Google Profile Name
+  const [name, setNameLocal] = useState(storeName || user?.fullName || user?.firstName || '');
   const [gender, setGenderLocal] = useState(storeGender || 'other');
   const [age, setAgeLocal] = useState(storeAge ? String(storeAge) : '');
+  
+  // Height State logic
+  const [heightUnit, setHeightUnit] = useState('cm'); 
   const [heightCm, setHeightCmLocal] = useState(storeHeightCm ? String(storeHeightCm) : '');
+  const [heightFt, setHeightFtLocal] = useState('');
+  const [heightIn, setHeightInLocal] = useState('');
+
   const [weightKg, setWeightKgLocal] = useState(storeWeightKg ? String(storeWeightKg) : '');
   const [targetWeightKg, setTargetWeightKgLocal] = useState(storeTargetWeightKg ? String(storeTargetWeightKg) : '');
   const [activityLevel, setActivityLevelLocal] = useState(storeActivityLevel || 'moderate');
-  const [primaryGoal, setPrimaryGoalLocal] = useState(storePrimaryGoal || 'general');
+  
+  // Goals State Logic (Multi-select)
+  const defaultGoals = Array.isArray(storePrimaryGoal) ? storePrimaryGoal : (storePrimaryGoal ? [storePrimaryGoal] : []);
+  const [selectedGoals, setSelectedGoals] = useState(defaultGoals);
+
+  const [reviewStepGoal, setReviewStepGoal] = useState(6000);
+  const [reviewWaterGoal, setReviewWaterGoal] = useState(2.5);
+  const [reviewSleepGoal, setReviewSleepGoal] = useState(8);
+
+  const calculatedHeightCm = useMemo(() => {
+    if (heightUnit === 'cm') return Number(heightCm);
+    const ft = Number(heightFt) || 0;
+    const inch = Number(heightIn) || 0;
+    return (ft * 30.48) + (inch * 2.54);
+  }, [heightUnit, heightCm, heightFt, heightIn]);
 
   const bmiPreview = useMemo(() => {
-    const h = Number(heightCm);
+    const h = calculatedHeightCm;
     const w = Number(weightKg);
-    if (!h || !w) return null;
+    if (!h || !w || h <= 0) return null;
     const bmi = w / ((h / 100) * (h / 100));
     return Number.isFinite(bmi) ? bmi.toFixed(1) : null;
-  }, [heightCm, weightKg]);
+  }, [calculatedHeightCm, weightKg]);
 
-  const progress = (step / 5) * 100;
+  const progress = (step / 6) * 100;
+
+  const toggleGoal = (key) => {
+    if (selectedGoals.includes(key)) {
+      setSelectedGoals(selectedGoals.filter(g => g !== key));
+    } else {
+      setSelectedGoals([...selectedGoals, key]);
+    }
+  };
 
   const goNext = () => {
     if (step === 1) {
@@ -106,55 +148,114 @@ export default function OnboardingWizardScreen() {
     }
     
     if (step === 2) {
-      if (!heightCm || isNaN(Number(heightCm)) || Number(heightCm) <= 0) {
-        Alert.alert('Required', 'Please enter a valid height in cm.');
+      if (calculatedHeightCm <= 0) {
+        Alert.alert('Required', 'Please enter a valid height.');
         return;
       }
       if (!weightKg || isNaN(Number(weightKg)) || Number(weightKg) <= 0) {
-        Alert.alert('Required', 'Please enter a valid weight in kg.');
+        Alert.alert('Required', 'Please enter a valid weight.');
         return;
       }
     }
 
-    setStep((s) => Math.min(5, s + 1));
+    if (step === 4 && selectedGoals.length === 0) {
+      Alert.alert('Required', 'Please select at least one health goal.');
+      return;
+    }
+
+    setStep((s) => Math.min(6, s + 1));
   };
 
   const goBack = () => setStep((s) => Math.max(1, s - 1));
 
-  const handleStartJourney = () => {
+  const handleGeneratePlan = () => {
     const parsedAge = Number(age);
-    const parsedHeight = Number(heightCm);
     const parsedWeight = Number(weightKg);
     const parsedTarget = Number(targetWeightKg);
 
     setName(name.trim());
     setGender(gender);
     setAge(Number.isFinite(parsedAge) ? parsedAge : '');
-    setHeightCm(Number.isFinite(parsedHeight) ? parsedHeight : 0);
+    setHeightCm(calculatedHeightCm);
     setWeightKg(Number.isFinite(parsedWeight) ? parsedWeight : 0);
     setTargetWeightKg(Number.isFinite(parsedTarget) ? parsedTarget : 0);
     setActivityLevel(activityLevel);
-    setPrimaryGoal(primaryGoal);
+    setPrimaryGoal(selectedGoals); 
 
     calculateBMI();
     generateInitialGoals();
+
+    const store = useHealthStore.getState();
+    setReviewStepGoal(store.stepGoal);
+    setReviewWaterGoal((store.waterGoalMl || 2500) / 1000);
+    setReviewSleepGoal(store.sleepGoalHours || 8);
+
+    setStep(6);
+  };
+
+  const handleConfirmGoals = async () => {
+    // 1. Save locally for immediate UI response
+    setStepGoal(reviewStepGoal);
+    setWaterGoalMl(reviewWaterGoal * 1000);
+    setSleepGoalHours(reviewSleepGoal);
+    
+    // 2. Build the cloud payload
+    if (user) {
+      try {
+        const cloudPayload = {
+          name: name.trim(),
+          gender,
+          age: Number(age),
+          heightCm: calculatedHeightCm,
+          weightKg: Number(weightKg),
+          targetWeightKg: Number(targetWeightKg),
+          activityLevel,
+          primaryGoal: selectedGoals,
+          stepGoal: reviewStepGoal,
+          waterGoalMl: reviewWaterGoal * 1000,
+          sleepGoalHours: reviewSleepGoal,
+          hasCompletedSetup: true,
+        };
+
+        // 3. Push to Clerk's Cloud Database
+        await user.update({
+          unsafeMetadata: cloudPayload
+        });
+        console.log("Profile successfully synced to Clerk Cloud.");
+      } catch (error) {
+        console.warn("Failed to sync profile to cloud:", error);
+      }
+    }
+
+    // 4. Complete setup to unmount the wizard
     completeSetup();
   };
 
   const renderStepHeader = () => (
     <View style={styles.headerWrap}>
-      <Text style={[styles.stepLabel, FONTS.smallText, { color: COLORS.textMuted }]}>Step {step} of 5</Text>
+      <Text style={[styles.stepLabel, FONTS.smallText, { color: COLORS.textMuted }]}>Step {step} of 6</Text>
       <View style={[styles.progressTrack, { backgroundColor: COLORS.border }]}>
         <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: COLORS.primary }]} />
       </View>
       <Text style={[styles.title, FONTS.mainHeading, { color: COLORS.textPrimary }]}>{STEP_TITLES[step]}</Text>
-      <Text style={[styles.subtitle, FONTS.bodyText, { color: COLORS.textMuted }]}>A few details help personalize your health experience.</Text>
+      <Text style={[styles.subtitle, FONTS.bodyText, { color: COLORS.textMuted }]}>
+        {step === 6 ? 'We calculated these targets based on your profile.' : 'A few details help personalize your health experience.'}
+      </Text>
     </View>
   );
 
   return (
-    <KeyboardAvoidingView style={[styles.container, { backgroundColor: COLORS.background }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+    // Keyboard vertical offset fixes the overlap on standard navigation headers
+    <KeyboardAvoidingView 
+      style={[styles.container, { backgroundColor: COLORS.background }]} 
+      behavior='padding'
+      enabled={true}
+      >
+      <ScrollView 
+        contentContainerStyle={styles.content} 
+        keyboardShouldPersistTaps="handled" 
+        showsVerticalScrollIndicator={false}
+      >
         {renderStepHeader()}
 
         <View style={[styles.card, { backgroundColor: COLORS.card, borderColor: COLORS.border, borderRadius: RADII.lg }, SHADOWS.small]}>
@@ -207,15 +308,47 @@ export default function OnboardingWizardScreen() {
             <View>
               <Text style={[styles.sectionTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>Your body metrics</Text>
 
-              <Text style={[styles.label, FONTS.cardText, { color: COLORS.textMuted }]}>Height (cm)</Text>
-              <TextInput
-                value={heightCm}
-                onChangeText={setHeightCmLocal}
-                placeholder="e.g. 170"
-                placeholderTextColor={COLORS.textMuted}
-                keyboardType="numeric"
-                style={[styles.input, INPUT_STYLE(COLORS)]}
-              />
+              <View style={styles.unitToggleRow}>
+                <Text style={[styles.label, FONTS.cardText, { color: COLORS.textMuted, marginTop: 0 }]}>Height</Text>
+                <View style={styles.unitPillContainer}>
+                  <TouchableOpacity onPress={() => setHeightUnit('cm')} style={[styles.unitPill, heightUnit === 'cm' && { backgroundColor: COLORS.primaryContainer }]}>
+                    <Text style={{ fontSize: 12, color: heightUnit === 'cm' ? COLORS.primary : COLORS.textMuted, fontWeight: '700' }}>CM</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setHeightUnit('ft')} style={[styles.unitPill, heightUnit === 'ft' && { backgroundColor: COLORS.primaryContainer }]}>
+                    <Text style={{ fontSize: 12, color: heightUnit === 'ft' ? COLORS.primary : COLORS.textMuted, fontWeight: '700' }}>FT/IN</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {heightUnit === 'cm' ? (
+                <TextInput
+                  value={heightCm}
+                  onChangeText={setHeightCmLocal}
+                  placeholder="e.g. 170"
+                  placeholderTextColor={COLORS.textMuted}
+                  keyboardType="numeric"
+                  style={[styles.input, INPUT_STYLE(COLORS), { marginBottom: 14 }]}
+                />
+              ) : (
+                <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
+                  <TextInput
+                    value={heightFt}
+                    onChangeText={setHeightFtLocal}
+                    placeholder="Feet"
+                    placeholderTextColor={COLORS.textMuted}
+                    keyboardType="numeric"
+                    style={[styles.input, INPUT_STYLE(COLORS), { flex: 1 }]}
+                  />
+                  <TextInput
+                    value={heightIn}
+                    onChangeText={setHeightInLocal}
+                    placeholder="Inches"
+                    placeholderTextColor={COLORS.textMuted}
+                    keyboardType="numeric"
+                    style={[styles.input, INPUT_STYLE(COLORS), { flex: 1 }]}
+                  />
+                </View>
+              )}
 
               <Text style={[styles.label, FONTS.cardText, { color: COLORS.textMuted }]}>Weight (kg)</Text>
               <TextInput
@@ -276,14 +409,14 @@ export default function OnboardingWizardScreen() {
 
           {step === 4 && (
             <View>
-              <Text style={[styles.sectionTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>Primary Health Goal</Text>
+              <Text style={[styles.sectionTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>Health Goals (Select Multiple)</Text>
               {GOAL_OPTIONS.map((option) => {
-                const selected = primaryGoal === option.key;
+                const selected = selectedGoals.includes(option.key);
                 return (
                   <TouchableOpacity
                     key={option.key}
                     activeOpacity={0.85}
-                    onPress={() => setPrimaryGoalLocal(option.key)}
+                    onPress={() => toggleGoal(option.key)}
                     style={[
                       styles.activityCard,
                       { backgroundColor: COLORS.card, borderColor: selected ? COLORS.primary : COLORS.border },
@@ -294,7 +427,10 @@ export default function OnboardingWizardScreen() {
                         <Text style={[FONTS.cardTitle, { color: COLORS.textPrimary }]}>{option.label}</Text>
                         <Text style={[FONTS.cardText, { color: COLORS.textMuted, marginTop: 4 }]}>{option.description}</Text>
                       </View>
-                      <View style={[styles.activityDot, { borderColor: selected ? COLORS.primary : COLORS.border, backgroundColor: selected ? COLORS.primaryContainer : 'transparent' }]} />
+                      {/* Checkbox Style UI for Multi-select */}
+                      <View style={[styles.checkboxContainer, { borderColor: selected ? COLORS.primary : COLORS.border, backgroundColor: selected ? COLORS.primary : 'transparent' }]}>
+                        {selected && <Text style={{ color: COLORS.card, fontSize: 12, fontWeight: '800' }}>✓</Text>}
+                      </View>
                     </View>
                   </TouchableOpacity>
                 );
@@ -309,18 +445,76 @@ export default function OnboardingWizardScreen() {
                 <SummaryRow label="Name" value={name || '—'} COLORS={COLORS} />
                 <SummaryRow label="Gender" value={gender} COLORS={COLORS} />
                 <SummaryRow label="Age" value={age || '—'} COLORS={COLORS} />
-                <SummaryRow label="Height" value={heightCm ? `${heightCm} cm` : '—'} COLORS={COLORS} />
+                <SummaryRow label="Height" value={calculatedHeightCm ? `${calculatedHeightCm.toFixed(0)} cm` : '—'} COLORS={COLORS} />
                 <SummaryRow label="Weight" value={weightKg ? `${weightKg} kg` : '—'} COLORS={COLORS} />
-                <SummaryRow label="Target Weight" value={targetWeightKg ? `${targetWeightKg} kg` : '—'} COLORS={COLORS} />
+                <SummaryRow label="Target" value={targetWeightKg ? `${targetWeightKg} kg` : '—'} COLORS={COLORS} />
                 <SummaryRow label="Activity" value={ACTIVITY_OPTIONS.find(o => o.key === activityLevel)?.label} COLORS={COLORS} />
-                <SummaryRow label="Goal" value={GOAL_OPTIONS.find(o => o.key === primaryGoal)?.label} COLORS={COLORS} />
+                <SummaryRow label="Goals" value={`${selectedGoals.length} Selected`} COLORS={COLORS} />
+              </View>
+            </View>
+          )}
+
+          {step === 6 && (
+            <View>
+              <Text style={[styles.sectionTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>AI Suggested Goals</Text>
+              
+              <View style={styles.sliderWrap}>
+                <View style={styles.sliderHeader}>
+                  <Text style={[FONTS.cardTitle, { color: COLORS.textPrimary }]}>Daily Steps</Text>
+                  <Text style={[FONTS.mediumNumbers, { color: COLORS.primary }]}>{Math.round(reviewStepGoal)}</Text>
+                </View>
+                <Slider
+                  style={{ width: '100%', height: 40 }}
+                  minimumValue={2000}
+                  maximumValue={20000}
+                  step={100}
+                  minimumTrackTintColor={COLORS.primary}
+                  maximumTrackTintColor={COLORS.border}
+                  value={reviewStepGoal}
+                  onValueChange={setReviewStepGoal}
+                />
+              </View>
+
+              <View style={styles.sliderWrap}>
+                <View style={styles.sliderHeader}>
+                  <Text style={[FONTS.cardTitle, { color: COLORS.textPrimary }]}>Hydration (Liters)</Text>
+                  <Text style={[FONTS.mediumNumbers, { color: COLORS.secondary }]}>{reviewWaterGoal.toFixed(1)} L</Text>
+                </View>
+                <Slider
+                  style={{ width: '100%', height: 40 }}
+                  minimumValue={1}
+                  maximumValue={6}
+                  step={0.1}
+                  minimumTrackTintColor={COLORS.secondary}
+                  maximumTrackTintColor={COLORS.border}
+                  value={reviewWaterGoal}
+                  onValueChange={setReviewWaterGoal}
+                />
+              </View>
+
+              <View style={styles.sliderWrap}>
+                <View style={styles.sliderHeader}>
+                  <Text style={[FONTS.cardTitle, { color: COLORS.textPrimary }]}>Sleep (Hours)</Text>
+                  <Text style={[FONTS.mediumNumbers, { color: COLORS.tertiary }]}>{reviewSleepGoal} hrs</Text>
+                </View>
+                <Slider
+                  style={{ width: '100%', height: 40 }}
+                  minimumValue={4}
+                  maximumValue={12}
+                  step={0.5}
+                  minimumTrackTintColor={COLORS.tertiary}
+                  maximumTrackTintColor={COLORS.border}
+                  value={reviewSleepGoal}
+                  onValueChange={setReviewSleepGoal}
+                />
               </View>
             </View>
           )}
         </View>
 
         <View style={styles.footerRow}>
-          {step > 1 && step !== 5 ? (
+          {/* Hide Back button on Summary (5) and Review (6) per request */}
+          {step > 1 && step < 5 ? (
             <TouchableOpacity activeOpacity={0.85} onPress={goBack} style={[styles.secondaryBtn, { borderColor: COLORS.border, backgroundColor: COLORS.card }]}>
               <Text style={[styles.secondaryBtnText, { color: COLORS.textPrimary }]}>Back</Text>
             </TouchableOpacity>
@@ -332,17 +526,21 @@ export default function OnboardingWizardScreen() {
             <TouchableOpacity activeOpacity={0.9} onPress={goNext} style={[styles.primaryBtn, { backgroundColor: COLORS.primary }]}>
               <Text style={[styles.primaryBtnText, { color: COLORS.onPrimary }]}>Continue</Text>
             </TouchableOpacity>
-          ) : (
+          ) : step === 5 ? (
             <View style={{ flex: 1, flexDirection: 'column', gap: 8}}>
               <View style={styles.finalButtonsWrap}>
                 <TouchableOpacity activeOpacity={0.85} onPress={() => setStep(1)} style={[styles.secondaryBtn, { borderColor: COLORS.border, backgroundColor: COLORS.card}]}>
                   <Text style={[styles.secondaryBtnText, { color: COLORS.textPrimary }]}>Edit Information</Text>
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity activeOpacity={0.9} onPress={handleStartJourney} style={[styles.primaryBtn, { backgroundColor: COLORS.primary, flex: 1, marginTop: 10 }]}>
-                <Text style={[styles.primaryBtnText, { color: COLORS.onPrimary }]}>Start My Journey</Text>
+              <TouchableOpacity activeOpacity={0.9} onPress={handleGeneratePlan} style={[styles.primaryBtn, { backgroundColor: COLORS.primary, flex: 1, marginTop: 10 }]}>
+                <Text style={[styles.primaryBtnText, { color: COLORS.onPrimary }]}>Generate Plan</Text>
               </TouchableOpacity>
             </View>
+          ) : (
+            <TouchableOpacity activeOpacity={0.9} onPress={handleConfirmGoals} style={[styles.primaryBtn, { backgroundColor: COLORS.primary, flex: 1 }]}>
+              <Text style={[styles.primaryBtnText, { color: COLORS.onPrimary }]}>Confirm & Start</Text>
+            </TouchableOpacity>
           )}
         </View>
       </ScrollView>
@@ -361,7 +559,8 @@ function SummaryRow({ label, value, COLORS }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 20, paddingBottom: 32, paddingTop: 60 },
+  // Increased bottom padding to ensure keyboard layout doesn't crush the Continue button
+  content: { padding: 20, paddingBottom: 60, paddingTop: 40, flexGrow: 1 },
   headerWrap: { marginBottom: 18 },
   stepLabel: { marginBottom: 8, fontWeight: '700' },
   progressTrack: { height: 8, borderRadius: 999, overflow: 'hidden', marginBottom: 30 },
@@ -374,14 +573,20 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 14, fontSize: 16 },
   pillRow: { flexDirection: 'row', gap: 10, marginBottom: 6, flexWrap: 'wrap' },
   pill: { borderWidth: 1, borderRadius: 999, paddingVertical: 10, paddingHorizontal: 14 },
+  unitToggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  unitPillContainer: { flexDirection: 'row', borderWidth: 1, borderColor: 'rgba(148,163,184,0.3)', borderRadius: 8, overflow: 'hidden' },
+  unitPill: { paddingHorizontal: 10, paddingVertical: 4 },
   previewCard: { marginTop: 16, borderRadius: 16, padding: 14 },
   activityCard: { borderWidth: 1, borderRadius: 18, padding: 16, marginBottom: 12 },
   activityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   activityDot: { width: 22, height: 22, borderRadius: 11, borderWidth: 2 },
+  checkboxContainer: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   summaryCard: { borderWidth: 1, borderRadius: 18, padding: 16 },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(148,163,184,0.2)' },
   summaryLabel: { fontSize: 14, fontWeight: '600' },
   summaryValue: { fontSize: 14, fontWeight: '700', textAlign: 'right', flex: 1, marginLeft: 12 },
+  sliderWrap: { marginBottom: 24 },
+  sliderHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   footerRow: { marginTop: 18, flexDirection: 'row', alignItems: 'center' },
   secondaryBtn: { flex: 1, borderWidth: 1, borderRadius: 14, paddingVertical: 14, alignItems: 'center', marginRight: 10 },
   secondaryBtnText: { fontSize: 15, fontWeight: '700' },

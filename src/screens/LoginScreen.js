@@ -1,18 +1,18 @@
-import { useSignInWithGoogle } from '@clerk/expo/google';
-import { useAuth } from '@clerk/expo';
+import { useAuth, useOAuth } from '@clerk/expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useCallback, useEffect } from 'react';
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
+import { useCallback, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useHealthStore } from '../store/useHealthStore';
-import { useState } from 'react';
 
 const COLORS = {
   background: '#fdfdfb',
@@ -25,66 +25,66 @@ const COLORS = {
   waterbg: '#eef4ff',
 };
 
+// 1. CRITICAL FOR ANDROID: Catches the returning OAuth redirect
+WebBrowser.maybeCompleteAuthSession();
+
 export default function LoginScreen({ navigation }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const { isSignedIn } = useAuth();
   const clearGuestMode = useHealthStore((state) => state.clearGuestMode);
   const setIsGuestMode = useHealthStore((state) => state.setIsGuestMode);
-  const { startGoogleAuthenticationFlow } = useSignInWithGoogle();
+  
+  // 2. Use the official Clerk OAuth hook
+  const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' });
 
-  // ✅ When Clerk confirms sign-in, clear guest mode and close modal
   useEffect(() => {
     if (isSignedIn) {
       clearGuestMode();
-      // Dismiss the modal — App.js will re-route to AppNavigator automatically
       if (navigation?.canGoBack()) {
         navigation.goBack();
       }
     }
-  }, [isSignedIn]);
+  }, [isSignedIn, navigation, clearGuestMode]);
 
   const handleGoogleSignIn = useCallback(async () => {
     if (isLoading) return;
     setIsLoading(true);
 
     try {
-      const result = await startGoogleAuthenticationFlow();
+      // 3. Create a dynamic redirect URL that works everywhere (Expo Go, Dev Build, Release APK)
+      // It reads the "scheme: healthmateaitemp" automatically from your app.json
+      const redirectUrl = Linking.createURL('/', { scheme: 'healthmateaitemp' });
 
-      if (!result) {
-        // User cancelled or flow returned nothing
-        setIsLoading(false);
-        return;
-      }
-
-      const { createdSessionId, setActive } = result;
+      const { createdSessionId, setActive } = await startOAuthFlow({ 
+        redirectUrl 
+      });
 
       if (createdSessionId && setActive) {
         await setActive({ session: createdSessionId });
-        // ✅ useEffect above will fire once isSignedIn becomes true
+        // The useEffect will trigger the navigation once isSignedIn becomes true
         return;
       }
 
-      // Flow completed but no session (e.g. cancelled)
       setIsLoading(false);
-
     } catch (err) {
       setIsLoading(false);
 
       const isCancelled =
         err?.code === 'SIGN_IN_CANCELLED' ||
         err?.code === '-5' ||
-        err?.message?.includes('cancelled');
+        err?.message?.includes('cancelled') ||
+        err?.message?.includes('browser');
 
       if (!isCancelled) {
         console.error('Google sign-in error:', err);
         Alert.alert(
           'Sign-In Failed',
-          err?.message || 'Something went wrong. Please try again.'
+          err?.errors?.[0]?.longMessage || err?.message || 'Something went wrong. Please try again.'
         );
       }
     }
-  }, [startGoogleAuthenticationFlow, isLoading]);
+  }, [startOAuthFlow, isLoading]);
 
   const handleContinueAsGuest = useCallback(() => {
     setIsGuestMode(true);
@@ -96,8 +96,6 @@ export default function LoginScreen({ navigation }) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
       <View style={styles.content}>
-
-        {/* Close button (since it's a modal) */}
         {navigation?.canGoBack() && (
           <TouchableOpacity
             style={styles.closeButton}
@@ -168,89 +166,19 @@ export default function LoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-    justifyContent: 'center',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    zIndex: 10,
-    padding: 4,
-  },
-  brandWrap: {
-    alignItems: 'center',
-    marginBottom: 48,
-  },
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  welcome: {
-    fontSize: 32,
-    fontWeight: '800',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  googleButton: {
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 24,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  googleButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    marginHorizontal: 12,
-    fontSize: 14,
-  },
-  guestButton: {
-    borderWidth: 1.5,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    marginBottom: 32,
-  },
-  guestButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  footerText: {
-    textAlign: 'center',
-    fontSize: 12,
-    lineHeight: 18,
-  },
+  container: { flex: 1 },
+  content: { flex: 1, paddingHorizontal: 24, justifyContent: 'center' },
+  closeButton: { position: 'absolute', top: 16, right: 16, zIndex: 10, padding: 4 },
+  brandWrap: { alignItems: 'center', marginBottom: 48 },
+  logoCircle: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  welcome: { fontSize: 32, fontWeight: '800', marginBottom: 8, textAlign: 'center' },
+  subtitle: { fontSize: 16, fontWeight: '500', textAlign: 'center' },
+  googleButton: { borderRadius: 14, alignItems: 'center', justifyContent: 'center', paddingVertical: 16, flexDirection: 'row', gap: 10, marginBottom: 24, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+  googleButtonText: { fontSize: 18, fontWeight: '700' },
+  dividerContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
+  divider: { flex: 1, height: 1 },
+  dividerText: { marginHorizontal: 12, fontSize: 14 },
+  guestButton: { borderWidth: 1.5, borderRadius: 14, alignItems: 'center', justifyContent: 'center', paddingVertical: 16, marginBottom: 32 },
+  guestButtonText: { fontSize: 18, fontWeight: '700' },
+  footerText: { textAlign: 'center', fontSize: 12, lineHeight: 18 },
 });

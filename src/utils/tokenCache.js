@@ -6,9 +6,7 @@
  * 
  * Required by @clerk/clerk-expo for proper session management on Android/iOS.
  */
-
 import * as SecureStore from 'expo-secure-store';
-
 export const tokenCache = {
   /**
    * Get token from secure storage
@@ -22,7 +20,6 @@ export const tokenCache = {
       return null;
     }
   },
-
   /**
    * Save token to secure storage
    * @param {any} token The token/session data to cache
@@ -35,7 +32,6 @@ export const tokenCache = {
       console.warn('Failed to save token cache:', err);
     }
   },
-
   /**
    * Clear the token cache
    * @returns {Promise<void>}

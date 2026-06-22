@@ -3,51 +3,41 @@ import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
-
 export default function SetupGoalsScreen({ navigation }) {
   const { COLORS, FONTS, SPACING, RADII } = useTheme();
-
   const stepGoalStore = useHealthStore((s) => s.stepGoal);
   const waterGoalStore = useHealthStore((s) => s.waterGoalMl ?? s.waterGoal ?? 2500);
   const sleepGoalStore = useHealthStore((s) => s.sleepGoalHours ?? s.sleepGoal ?? 8);
-
   const setStepGoal = useHealthStore((s) => s.setStepGoal);
   const setWaterGoalMl = useHealthStore((s) => s.setWaterGoalMl);
   const setSleepGoalHours = useHealthStore((s) => s.setSleepGoalHours);
   const completeSetup = useHealthStore((s) => s.completeSetup);
   const getCalculatedBaselines = useHealthStore((s) => s.getCalculatedBaselines);
-
   const [stepGoal, setStepGoalLocal] = useState(stepGoalStore || 6000);
   const [waterLiters, setWaterLiters] = useState((waterGoalStore || 2500) / 1000);
   const [sleepHours, setSleepHoursLocal] = useState(sleepGoalStore || 8);
-
   const resetToCurrent = () => {
     setStepGoalLocal(stepGoalStore || 6000);
     setWaterLiters((waterGoalStore || 2500) / 1000);
     setSleepHoursLocal(sleepGoalStore || 8);
   };
-
   const applyAISuggestion = () => {
     // Generate intelligent baselines from current demographic and behavioral data
     const smartBaselines = getCalculatedBaselines();
-    
     setStepGoalLocal(smartBaselines.suggestedSteps);
     setWaterLiters(smartBaselines.suggestedWater / 1000);
     setSleepHoursLocal(smartBaselines.suggestedSleep);
   };
-
   const handleSave = () => {
     setStepGoal(Math.round(stepGoal));
     setWaterGoalMl(Math.round(waterLiters * 1000));
     setSleepGoalHours(Number(sleepHours));
     completeSetup();
   };
-
   return (
     <View style={[styles.container, { backgroundColor: COLORS.background }]}> 
       <View style={[styles.content, { padding: SPACING.lg }]}> 
         <Text style={[styles.title, FONTS.mainHeading, { color: COLORS.textPrimary }]}>Set Your Daily Goals</Text>
-
         <View style={[styles.card, { backgroundColor: COLORS.card, borderColor: COLORS.border, borderRadius: RADII.md }]}> 
           <View style={styles.cardRow}>
             <View style={[styles.iconCircle, { backgroundColor: COLORS.primaryContainer }]}> 
@@ -78,7 +68,6 @@ export default function SetupGoalsScreen({ navigation }) {
             </View>
           </View>
         </View>
-
         <View style={[styles.card, { backgroundColor: COLORS.card, borderColor: COLORS.border, borderRadius: RADII.md }]}> 
           <View style={styles.cardRow}>
             <View style={[styles.iconCircle, { backgroundColor: COLORS.secondaryContainer }]}> 
@@ -109,7 +98,6 @@ export default function SetupGoalsScreen({ navigation }) {
             </View>
           </View>
         </View>
-
         <View style={[styles.card, { backgroundColor: COLORS.card, borderColor: COLORS.border, borderRadius: RADII.md }]}> 
           <View style={styles.cardRow}>
             <View style={[styles.iconCircle, { backgroundColor: COLORS.tertiaryContainer }]}> 
@@ -140,7 +128,6 @@ export default function SetupGoalsScreen({ navigation }) {
             </View>
           </View>
         </View>
-
         <View style={styles.actionRow}>
           <TouchableOpacity
             style={[styles.ghostBtn, { borderColor: COLORS.border, backgroundColor: 'transparent' }]}
@@ -149,7 +136,6 @@ export default function SetupGoalsScreen({ navigation }) {
           >
             <Text style={[styles.ghostBtnText, { color: COLORS.textPrimary }]}>Keep Current</Text>
           </TouchableOpacity>
-
           <TouchableOpacity
             style={[styles.secondaryBtn, { backgroundColor: COLORS.primary }]}
             activeOpacity={0.9}
@@ -158,7 +144,6 @@ export default function SetupGoalsScreen({ navigation }) {
             <Text style={[styles.secondaryBtnText, { color: COLORS.onPrimary || '#FFF' }]}>Smart Auto-Fill</Text>
           </TouchableOpacity>
         </View>
-
         <TouchableOpacity
           style={[styles.saveButton, { backgroundColor: COLORS.primary }]}
           activeOpacity={0.9}
@@ -175,7 +160,6 @@ export default function SetupGoalsScreen({ navigation }) {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingTop: 50 },

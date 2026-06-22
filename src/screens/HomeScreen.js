@@ -5,28 +5,18 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, AppState, Dimensions, Image, Modal, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
-import {
-    requestNotificationPermissions,
-    triggerMorningNow,
-    triggerTestNotification,
-} from '../utils/notifications';
-
 import AvatarSelectionModal from '../components/AvatarSelectionModal';
 import { getTodayDate, useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
-
 const { width: screenWidth } = Dimensions.get('window');
-
 const getWeekDates = () => {
   const today = new Date();
   const dayOfWeek = today.getDay();
   const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   const monday = new Date(today);
   monday.setDate(today.getDate() - mondayOffset);
-
   const weekDates = [];
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
   for (let i = 0; i < 7; i++) {
     const date = new Date(monday);
     date.setDate(monday.getDate() + i);
@@ -39,15 +29,12 @@ const getWeekDates = () => {
       dateString: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
     });
   }
-
   return weekDates;
 };
-
 const getMonthName = (monthIndex) => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return months[monthIndex];
 };
-
 function GoalBar({
   iconName,
   iconColor,
@@ -87,35 +74,12 @@ function GoalBar({
     </TouchableOpacity>
   );
 }
-
 export default function HomeScreen({ navigation }) {
   const { COLORS, FONTS, isDark } = useTheme();
   const userAvatar = useHealthStore((state) => state.userAvatar);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
-
-  // Initialize background services and permissions
-  useEffect(() => {
-    requestNotificationPermissions();
-    
-    // Create an async initializer for the pedometer
-    const initializePedometer = async () => {
-      const store = useHealthStore.getState();
-      
-      // 1. Trigger the OS permission prompt
-      const hasPermission = await store.requestPedometerPermission();
-      
-      // 2. Only start the tracker if the user tapped "Allow"
-      if (hasPermission) {
-        await store.startLiveStepTracking();
-      }
-    };
-
-    initializePedometer();
-  }, []);
-
   useAuth();
   const { user: clerkUser } = useUser();
-
   const hasCelebratedToday = useHealthStore((state) => state.hasCelebratedToday);
   const lastGoalCompletionDate = useHealthStore((state) => state.lastGoalCompletionDate);
   const currentStreak = useHealthStore((state) => state.currentStreak);
@@ -125,7 +89,6 @@ export default function HomeScreen({ navigation }) {
   const completeReview = useHealthStore((state) => state.completeReview);
   const setHasCelebratedToday = useHealthStore((state) => state.setHasCelebratedToday);
   const refreshDailyCelebrationState = useHealthStore((state) => state.refreshDailyCelebrationState);
-  
   const dailySteps = useHealthStore((state) => state.dailySteps);
   const stepGoal = useHealthStore((state) => state.stepGoal);
   const currentWaterMl = useHealthStore((state) => state.currentWaterMl ?? state.waterIntake);
@@ -133,7 +96,6 @@ export default function HomeScreen({ navigation }) {
   const sleepDuration = useHealthStore((state) => state.sleepDuration);
   const sleepGoal = useHealthStore((state) => state.sleepGoal) ?? 8;
   const weeklyProgress = useHealthStore((state) => state.weeklyProgress);
-  
   const [showCelebration, setShowCelebration] = useState(false);
   const [reviewStepGoal, setReviewStepGoal] = useState(stepGoal);
   const [reviewWaterGoal, setReviewWaterGoal] = useState(waterGoal / 1000);
@@ -141,14 +103,11 @@ export default function HomeScreen({ navigation }) {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [selectedDayModal, setSelectedDayModal] = useState(null);
   const [weekDates, setWeekDates] = useState(getWeekDates());
-  
   const todayDateString = getTodayDate();
   const focusedDayIndex = weekDates.findIndex((day) => day.dateString === todayDateString);
-
   useEffect(() => {
     checkDailyReset();
   }, [checkDailyReset]);
-
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'active') {
@@ -157,29 +116,24 @@ export default function HomeScreen({ navigation }) {
     });
     return () => subscription.remove();
   }, [checkDailyReset]);
-
   useEffect(() => {
     const intervalId = setInterval(() => {
       checkDailyReset();
     }, 60 * 1000);
     return () => clearInterval(intervalId);
   }, [checkDailyReset]);
-
   useEffect(() => {
     setReviewStepGoal(stepGoal);
     setReviewWaterGoal(waterGoal / 1000);
     setReviewSleepGoal(sleepGoal);
   }, [stepGoal, waterGoal, sleepGoal]);
-
   useEffect(() => {
     setWeekDates(getWeekDates());
   }, []);
-
   useEffect(() => {
     refreshDailyCelebrationState();
     const today = getTodayDate();
     const goalCompletedToday = lastGoalCompletionDate === today;
-
     if (goalCompletedToday && !hasCelebratedToday) {
       setShowCelebration(true);
       setHasCelebratedToday(true);
@@ -190,12 +144,10 @@ export default function HomeScreen({ navigation }) {
     }
     return undefined;
   }, [hasCelebratedToday, lastGoalCompletionDate, setHasCelebratedToday, refreshDailyCelebrationState]);
-
   const waterProgress = waterGoal > 0 ? Math.min(100, Math.round((currentWaterMl / waterGoal) * 100)) : 0;
   const stepProgress = stepGoal > 0 ? Math.min(100, Math.round((dailySteps / stepGoal) * 100)) : 0;
   const sleepProgress = sleepGoal > 0 ? Math.min(100, Math.round((sleepDuration / sleepGoal) * 100)) : 0;
   const healthScore = Math.max(0, Math.min(100, Math.round((stepProgress + waterProgress + sleepProgress) / 3)));
-
   const goals = [
     {
       key: 'steps',
@@ -231,14 +183,12 @@ export default function HomeScreen({ navigation }) {
       navigationScreen: 'SleepScreen',
     },
   ];
-
   const dashboardCards = [
     { title: 'BMI', iconName: 'body-outline', iconColor: COLORS.BMI, iconBg: isDark ? '#1E293B' : '#FFF3E6', backgroundColor: COLORS.card, navigationScreen: 'BMIScreen' },
     { title: 'Steps', iconName: 'footsteps-outline', iconColor: COLORS.steps, iconBg: isDark ? '#163322' : '#EAF8F0', backgroundColor: COLORS.card, navigationScreen: 'StepScreen' },
     { title: 'Water', iconName: 'water-outline', iconColor: COLORS.water, iconBg: isDark ? '#102A43' : '#EAF2FF', backgroundColor: COLORS.card, navigationScreen: 'WaterScreen' },
     { title: 'Sleep', iconName: 'moon-outline', iconColor: COLORS.sleep, iconBg: isDark ? '#2A1F3D' : '#F0ECFD', backgroundColor: COLORS.card, navigationScreen: 'SleepScreen' },
   ];
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
       <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
@@ -247,7 +197,6 @@ export default function HomeScreen({ navigation }) {
             <ConfettiCannon count={180} origin={{ x: screenWidth / 2, y: 0 }} fadeOut fallSpeed={3200} explosionSpeed={420} autoStart />
           </View>
         )}
-
         <View style={styles.headerRow}>
           <View style={styles.headerLeftGroup}>
             <TouchableOpacity onPress={() => setShowAvatarModal(true)} style={{ position: 'relative' }}>
@@ -267,12 +216,10 @@ export default function HomeScreen({ navigation }) {
                 <Ionicons name="pencil" size={10} color={COLORS.onPrimary || '#FFFFFF'} />
               </View>
             </TouchableOpacity>
-
             <View style={styles.headerTitleGroup}>
               <Text style={[styles.headerAppName, { color: COLORS.textPrimary }]}>HealthMate</Text>
             </View>
           </View>
-
           <View style={styles.headerRightGroup}>
             <TouchableOpacity
               onPress={() => navigation.navigate('StreakDetails')}
@@ -282,18 +229,17 @@ export default function HomeScreen({ navigation }) {
               <Ionicons name="flame-outline" size={16} color="#B25A00" />
               <Text style={[styles.streakText, { color: isDark ? '#F9C27A' : '#B25A00' }]}>{currentStreak} Days</Text>
             </TouchableOpacity>
-
-            <View style={styles.notificationButton}>
-              <Ionicons name="notifications-outline" size={24} color={COLORS.textPrimary} />
-            </View>
+            <TouchableOpacity onPress={() => navigation.navigate('NotificationCenterScreen')}>
+              <View style={styles.notificationButton}>
+                <Ionicons name="notifications-outline" size={24} color={COLORS.textPrimary} />
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
-
         {needsDailyReview ? (
           <View style={[styles.reviewCard, { backgroundColor: COLORS.card, shadowColor: isDark ? COLORS.background : '#000000' }]}>
             <Text style={[styles.reviewGreeting, FONTS.mainHeading, { color: COLORS.textPrimary }]}>Good Morning</Text>
             <Text style={[styles.reviewInsight, FONTS.bodyText, { color: COLORS.textSecondary }]}>{insightText}</Text>
-
             <View style={[styles.goalCard, { backgroundColor: COLORS.card, borderColor: COLORS.border }]}>
               <View style={styles.goalCardRow}>
                 <View style={[styles.goalIconCircle, { backgroundColor: COLORS.primaryContainer }]}>
@@ -324,7 +270,6 @@ export default function HomeScreen({ navigation }) {
                 </View>
               </View>
             </View>
-
             <View style={[styles.goalCard, { backgroundColor: COLORS.card, borderColor: COLORS.border }]}>
               <View style={styles.goalCardRow}>
                 <View style={[styles.goalIconCircle, { backgroundColor: COLORS.secondaryContainer }]}>
@@ -355,7 +300,6 @@ export default function HomeScreen({ navigation }) {
                 </View>
               </View>
             </View>
-
             <View style={[styles.goalCard, { backgroundColor: COLORS.card, borderColor: COLORS.border }]}>
               <View style={styles.goalCardRow}>
                 <View style={[styles.goalIconCircle, { backgroundColor: COLORS.tertiaryContainer }]}>
@@ -386,7 +330,6 @@ export default function HomeScreen({ navigation }) {
                 </View>
               </View>
             </View>
-
             <View style={styles.reviewActionRow}>
               <TouchableOpacity
                 style={[styles.reviewActionBtn, { backgroundColor: 'transparent', borderColor: COLORS.border, borderWidth: 1 }]}
@@ -398,7 +341,6 @@ export default function HomeScreen({ navigation }) {
               >
                 <Text style={[styles.reviewActionBtnText, { color: COLORS.textPrimary }]}>Keep Current</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={[styles.reviewActionBtn, { backgroundColor: COLORS.primary }]}
                 activeOpacity={isAiLoading ? 1 : 0.85}
@@ -406,16 +348,13 @@ export default function HomeScreen({ navigation }) {
                 onPress={async () => {
                   if (isAiLoading) return;
                   setIsAiLoading(true);
-
                   try {
                     const NVIDIA_INVOKE_URL = process.env.EXPO_PUBLIC_NVIDIA_INVOKE_URL;
                     const NVIDIA_MODEL = process.env.EXPO_PUBLIC_NVIDIA_MODEL;
                     const NVIDIA_API_KEY = process.env.EXPO_PUBLIC_NVIDIA_API_KEY;
-
                     if (!NVIDIA_INVOKE_URL || !NVIDIA_MODEL || !NVIDIA_API_KEY) {
                       throw new Error('Missing NVIDIA API configuration');
                     }
-
                     const payload = {
                       model: NVIDIA_MODEL,
                       messages: [
@@ -438,7 +377,6 @@ export default function HomeScreen({ navigation }) {
                       top_p: 0.9,
                       stream: false,
                     };
-
                     const response = await axios.post(NVIDIA_INVOKE_URL, payload, {
                       headers: {
                         Authorization: `Bearer ${NVIDIA_API_KEY}`,
@@ -446,19 +384,15 @@ export default function HomeScreen({ navigation }) {
                         Accept: 'application/json',
                       },
                     });
-
                     const aiText = response.data?.choices?.[0]?.message?.content || '';
                     const jsonMatch = aiText.match(/\{[\s\S]*\}/);
-
                     if (!jsonMatch) {
                       throw new Error('AI response did not contain valid JSON');
                     }
-
                     const aiResponse = JSON.parse(jsonMatch[0]);
                     const suggestedStepGoal = Math.max(3000, Math.min(20000, Math.round(aiResponse.suggestedStepGoal || stepGoal)));
                     const suggestedWaterGoalMl = Math.max(1000, Math.min(6000, Math.round(aiResponse.suggestedWaterGoalMl || waterGoal)));
                     const suggestedSleepGoalHours = Math.max(4, Math.min(12, Number(aiResponse.suggestedSleepGoalHours || sleepGoal)));
-
                     setReviewStepGoal(suggestedStepGoal);
                     setReviewWaterGoal(suggestedWaterGoalMl / 1000);
                     setReviewSleepGoal(suggestedSleepGoalHours);
@@ -476,7 +410,6 @@ export default function HomeScreen({ navigation }) {
                 )}
               </TouchableOpacity>
             </View>
-
             <TouchableOpacity
               style={[styles.reviewStartBtn, { backgroundColor: COLORS.primary }]}
               activeOpacity={0.9}
@@ -495,7 +428,6 @@ export default function HomeScreen({ navigation }) {
                 <Text style={[styles.dailyHealthTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>Daily Health Score</Text>
                 <Text style={[styles.dailyHealthSubtitle, FONTS.bodyText, { color: COLORS.textSecondary }]}>You are doing better than 82% of users today!</Text>
               </View>
-
               <View style={styles.scoreRingWrap}>
                 <View style={[styles.scoreHeartGhost, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.09)' }]}>
                   <Ionicons name="heart-outline" size={74} color={isDark ? 'rgba(255, 255, 255, 0.13)' : 'rgba(15, 23, 42, 0.12)'} />
@@ -506,7 +438,6 @@ export default function HomeScreen({ navigation }) {
                 </View>
               </View>
             </View>
-
             <View style={[styles.weeklyMomentumCard, { backgroundColor: COLORS.card, shadowColor: isDark ? COLORS.background : '#000000' }]}>
               <View style={styles.weeklyProgressHeader}>
                 <Text style={[styles.weeklyProgressTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>Weekly Momentum</Text>
@@ -514,12 +445,10 @@ export default function HomeScreen({ navigation }) {
                   <Text style={[styles.viewDetailsText, { color: COLORS.primary }]}>View Report</Text>
                 </TouchableOpacity>
               </View>
-
               <View style={styles.weekDaysContainer}>
                 {weekDates.map((dayData, index) => {
                   const isGoalMet = Boolean(weeklyProgress && weeklyProgress[index]);
                   const isFocused = index === focusedDayIndex;
-
                   return (
                     <TouchableOpacity
                       key={dayData.dateString}
@@ -549,7 +478,6 @@ export default function HomeScreen({ navigation }) {
                   );
                 })}
               </View>
-
               <View style={styles.weeklyMomentumFooter}>
                 <Text
                   onPress={() => navigation.navigate('AnalyticsScreenPremium')}
@@ -565,9 +493,7 @@ export default function HomeScreen({ navigation }) {
                 </TouchableOpacity>
               </View>
             </View>
-
             <Text style={[styles.sectionTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>Daily Goals</Text>
-
             {goals.map((goal) => (
               <GoalBar
                 key={goal.key}
@@ -584,7 +510,6 @@ export default function HomeScreen({ navigation }) {
                 progressTrack={isDark ? '#374151' : '#EBEDF0'}
               />
             ))}
-
             <Text style={[styles.sectionTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>Quick Actions</Text>
             <View style={styles.dashboardGrid}>
               {dashboardCards.map((card) => (
@@ -606,7 +531,6 @@ export default function HomeScreen({ navigation }) {
                 </TouchableOpacity>
               ))}
             </View>
-
             <View style={[styles.appTipCard, { backgroundColor: COLORS.card, shadowColor: isDark ? COLORS.background : '#232627' }]}>
               <View style={[styles.appTipBadge, { backgroundColor: isDark ? 'rgba(52, 79, 72, 0.66)' : 'rgba(163, 237, 205, 0.77)' }]}>
                 <Text style={[styles.appTipBadgeText, { color: COLORS.primary }]}>PRO TIP</Text>
@@ -614,38 +538,8 @@ export default function HomeScreen({ navigation }) {
               <Text style={[styles.appTipTitle, { color: COLORS.textPrimary }]}>Keep your streak alive with one quick habit.</Text>
               <Text style={[styles.appTipSubtitle, { color: COLORS.textSecondary }]}>Log water, reach today steps, and finish strong on the sleep goal.</Text>
             </View>
-
-            {/* Debug Actions - Left intact for testing native module triggers */}
-            <TouchableOpacity
-              style={{ backgroundColor: 'red', padding: 15, borderRadius: 10, marginVertical: 20, alignItems: 'center' }}
-              onPress={async () => {
-                await triggerTestNotification();
-              }}
-            >
-              <Text style={{ color: 'white', fontWeight: 'bold' }}>TEST NOTIFICATION</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={{ backgroundColor: '#0a84ff', padding: 12, borderRadius: 8, marginBottom: 12, alignItems: 'center' }}
-              onPress={async () => {
-                const startLiveStepTracking = useHealthStore.getState().startLiveStepTracking;
-                await startLiveStepTracking();
-              }}
-            >
-              <Text style={{ color: 'white', fontWeight: '700' }}>START LIVE PEDOMETER</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={{ backgroundColor: '#f5a623', padding: 12, borderRadius: 8, marginBottom: 20, alignItems: 'center' }}
-              onPress={async () => {
-                await triggerMorningNow();
-              }}
-            >
-              <Text style={{ color: 'white', fontWeight: '700' }}>TRIGGER MORNING NOTIFICATION</Text>
-            </TouchableOpacity>
           </>
         )}
-
         <Modal
           transparent
           visible={!!selectedDayModal}
@@ -660,11 +554,9 @@ export default function HomeScreen({ navigation }) {
               >
                 <Ionicons name="close" size={24} color={COLORS.textPrimary} />
               </TouchableOpacity>
-
               <Text style={[styles.modalTitle, FONTS.mainHeading, { color: COLORS.textPrimary }]}>
                 {selectedDayModal?.day}
               </Text>
-
               <View style={styles.modalDateDisplay}>
                 <Text style={[styles.modalDateText, FONTS.bigNumbers, { color: COLORS.primary }]}>
                   {selectedDayModal?.date}
@@ -674,7 +566,6 @@ export default function HomeScreen({ navigation }) {
                   {selectedDayModal ? getMonthName(selectedDayModal.month) : ''}
                 </Text>
               </View>
-
               <View style={styles.modalGoalStatus}>
                 <Ionicons
                   name={selectedDayModal && weeklyProgress && weeklyProgress[weekDates.findIndex(d => d.dateString === selectedDayModal.dateString)] ? 'checkmark-circle' : 'close-circle'}
@@ -687,7 +578,6 @@ export default function HomeScreen({ navigation }) {
                     : 'Goal Not Achieved'}
                 </Text>
               </View>
-
               <TouchableOpacity
                 style={[styles.modalCloseActionBtn, { backgroundColor: COLORS.primary }]}
                 onPress={() => setSelectedDayModal(null)}
@@ -702,7 +592,6 @@ export default function HomeScreen({ navigation }) {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -1080,7 +969,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     maxWidth: '90%',
   },
-  
   reviewCard: {
     marginTop: 20,
     marginBottom: 40,
@@ -1231,7 +1119,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-  
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',

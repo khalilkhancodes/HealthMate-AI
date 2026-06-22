@@ -2,12 +2,10 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/theme';
-
 export default function HelpScreen({ navigation }) {
   const { COLORS, FONTS, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const safeTopPadding = Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 20 : insets.top + 20;
-
   const helpCards = [
     {
       key: 'getting-started',
@@ -50,7 +48,6 @@ export default function HelpScreen({ navigation }) {
       onPress: () => navigation.navigate('PaywallScreen'),
     },
   ];
-
   return (
     <View style={[styles.container, { backgroundColor: COLORS.background }]}> 
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: safeTopPadding }]} showsVerticalScrollIndicator={false}>
@@ -61,19 +58,15 @@ export default function HelpScreen({ navigation }) {
             </View>
             <Text style={[styles.brandText, FONTS.sectionHeading, { color: COLORS.primary }]}>HealthMate AI</Text>
           </View>
-
           <TouchableOpacity style={styles.headerIconButton} activeOpacity={0.8} onPress={() => navigation.navigate('Profile')}>
             <Ionicons name="notifications-outline" size={22} color={COLORS.textPrimary} />
           </TouchableOpacity>
         </View>
-
         <Text style={[styles.title, FONTS.mainHeading, { color: COLORS.textPrimary }]}>How can we help?</Text>
-
         <View style={[styles.searchBar, { backgroundColor: COLORS.card, borderColor: COLORS.border }]}> 
           <Ionicons name="search-outline" size={28} color={COLORS.textMuted} />
           <Text style={[styles.searchText, FONTS.bodyText, { color: COLORS.textMuted }]}>Search for articles, guides...</Text>
         </View>
-
         <View style={styles.cardsWrap}>
           {helpCards.map((card) => (
             <TouchableOpacity
@@ -87,7 +80,6 @@ export default function HelpScreen({ navigation }) {
               </View>
               <Text style={[styles.cardTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>{card.title}</Text>
               <Text style={[styles.cardSubtitle, FONTS.bodyText, { color: COLORS.textSecondary }]}>{card.subtitle}</Text>
-
               <View style={styles.cardFooter}>
                 <Text style={[styles.articleText, FONTS.subheading, { color: card.iconColor }]}>{card.articles}</Text>
                 <Ionicons name="chevron-forward" size={20} color={card.iconColor} />
@@ -99,7 +91,6 @@ export default function HelpScreen({ navigation }) {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 16, paddingBottom: 110 },

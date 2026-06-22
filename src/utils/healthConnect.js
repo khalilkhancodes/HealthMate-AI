@@ -8,7 +8,6 @@ import {
 } from 'react-native-health-connect';
 
 let isInitialized = false;
-
 export function getHealthConnectStatusLabel(status) {
   if (status === SdkAvailabilityStatus.SDK_AVAILABLE) return 'SDK_AVAILABLE';
   if (status === SdkAvailabilityStatus.SDK_UNAVAILABLE) return 'SDK_UNAVAILABLE';
@@ -17,7 +16,6 @@ export function getHealthConnectStatusLabel(status) {
   }
   return `UNKNOWN_STATUS_${String(status)}`;
 }
-
 export async function getHealthConnectStatus() {
   try {
     const status = await getSdkStatus();
@@ -29,7 +27,6 @@ export async function getHealthConnectStatus() {
     return { status: null, label: 'SDK_STATUS_ERROR' };
   }
 }
-
 export async function isHealthConnectAvailable() {
   try {
     const status = await getSdkStatus();
@@ -40,11 +37,9 @@ export async function isHealthConnectAvailable() {
     return false;
   }
 }
-
 export async function requestStepPermissions() {
   const { status, label } = await getHealthConnectStatus();
   const available = status === SdkAvailabilityStatus.SDK_AVAILABLE;
-
   if (!available) {
     console.warn('[HealthConnect] not available on device ->', label);
     if (status === SdkAvailabilityStatus.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED) {
@@ -53,24 +48,20 @@ export async function requestStepPermissions() {
     }
     return false;
   }
-
   try {
     if (!isInitialized) {
       await initialize();
       isInitialized = true;
       console.log('[HealthConnect] initialized');
     }
-
     const grantedPermissions = await getGrantedPermissions();
     const hasStepsPermission = grantedPermissions.some(
       (perm) => perm.recordType === 'Steps' && perm.accessType === 'read'
     );
-
     if (hasStepsPermission) {
       // If we already have permission, silently return true without opening the popup!
       return true; 
     }
-
     const permResult = await requestPermission([{ accessType: 'read', recordType: 'Steps' }]);
     console.log('[HealthConnect] requestPermission ->', permResult);
     return true;
@@ -79,19 +70,15 @@ export async function requestStepPermissions() {
     return false;
   }
 }
-
 export async function fetchTodaySteps() {
   const available = await isHealthConnectAvailable();
   if (!available) return 0;
-
   if (!isInitialized) {
     await initialize();
     isInitialized = true;
   }
-
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
-
   try {
     const result = await aggregateRecord({
       recordType: 'Steps',
@@ -101,7 +88,6 @@ export async function fetchTodaySteps() {
         endTime: new Date().toISOString(),
       },
     });
-
     console.log('[HealthConnect] aggregateRecord result ->', result);
     return Number(result?.COUNT_TOTAL ?? 0);
   } catch (err) {

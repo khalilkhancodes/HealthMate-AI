@@ -2,11 +2,10 @@ import { useAuth } from '@clerk/expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo, useState } from 'react';
-import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { premiumPricingPlan, subscriptionPlans, useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
-
 function FeatureCard({ COLORS, FONTS, icon, iconBg, iconColor, title, description, visualType }) {
     return (
         <View style={[styles.featureCard, { backgroundColor: COLORS.card, borderColor: COLORS.border, shadowColor: COLORS.textPrimary }]}>
@@ -15,7 +14,6 @@ function FeatureCard({ COLORS, FONTS, icon, iconBg, iconColor, title, descriptio
             </View>
             <Text style={[styles.featureTitle, FONTS.cardTitle, { color: COLORS.textPrimary }]}>{title}</Text>
             <Text style={[styles.featureDescription, FONTS.bodyText, { color: COLORS.textSecondary }]}>{description}</Text>
-
             <View style={[styles.visualPanel, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
                 {visualType === 'analytics' && (
                     <View style={styles.chartRow}>
@@ -45,12 +43,10 @@ function FeatureCard({ COLORS, FONTS, icon, iconBg, iconColor, title, descriptio
         </View>
     );
 }
-
 function PlanCard({ plan, isSelected, COLORS, FONTS, onPress }) {
     const label = plan.id === 'yearly' ? 'ANNUAL ACCESS' : plan.id === 'monthly' ? 'MONTHLY' : 'WEEKLY';
     const suffix = plan.id === 'yearly' ? '/year' : plan.id === 'monthly' ? '/month' : '/week';
     const equivalent = plan.id === 'yearly' ? '$4.99/month' : plan.id === 'monthly' ? '$9.99/month' : '$0.25/day';
-
     return (
         <TouchableOpacity activeOpacity={0.92} onPress={onPress} style={[styles.planCard, { backgroundColor: COLORS.card, borderColor: isSelected ? COLORS.primary : COLORS.border, shadowColor: COLORS.textPrimary, shadowOpacity: isSelected ? 0.14 : 0.08 }]}>
             <View style={styles.planTopRow}>
@@ -62,14 +58,12 @@ function PlanCard({ plan, isSelected, COLORS, FONTS, onPress }) {
                     </View>
                     <Text style={[styles.planSubCopy, FONTS.smallText, { color: COLORS.textSecondary }]}>Equivalent to just {equivalent}</Text>
                 </View>
-
                 {plan.badge ? (
                     <View style={[styles.planBadge, { backgroundColor: COLORS.primary }]}>
                         <Text style={styles.planBadgeText}>{plan.badge === 'BEST VALUE' ? 'SAVE 40%' : plan.badge}</Text>
                     </View>
                 ) : null}
             </View>
-
             <View style={styles.featureList}>
                 {plan.features.map((feature) => (
                     <View key={`${plan.id}-${feature}`} style={styles.planFeatureRow}>
@@ -83,32 +77,33 @@ function PlanCard({ plan, isSelected, COLORS, FONTS, onPress }) {
         </TouchableOpacity>
     );
 }
-
 export default function PaywallScreen({ navigation }) {
     const { COLORS, FONTS, isDark } = useTheme();
     const { isSignedIn } = useAuth();
     const [selectedPlan, setSelectedPlan] = useState('yearly');
+    const [isProcessing, setIsProcessing] = useState(false);
     const isGuestMode = useHealthStore((state) => state.isGuestMode);
-    const togglePremium = useHealthStore((state) => state.togglePremium);
+    const setPremiumStatus = useHealthStore((state) => state.setPremiumStatus);
     const isAuthenticated = isSignedIn || isGuestMode;
-
     const featuredCards = useMemo(() => ([
         { key: 'analytics', icon: 'analytics-outline', iconBg: COLORS.primaryContainer, iconColor: COLORS.primary, title: 'Advanced Analytics', description: 'Deep dive into your health trends with predictive modeling and metabolic tracking charts.', visualType: 'analytics' },
         { key: 'meal', icon: 'restaurant-outline', iconBg: COLORS.tertiaryContainer, iconColor: COLORS.tertiary, title: 'AI Meal Planning', description: 'Custom nutrition plans that adapt to your progress, allergies, and daily energy expenditure.', visualType: 'meal' },
         { key: 'focus', icon: 'shield-checkmark-outline', iconBg: COLORS.secondaryContainer, iconColor: COLORS.secondary, title: 'Seamless Ad-Free Focus', description: 'Zero interruptions. Just you and your wellness journey, optimized for maximum focus.', visualType: 'focus' },
     ]), [COLORS.primaryContainer, COLORS.secondaryContainer, COLORS.tertiaryContainer, COLORS.primary, COLORS.secondary, COLORS.tertiary]);
-
     const handlePurchase = () => {
         if (!isAuthenticated) {
             navigation.navigate('LoginNavigator');
             return;
         }
-
-        togglePremium();
-        Alert.alert('Success', `Welcome to HealthMate Premium (${selectedPlan})!`);
-        navigation.goBack();
+        setIsProcessing(true);
+        // Mocking external payment gateway processing latency
+        setTimeout(() => {
+            setPremiumStatus(true);
+            setIsProcessing(false);
+            Alert.alert('Transaction Successful', `Welcome to HealthMate Premium (${selectedPlan.toUpperCase()}). All tools unlocked.`);
+            navigation.goBack();
+        }, 1200);
     };
-
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
             <ScrollView contentContainerStyle={[styles.content, { paddingTop: 18 }]} showsVerticalScrollIndicator={false}>
@@ -117,14 +112,12 @@ export default function PaywallScreen({ navigation }) {
                         <View style={[styles.avatar, { backgroundColor: COLORS.surface }]}>
                             <Text style={{ fontSize: 20 }}>👩‍🦰</Text>
                         </View>
-                        <Text style={[styles.brandName, FONTS.sectionHeading, { color: COLORS.primary }]}>HealthMate</Text>
+                        <Text style={[styles.brandName, FONTS.sectionHeading, { color: COLORS.primary }]}>HealthMate AI</Text>
                     </View>
-
                     <TouchableOpacity activeOpacity={0.8} style={styles.headerIconButton} onPress={() => navigation.goBack()}>
-                        <Ionicons name="notifications-outline" size={22} color={COLORS.primary} />
+                        <Ionicons name="close-outline" size={26} color={COLORS.primary} />
                     </TouchableOpacity>
                 </View>
-
                 <View style={styles.heroSection}>
                     <View style={[styles.premiumPill, { backgroundColor: COLORS.warning }]}>
                         <Text style={[styles.premiumPillText, { color: isDark ? '#1F2937' : '#5A3400' }]}>PREMIUM</Text>
@@ -132,7 +125,6 @@ export default function PaywallScreen({ navigation }) {
                     <Text style={[styles.heroTitle, FONTS.mainHeading, { color: COLORS.textPrimary }]}>Unlock Your Full Health Potential</Text>
                     <Text style={[styles.heroSubtitle, FONTS.bodyText, { color: COLORS.textSecondary }]}>Experience HealthMate without limits. Advanced tools designed to help you reach your goals faster.</Text>
                 </View>
-
                 <View style={styles.featureListWrap}>
                     {featuredCards.map((card) => (
                         <FeatureCard
@@ -148,23 +140,22 @@ export default function PaywallScreen({ navigation }) {
                         />
                     ))}
                 </View>
-
                 <Text style={[styles.sectionTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>Choose Your Plan</Text>
-
                 <View style={styles.planList}>
                     {subscriptionPlans.map((plan) => (
                         <PlanCard key={plan.id} plan={plan} isSelected={selectedPlan === plan.id} COLORS={COLORS} FONTS={FONTS} onPress={() => setSelectedPlan(plan.id)} />
                     ))}
                 </View>
-
-                <TouchableOpacity activeOpacity={0.9} onPress={handlePurchase} style={styles.ctaWrap}>
+                <TouchableOpacity activeOpacity={0.9} onPress={handlePurchase} style={styles.ctaWrap} disabled={isProcessing}>
                     <LinearGradient colors={[COLORS.primary, COLORS.primary]} style={styles.ctaButton}>
-                        <Text style={[styles.ctaText, FONTS.buttonText, { color: COLORS.onPrimary || '#FFFFFF' }]}>{premiumPricingPlan.trial}</Text>
+                        {isProcessing ? (
+                            <ActivityIndicator color={COLORS.onPrimary || '#FFFFFF'} />
+                        ) : (
+                            <Text style={[styles.ctaText, FONTS.buttonText, { color: COLORS.onPrimary || '#FFFFFF' }]}>{premiumPricingPlan.trial}</Text>
+                        )}
                     </LinearGradient>
                 </TouchableOpacity>
-
                 <Text style={[styles.ctaSubtext, FONTS.smallText, { color: COLORS.textMuted }]}>No commitment. Cancel anytime before your trial ends to avoid being charged.</Text>
-
                 <View style={styles.footerLinks}>
                     <TouchableOpacity activeOpacity={0.8}><Text style={[styles.footerLink, FONTS.smallText, { color: COLORS.textMuted }]}>Restore</Text></TouchableOpacity>
                     <Text style={[styles.footerDot, { color: COLORS.textMuted }]}>•</Text>
@@ -176,12 +167,11 @@ export default function PaywallScreen({ navigation }) {
         </SafeAreaView>
     );
 }
-
 const styles = StyleSheet.create({
     container: { flex: 1 },
     content: { paddingHorizontal: 16, paddingBottom: 24, marginTop: 18 },
-    headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, marginTop: 10 },
-    headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 10, justifyContent: 'space-between' },
+    headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, width: '70%' },
     avatar: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
     brandName: { fontSize: 19, fontWeight: '800' },
     headerIconButton: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },

@@ -1,11 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-
-import axios from 'axios';
-
+import { fetch as expofetch } from 'expo/fetch';
+import OpenAI from 'openai';
 import { useEffect, useRef, useState } from 'react';
-
 import {
-
   ActivityIndicator,
   FlatList,
   Keyboard,
@@ -16,7 +13,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 
@@ -24,13 +20,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
 
-const NVIDIA_INVOKE_URL = process.env.EXPO_PUBLIC_NVIDIA_INVOKE_URL;
-const NVIDIA_MODEL = process.env.EXPO_PUBLIC_NVIDIA_MODEL;
-const NVIDIA_API_KEY = process.env.EXPO_PUBLIC_NVIDIA_API_KEY;
+const EXPO_PUBLIC_NVIDIA_INVOKE_URL = process.env.EXPO_PUBLIC_NVIDIA_INVOKE_URL;
+const EXPO_PUBLIC_NVIDIA_MODEL = process.env.EXPO_PUBLIC_NVIDIA_MODEL;
+const EXPO_PUBLIC_NVIDIA_API_KEY = process.env.EXPO_PUBLIC_NVIDIA_API_KEY;
 
-if (!NVIDIA_API_KEY) {
+if (!EXPO_PUBLIC_NVIDIA_API_KEY) {
   console.warn("Missing EXPO_PUBLIC_NVIDIA_API_KEY in .env file");
 }
+
+// 2. INITIALIZE SDK WITH THE STRICT BASE URL
+const openai = new OpenAI({
+  apiKey: EXPO_PUBLIC_NVIDIA_API_KEY,
+  baseURL: EXPO_PUBLIC_NVIDIA_INVOKE_URL,
+  dangerouslyAllowBrowser: true, 
+  fetch: expofetch,
+});
 
 const INITIAL_AI_GREETING = {
   id: '1',
@@ -42,7 +46,7 @@ const INITIAL_AI_GREETING = {
 export default function AIChatScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef(null);
-  const { COLORS, FONTS, isDark } = useTheme();
+  const { COLORS, FONTS } = useTheme();
   const {
     isPremiumUser,
     freeAiQuestionsRemaining,
@@ -53,6 +57,7 @@ export default function AIChatScreen({ navigation }) {
     stepGoal,
     waterIntake,
     sleepDuration,
+    
   } = useHealthStore();
 
   const [inputText, setInputText] = useState('');
@@ -71,11 +76,9 @@ export default function AIChatScreen({ navigation }) {
   const AI_LOADING_STATES = [
     'Thinking...',
     'Analyzing your data...',
-    'Reviewing your progress...',
-    'Checking hydration patterns...',
-    'Evaluating sleep quality...',
-    'Assessing activity levels...',
-    'Preparing your response...',
+    'Reviewing Health...',
+    'Reviewing Progress...',
+    'Preparing Insights...',
   ];
 
   const [dotCount, setDotCount] = useState(1);
@@ -114,78 +117,96 @@ export default function AIChatScreen({ navigation }) {
   }, [isTyping]);
 
   const buildSystemPrompt = () =>
-    `You are HealthMate AI, an expert health coach.
-The user's current stats today:
-- Steps: ${dailySteps} / ${stepGoal}
-- Water: ${waterIntake}ml
-- Sleep: ${sleepDuration} hours
-Keep responses under 3 short paragraphs. Be highly encouraging. Use the stats above to give personalized advice.`;
+    `You are HealthMate AI Health Assistant.
+
+  CRITICAL FORMATTING RULES:
+1. DO NOT use markdown formatting. "NO asterisks (**), NO bold tags, NO hash symbols (#)". 
+2. Use ALL CAPS for section headings (e.g., DISH NAME, DESCRIPTION, INGREDIENTS, INSTRUCTIONS, TIPS).
+3. Use simple hyphens (-) for bullet points.
+4. Separate sections with blank lines for readability.
+
+
+Your role is lifestyle optimization.
+  Use user data including:
+  steps, sleep, water intake, BMI, BMR, activity level, goals and location.
+  - Steps: ${dailySteps} / ${stepGoal}
+  - Water: ${waterIntake}ml
+  - Sleep: ${sleepDuration} hours
+Capabilities:
+- Fitness
+- Sleep
+- Hydration
+- Weight loss
+- Weight gain
+- Healthy habits
+- Nutrition
+- BMI and BMR explanations
+- Motivation
+- General wellness
+Rules:
+- Avoid greetings.
+- Give practical advice.
+- Keep responses concise.
+- Explain reasons behind recommendations.
+- Personalize recommendations using available metrics.
+If users ask about:
+- Medications
+- Symptoms
+- Diseases
+Answer briefly and encourage using AI Doctor for better guidance.
+Format:
+ANALYSIS:
+...
+RECOMMENDATIONS:
+• ...
+BENEFITS:
+• ...
+WARNINGS:
+• ...
+Use metric units.
+Prefer foods commonly available globally with emphasis on Pakistan.
+
+
+Communication Style:
+Professional, practical and supportive.
+- Avoid greetings, small talk and filler words.
+- Start directly with useful information.
+- Default response length is medium (150-250 words).
+- Provide detailed explanations only when requested.
+- Use simple language suitable for non-medical users.
+- Explain uncertainty when confidence is low.
+- Never reveal chain of thought or internal reasoning.
+- Do not invent information.
+`;
 
   const callNvidiaChat = async (messages) => {
-
-    if (!NVIDIA_INVOKE_URL || !NVIDIA_API_KEY) {
-
+    if (!EXPO_PUBLIC_NVIDIA_API_KEY || !EXPO_PUBLIC_NVIDIA_INVOKE_URL || !EXPO_PUBLIC_NVIDIA_MODEL) {
       throw new Error('Missing API Configuration. Check environment variables.');
-
     }
-
-
-
-    const headers = {
-
-      Authorization: `Bearer ${NVIDIA_API_KEY}`,
-
-      'Content-Type': 'application/json',
-
-      Accept: 'application/json',
-
-    };
-
-
-
-    const payload = {
-
-      model: NVIDIA_MODEL,
-
-      messages,
-
-      max_tokens: 500,
-
-      temperature: 0.70,
-
-      top_p: 0.90,
-
-      stream: false,
-
-    };
-
-
 
     try {
-
-      const response = await axios.post(NVIDIA_INVOKE_URL, payload, { headers });
+      // Using the exact payload structure required by Nemotron
+      const completion = await openai.chat.completions.create({
+        model: EXPO_PUBLIC_NVIDIA_MODEL,
+        messages: messages,
+        temperature: 0.3, // Lower temp for clinical accuracy
+        top_p: 0.95,
+        max_tokens: 540, // Adjusted from 16384 for faster mobile response
+        reasoning_budget: 1000, // Specific to Nemotron for deeper reasoning
+        chat_template_kwargs: { "enable_thinking": true },
+        stream: false // Kept false for simpler state management in React Native
+      });
 
       return (
-
-        response.data?.choices?.[0]?.message?.content ||
-
-        'Sorry, I could not generate a response.'
-
+        completion.choices[0]?.message?.content ||
+        'Sorry, I could not generate a medical insight at this time.'
       );
-
     } catch (error) {
-
       throw new Error(
-
         error?.response?.data?.message || error?.message || 'NVIDIA API error'
-
       );
-
     }
-
   };
-
-
 
   const handleSend = async () => {
     if (!inputText.trim()) return;
@@ -245,109 +266,58 @@ Keep responses under 3 short paragraphs. Be highly encouraging. Use the stats ab
   // ─── Render message ───────────────────────────────────────────────────────
 
   const renderMessage = ({ item }) => {
-
     const isUser = item.sender === 'user';
-
-
-
     return (
-
       <View
-
         style={[
-
           styles.messageWrapper,
-
           isUser ? styles.messageWrapperUser : styles.messageWrapperAI,
-
         ]}
-
       >
-
         {!isUser && (
-
           <View style={[styles.aiAvatar, { backgroundColor: COLORS.primary }]}>
-
             <Ionicons
-
               name="sparkles"
-
               size={14}
-
               color={COLORS.onPrimary || '#0B1326'}
-
             />
-
           </View>
-
         )}
-
-
-
         <View
-
           style={[
-
             styles.messageBubble,
-
             isUser ? styles.userBubble : styles.aiBubble,
-
             isUser
-
               ? { backgroundColor: COLORS.primary }
-
               : {
-
                 backgroundColor: COLORS.surface,
-
                 borderWidth: 1,
-
                 borderColor: COLORS.border,
-
               },
-
           ]}
-
         >
-
           <Text
-
             style={[
-
               styles.messageText,
-
               {
-
                 color: isUser
-
                   ? COLORS.onPrimary || '#0B1326'
-
                   : COLORS.textPrimary,
-
               },
-
             ]}
-
           >
-
             {item.text}
-
           </Text>
-
         </View>
-
       </View>
-
     );
-
   };
-
 
 
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: COLORS.aiBackground }]}
-      behavior={Platform.OS === 'android' ? 'height' : 'padding'}
+      behavior= 'padding' enabled={true}
     >
       <View style={{ flex: 1 }}>
         <View style={{ flex: 1, backgroundColor: COLORS.aiBackground }}>
@@ -528,57 +498,31 @@ Keep responses under 3 short paragraphs. Be highly encouraging. Use the stats ab
 const styles = StyleSheet.create({
 
   container: {
-
     flex: 1,
-
   },
-
   header: {
-
     flexDirection: 'row',
-
     alignItems: 'center',
-
     justifyContent: 'space-between',
-
     paddingHorizontal: 16,
-
     paddingBottom: 16,
-
     borderBottomWidth: 1,
-
   },
-
   backButton: {
-
     padding: 4,
-
   },
-
   headerTitleContainer: {
-
     alignItems: 'center',
-
   },
-
   headerTitle: {
-
     fontSize: 18,
-
     fontWeight: '700',
-
   },
-
   badge: {
-
     marginTop: 4,
-
     paddingHorizontal: 8,
-
     paddingVertical: 2,
-
     borderRadius: 12,
-
   },
 
   badgeText: {
@@ -659,8 +603,6 @@ const styles = StyleSheet.create({
   inputDock: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 8,
-    marginBottom: -28,
   },
 
   pillContainer: {
@@ -689,4 +631,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 8,
   },
-}); 
+});

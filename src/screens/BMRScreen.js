@@ -2,14 +2,16 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import {
   Alert,
-  SafeAreaView,
   ScrollView,
+  Platform,
+  KeyboardAvoidingView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
@@ -80,7 +82,7 @@ export default function BMRScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}> 
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor: COLORS.background }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0} enabled={true}> 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.card, { backgroundColor: COLORS.card }, SHADOWS.small]}>
           <Text style={[FONTS.sectionHeading, { color: COLORS.textPrimary, marginBottom: 12 }]}>Gender</Text>
@@ -211,7 +213,7 @@ export default function BMRScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 

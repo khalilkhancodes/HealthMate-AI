@@ -2,7 +2,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/theme';
-
 function Bullet({ COLORS, FONTS, title, subtitle }) {
   return (
     <View style={styles.bulletRow}>
@@ -16,12 +15,10 @@ function Bullet({ COLORS, FONTS, title, subtitle }) {
     </View>
   );
 }
-
 export default function PrivacyPolicyScreen({ navigation }) {
   const { COLORS, FONTS, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const safeTopPadding = Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 20 : insets.top + 20;
-
   return (
     <View style={[styles.container, { backgroundColor: COLORS.background }]}> 
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: safeTopPadding }]} showsVerticalScrollIndicator={false}>
@@ -29,19 +26,15 @@ export default function PrivacyPolicyScreen({ navigation }) {
           <TouchableOpacity style={styles.backButton} activeOpacity={0.8} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={30} color={COLORS.primary} />
           </TouchableOpacity>
-
           <Text style={[styles.brandText, FONTS.sectionHeading, { color: COLORS.primary }]}>HealthMate AI</Text>
-
           <View style={[styles.bookCircle, { backgroundColor: isDark ? '#27475A' : '#2E5870' }]}>
             <Ionicons name="book-outline" size={20} color="#FFFFFF" />
           </View>
         </View>
-
         <View style={styles.heroWrap}>
           <Text style={[styles.title, FONTS.mainHeading, { color: COLORS.textPrimary }]}>Privacy Policy</Text>
           <Text style={[styles.subtitle, FONTS.bodyText, { color: COLORS.textSecondary }]}>Last updated: October 24, 2023. Your trust is our priority.</Text>
         </View>
-
         <View style={[styles.card, { backgroundColor: COLORS.card, borderColor: COLORS.border, shadowColor: COLORS.textPrimary }]}>
           <View style={styles.rowTop}>
             <View style={[styles.iconBox, { backgroundColor: COLORS.primaryContainer }]}>
@@ -55,15 +48,12 @@ export default function PrivacyPolicyScreen({ navigation }) {
             </View>
           </View>
         </View>
-
         <View style={[styles.card, { backgroundColor: COLORS.card, borderColor: COLORS.border, shadowColor: COLORS.textPrimary }]}>
           <View style={styles.sectionHeaderRow}>
             <Ionicons name="grid-outline" size={26} color={COLORS.secondary} />
             <Text style={[styles.sectionHeaderTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>Information We Collect</Text>
           </View>
-
           <Text style={[styles.sectionIntro, FONTS.bodyText, { color: COLORS.textSecondary }]}>To provide you with personalized health insights, we collect the following types of information:</Text>
-
           <Bullet
             COLORS={COLORS}
             FONTS={FONTS}
@@ -87,7 +77,6 @@ export default function PrivacyPolicyScreen({ navigation }) {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 16, paddingBottom: 100 },

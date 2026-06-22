@@ -2,13 +2,10 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CircularProgress from 'react-native-circular-progress-indicator';
-
 import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
-
 export default function StepScreen({ navigation }) {
   const { COLORS, FONTS, isDark, SHADOWS } = useTheme();
-
   const dailySteps = useHealthStore((state) => state.dailySteps);
   const stepGoal = useHealthStore((state) => state.stepGoal);
   const isStepTracking = useHealthStore((state) => state.isStepTracking);
@@ -16,15 +13,12 @@ export default function StepScreen({ navigation }) {
   const stopLiveStepTracking = useHealthStore((state) => state.stopLiveStepTracking);
   const getStepStats = useHealthStore((state) => state.getStepStats);
   const isPremiumUser = useHealthStore((state) => state.isPremiumUser);
-
   const { progressPercentage, distanceKm, caloriesBurned, stepsRemaining } = getStepStats();
-
   const handlePremiumCardPress = () => {
     if (!isPremiumUser) {
       navigation.navigate('PaywallScreen');
     }
   };
-
   const handleWorkoutToggle = async () => {
     if (isStepTracking) {
       stopLiveStepTracking();
@@ -32,7 +26,6 @@ export default function StepScreen({ navigation }) {
     }
     await startLiveStepTracking();
   };
-
   return (
     <ScrollView 
       style={[styles.container, { backgroundColor: COLORS.background }]} 
@@ -67,7 +60,6 @@ wa
           <Text style={[FONTS.mediumNumbers, { color: COLORS.textPrimary }]}>{progressPercentage}%</Text>
         </View>
       </View>
-
       <View style={styles.metricsGrid}>
         <View style={[styles.metricCard, { backgroundColor: COLORS.card }, SHADOWS.small]}>
           <View style={[styles.metricIconWrap, { backgroundColor: COLORS.secondaryContainer }]}>
@@ -77,7 +69,6 @@ wa
           <Text style={[FONTS.mediumNumbers, { color: COLORS.textPrimary, marginBottom: 2 }]}>{distanceKm}</Text>
           <Text style={[FONTS.smallText, { color: COLORS.textMuted }]}>kilometers</Text>
         </View>
-
         <TouchableOpacity 
           style={[styles.metricCard, { backgroundColor: COLORS.card }, SHADOWS.small]} 
           activeOpacity={0.88} 
@@ -104,7 +95,6 @@ wa
           )}
         </TouchableOpacity>
       </View>
-
       <View style={[styles.motivationBanner, { backgroundColor: COLORS.primaryContainer }]}>
         <View style={styles.motivationLeft}>
           <Text style={[FONTS.smallText, { color: COLORS.primary }]}>Keep moving!</Text>
@@ -112,7 +102,6 @@ wa
         </View>
         <Ionicons name="footsteps" size={36} color={COLORS.primary} />
       </View>
-
       <TouchableOpacity
         style={[
           styles.workoutToggleCard,
@@ -139,18 +128,15 @@ wa
             </Text>
           </View>
         </View>
-
         <View style={[styles.workoutToggleBadge, { backgroundColor: isStepTracking ? COLORS.error + '20' : COLORS.success + '20' }]}>
           <Text style={[FONTS.smallText, { color: isStepTracking ? COLORS.error : COLORS.success, fontWeight: '700' }]}>
             {isStepTracking ? 'Active' : 'Ready'}
           </Text>
         </View>
       </TouchableOpacity>
-
       <Text style={[FONTS.sectionHeading, { color: COLORS.textPrimary, marginTop: 24, marginBottom: 12 }]}>
         Advanced Tracking
       </Text>
-
       <TouchableOpacity 
         style={[styles.lockedFeatureCard, { backgroundColor: COLORS.card, borderColor: COLORS.border, borderWidth: 1 }]} 
         activeOpacity={0.88} 
@@ -161,13 +147,11 @@ wa
             <Ionicons name="calendar" size={28} color={COLORS.textMuted} />
             <Text style={[FONTS.smallText, { color: COLORS.textMuted, marginTop: 8 }]}>Weekly Goals</Text>
           </View>
-
           <View style={styles.lockedFeatureItem}>
             <Ionicons name="ribbon" size={28} color={COLORS.textMuted} />
             <Text style={[FONTS.smallText, { color: COLORS.textMuted, marginTop: 8 }]}>Achievement Badges</Text>
           </View>
         </View>
-
         <View style={[styles.lockedOverlay, { backgroundColor: isDark ? 'rgba(11, 18, 16, 0.85)' : 'rgba(255, 255, 255, 0.85)' }]}>
           <Text style={[FONTS.subheading, { color: COLORS.textPrimary }]}>🔒 Premium Feature</Text>
         </View>
@@ -175,7 +159,6 @@ wa
     </ScrollView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

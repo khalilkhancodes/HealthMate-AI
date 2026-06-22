@@ -1,5 +1,4 @@
 import { Pedometer } from 'expo-sensors';
-
 export async function isPedometerAvailable() {
   try {
     return await Pedometer.isAvailableAsync();
@@ -8,7 +7,6 @@ export async function isPedometerAvailable() {
     return false;
   }
 }
-
 export async function requestPedometerPermission() {
   try {
     const result = await Pedometer.requestPermissionsAsync();

@@ -2,11 +2,9 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
-
 export default function ToolsMenuScreen({ navigation }) {
   const { COLORS, FONTS, isDark } = useTheme();
   const isPremiumUser = useHealthStore((state) => state.isPremiumUser);
-
   const tools = [
     {
       key: 'bmi',
@@ -60,7 +58,6 @@ export default function ToolsMenuScreen({ navigation }) {
       // premium: true,
     },
   ];
-
   const shortcuts = [
     {
       key: 'heart-rate',
@@ -73,7 +70,6 @@ export default function ToolsMenuScreen({ navigation }) {
       icon: 'restaurant-outline',
     },
   ];
-  
   const handlePress = (key) => {
     if (key === 'bmi') return navigation.navigate('BMIScreen');
     if (key === 'bmr-recalculate') return navigation.navigate('BMRScreen');
@@ -82,7 +78,6 @@ export default function ToolsMenuScreen({ navigation }) {
     if (key === 'steps') return navigation.navigate('StepScreen');
     console.log(`${key} tool is coming soon`);
   };
-
   return (
     <View style={[styles.container, { backgroundColor: COLORS.background }]}>
       <ScrollView 
@@ -93,7 +88,6 @@ export default function ToolsMenuScreen({ navigation }) {
           <Text style={[styles.heading, FONTS.mainHeading, { color: COLORS.textPrimary }]}>Health Tools</Text>
           <Text style={[styles.subheading, FONTS.bodyText, { color: COLORS.textSecondary }]}>Precision calculations and tracking to help you maintain your momentum.</Text>
         </View>
-
         {/* Tool Cards */}
         <View style={styles.toolsContainer}>
           {tools.map((tool) => (
@@ -116,7 +110,6 @@ export default function ToolsMenuScreen({ navigation }) {
                   <View style={[styles.toolIcon, { backgroundColor: tool.iconBg }]}>
                     <Ionicons name={tool.icon} size={24} color={tool.iconColor} />
                   </View>
-
                   <View style={styles.toolTextSection}>
                     <Text style={[styles.toolTitle, FONTS.cardTitle, { color: COLORS.textPrimary }]}>
                       {tool.title}
@@ -126,14 +119,12 @@ export default function ToolsMenuScreen({ navigation }) {
                     </Text>
                   </View>
                 </View>
-
                 {tool.premium && !isPremiumUser && (
                   <View style={[styles.premiumPill, { backgroundColor: isDark ? '#2A2A2A' : '#EEF2F7' }]}>
                     <Ionicons name="sparkles" size={12} color={COLORS.primary} />
                     <Text style={[styles.premiumPillText, { color: COLORS.textSecondary }]}>Pro</Text>
                   </View>
                 )}
-
                 {tool.showMetric && (
                   <View style={styles.toolRightSection}>
                     <Text style={[styles.toolMetric, { color: COLORS.textPrimary }]}>
@@ -144,12 +135,10 @@ export default function ToolsMenuScreen({ navigation }) {
                     </Text>
                   </View>
                 )}
-
                 {!tool.showMetric && (
                   <Ionicons name="chevron-forward" size={20} color={COLORS.textSecondary} />
                 )}
               </View>
-
               {/* Progress bar for BMI */}
               {tool.key === 'bmi' && (
                 <View style={styles.progressSection}>
@@ -164,13 +153,11 @@ export default function ToolsMenuScreen({ navigation }) {
             </TouchableOpacity>
           ))}
         </View>
-
         {/* Quick Shortcuts */}
         <View style={styles.shortcutsSection}>
           <Text style={[styles.shortcutsTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>
             Quick Shortcuts
           </Text>
-
           {shortcuts.map((shortcut) => (
             <TouchableOpacity
               key={shortcut.key}
@@ -197,7 +184,6 @@ export default function ToolsMenuScreen({ navigation }) {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

@@ -5,20 +5,15 @@ import { Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, Vi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
-
 export default function ProfileScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const safeTopPadding = Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 20 : insets.top + 20;
-
   const { COLORS, FONTS, isDark, themePreference } = useTheme();
-
   // Clerk hooks for authentication and user data
   const { isSignedIn, signOut } = useAuth();
   const { user: clerkUser, isLoaded } = useUser();
-
   // Zustand store
   const { isPremiumUser, user, setUser, isGuestMode, clearGuestMode, setThemePreference } = useHealthStore();
-
   // Sync Clerk user data into Zustand when user loads
   useEffect(() => {
     if (isLoaded && clerkUser) {
@@ -30,11 +25,9 @@ export default function ProfileScreen({ navigation }) {
       });
     }
   }, [isLoaded, clerkUser, setUser]);
-
   // Mock User Data (fallback)
   const displayName = user?.name || 'User';
   const displayEmail = user?.email || '';
-
   // Handle logout: Clerk signOut + clear guest mode
   const handleLogout = async () => {
     try {
@@ -46,15 +39,12 @@ export default function ProfileScreen({ navigation }) {
       console.error('Logout error:', err);
     }
   };
-
   const themeOptions = [
     { key: 'light', label: 'Light', icon: 'sunny-outline' },
     { key: 'dark', label: 'Dark', icon: 'moon-outline' },
     { key: 'system', label: 'System', icon: 'phone-portrait-outline' },
   ];
-
   // --- REUSABLE UI COMPONENTS ---
-
   const MenuRow = ({ icon, title, subtitle, showArrow = true, rightElement, onPress, iconBg = '#E6F4FE', iconColor = COLORS.primary }) => (
     <TouchableOpacity
       style={[styles.menuRow, { borderBottomColor: COLORS.border }]}
@@ -72,11 +62,9 @@ export default function ProfileScreen({ navigation }) {
       {rightElement ? rightElement : (showArrow && <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />)}
     </TouchableOpacity>
   );
-
   return (
     <View style={[styles.container, { backgroundColor: COLORS.background }]}>
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: safeTopPadding }]} showsVerticalScrollIndicator={false}>
-
         {/* --- DYNAMIC HEADER CARD --- */}
         {!isSignedIn ? (
           // NOT SIGNED IN (INCLUDING GUEST MODE)
@@ -108,7 +96,6 @@ export default function ProfileScreen({ navigation }) {
                   color="#94A3B8"
                 />
               </View>
-
               <View style={styles.headerTextLayout}>
                 <Text
                   style={[
@@ -119,7 +106,6 @@ export default function ProfileScreen({ navigation }) {
                 >
                   Personalize your app
                 </Text>
-
                 <Text
                   style={[
                     styles.headerSubtitle,
@@ -131,7 +117,6 @@ export default function ProfileScreen({ navigation }) {
                 </Text>
               </View>
             </View>
-
             <TouchableOpacity
               style={[
                 styles.primaryButton,
@@ -184,7 +169,6 @@ export default function ProfileScreen({ navigation }) {
                   {displayName.charAt(0).toUpperCase()}
                 </Text>
               </View>
-
               <View style={styles.headerTextLayout}>
                 <Text
                   style={[
@@ -194,7 +178,6 @@ export default function ProfileScreen({ navigation }) {
                   ]}
                 >
                   {displayName}
-
                   {isPremiumUser && (
                     <Ionicons
                       name="checkmark-circle"
@@ -203,7 +186,6 @@ export default function ProfileScreen({ navigation }) {
                     />
                   )}
                 </Text>
-
                 <Text
                   style={[
                     styles.headerSubtitle,
@@ -217,7 +199,6 @@ export default function ProfileScreen({ navigation }) {
             </View>
           </View>
         )}
-
         {/* --- UPGRADE BANNER (Logged In or Guest, Not Premium) --- */}
         {(isSignedIn || isGuestMode) && !isPremiumUser && (
           <TouchableOpacity
@@ -232,11 +213,9 @@ export default function ProfileScreen({ navigation }) {
             <Ionicons name="arrow-forward-circle" size={28} color="#FFFFFF" />
           </TouchableOpacity>
         )}
-
         {/* --- SETTINGS GROUP 1: PREFERENCES --- */}
         <Text style={[styles.sectionTitle, FONTS.bodyText, { color: COLORS.textMuted }]}>App Preferences</Text>
         <View style={[styles.card, { backgroundColor: COLORS.card, paddingVertical: 8, shadowColor: isDark ? COLORS.background : '#000000' }]}>
-
           <View style={[styles.menuRow, { borderBottomColor: COLORS.border }]}>
             <View style={[styles.menuIcon, { backgroundColor: '#EAF8F0' }]}>
               <Ionicons name="color-palette-outline" size={20} color={COLORS.primary} />
@@ -246,12 +225,10 @@ export default function ProfileScreen({ navigation }) {
               <Text style={[styles.menuSubtitle, FONTS.smallText, { color: COLORS.textMuted }]}>Light, dark, or follow system setting</Text>
             </View>
           </View>
-
           <View style={styles.themeControlWrap}>
             <View style={[styles.themeSegmentedControl, { backgroundColor: isDark ? '#2E2E2E' : '#F3F4F6', borderColor: COLORS.border }]}>
               {themeOptions.map((option) => {
                 const isActive = themePreference === option.key;
-
                 return (
                   <TouchableOpacity
                     key={option.key}
@@ -278,7 +255,6 @@ export default function ProfileScreen({ navigation }) {
               })}
             </View>
           </View>
-
           <MenuRow
             icon="notifications"
             title="Notifications"
@@ -288,7 +264,6 @@ export default function ProfileScreen({ navigation }) {
             onPress={() => navigation.navigate('NotificationsScreen')}
           />
         </View>
-
         {/* --- SETTINGS GROUP 2: SUPPORT --- */}
         <Text style={[styles.sectionTitle, FONTS.smallText, { color: COLORS.textMuted }]}>Support & About</Text>
         <View style={[styles.card, { backgroundColor: COLORS.card, paddingVertical: 8, shadowColor: isDark ? COLORS.background : '#000000' }]}>
@@ -296,7 +271,6 @@ export default function ProfileScreen({ navigation }) {
           <MenuRow icon="shield-checkmark" title="Privacy Policy" subtitle="How your data is protected" iconBg="#E2E8F0" iconColor="#64748B" onPress={() => navigation.navigate('PrivacyPolicyScreen')} />
           <MenuRow icon="information-circle" title="App Version" subtitle="v1.0.0" iconBg="#E2E8F0" iconColor="#64748B" showArrow={false} />
         </View>
-
         {/* --- LOGOUT BUTTON (Logged In or Guest) --- */}
         {isSignedIn && (
           <TouchableOpacity style={[styles.logoutButton, { borderColor: COLORS.border, backgroundColor: COLORS.primary }]} onPress={handleLogout}>
@@ -304,12 +278,10 @@ export default function ProfileScreen({ navigation }) {
             <Text style={[styles.logoutText, FONTS.bodyText, { color: COLORS.card }]}>Log Out</Text>
           </TouchableOpacity>
         )}
-
       </ScrollView>
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

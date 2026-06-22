@@ -4,7 +4,8 @@ import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
 
 export default function AIHubScreen({ navigation }) {
-  const { COLORS, FONTS, isDark } = useTheme();
+  const themePreference = useHealthStore((s) => s.themePreference);
+const { COLORS, FONTS, isDark } = useTheme(themePreference);
   const isPremiumUser = useHealthStore((state) => state.isPremiumUser);
 
   const aiTools = [
