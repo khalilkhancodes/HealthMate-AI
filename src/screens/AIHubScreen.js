@@ -47,18 +47,18 @@ const { COLORS, FONTS, isDark } = useTheme(themePreference);
     },
   ];
 
-  const shortcuts = [
-    {
-      key: 'ai-chat',
-      title: 'HealthMate AI Assistant',
-      icon: 'sparkles-outline',
-    },
-    {
-      key: 'saved-reports',
-      title: 'Saved AI Reports',
-      icon: 'document-text-outline',
-    },
-  ];
+  // const shortcuts = [
+  //   {
+  //     key: 'ai-chat',
+  //     title: 'HealthMate AI Assistant',
+  //     icon: 'sparkles-outline',
+  //   },
+  //   {
+  //     key: 'saved-reports',
+  //     title: 'Saved AI Reports',
+  //     icon: 'document-text-outline',
+  //   },
+  // ];
   
   const handlePress = (key) => {
     if (key === 'ingredient-detector') return navigation.navigate('AIIngredientScreen');
@@ -127,7 +127,7 @@ const { COLORS, FONTS, isDark } = useTheme(themePreference);
         </View>
 
         {/* Quick Shortcuts */}
-        <View style={styles.shortcutsSection}>
+        {/* <View style={styles.shortcutsSection}>
           <Text style={[styles.shortcutsTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>
             Quick Actions
           </Text>
@@ -153,7 +153,7 @@ const { COLORS, FONTS, isDark } = useTheme(themePreference);
               <Ionicons name="chevron-forward" size={20} color={COLORS.textSecondary} />
             </TouchableOpacity>
           ))}
-        </View>
+        </View> */}
       </ScrollView>
     </View>
   );
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 16,
-    paddingTop: 60,
+    paddingTop: 50,
     paddingBottom: 100,
   },
   headerSection: {
@@ -240,28 +240,28 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
-  shortcutsSection: {
-    marginTop: 24,
-  },
-  shortcutsTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  shortcutItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-  },
-  shortcutLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  shortcutText: {
-    fontSize: 15,
-    fontWeight: '500',
-  },
+  // shortcutsSection: {
+  //   marginTop: 24,
+  // },
+  // shortcutsTitle: {
+  //   fontSize: 18,
+  //   fontWeight: '700',
+  //   marginBottom: 12,
+  // },
+  // shortcutItem: {
+  //   flexDirection: 'row',
+  //   alignItems: 'center',
+  //   justifyContent: 'space-between',
+  //   paddingVertical: 14,
+  //   borderBottomWidth: 1,
+  // },
+  // shortcutLeft: {
+  //   flexDirection: 'row',
+  //   alignItems: 'center',
+  //   gap: 12,
+  // },
+  // shortcutText: {
+  //   fontSize: 15,
+  //   fontWeight: '500',
+  // },
 });

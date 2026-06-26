@@ -1,10 +1,22 @@
 import { useAuth, useUser } from '@clerk/expo';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Slider from '@react-native-community/slider';
-import axios from 'axios';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, AppState, Dimensions, Image, Modal, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  AppState,
+  Dimensions,
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import ConfettiCannon from 'react-native-confetti-cannon';
+import Svg, { Circle } from 'react-native-svg'; // ─── NEW IMPORT FOR PROGRESS RING ───
 import AvatarSelectionModal from '../components/AvatarSelectionModal';
 import { getTodayDate, useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
@@ -35,48 +47,30 @@ const getMonthName = (monthIndex) => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return months[monthIndex];
 };
-function GoalBar({
-  iconName,
-  iconColor,
-  iconBg,
-  title,
-  metric,
-  percentage,
-  backgroundColor,
-  textPrimary,
-  textSecondary,
-  progressTrack,
-  onPress,
-}) {
+// ─── PREMIUM METRIC TILE ──────────────────────────────────────────────────
+function MetricTile({ iconName, iconColor, iconBg, label, value, unit, percentage, accentColor, cardBg, textPrimary, textSecondary, borderColor, onPress }) {
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      style={[
-        styles.goalCard,
-        { backgroundColor },
-      ]}
-    >
-      <View style={styles.goalTopRow}>
-        <View style={styles.goalLeftWrap}>
-          <View style={[styles.goalIconCircle, { backgroundColor: iconBg }]}>
-            <Ionicons name={iconName} size={18} color={iconColor} />
-          </View>
-          <View style={styles.goalTextWrap}>
-            <Text style={[styles.goalTitle, { color: textPrimary }]}>{title}</Text>
-            <Text style={[styles.goalMetric, { color: textSecondary }]}>{metric}</Text>
-          </View>
+    <TouchableOpacity onPress={onPress} style={[styles.metricTile, { backgroundColor: cardBg, borderColor }]} activeOpacity={0.82}>
+      <View style={styles.metricTileTop}>
+        <View style={[styles.metricTileIcon, { backgroundColor: iconBg }]}>
+          <Ionicons name={iconName} size={16} color={iconColor} />
         </View>
-        <Text style={[styles.goalPercent, { color: textPrimary }]}>{percentage}%</Text>
+        <Text style={[styles.metricTileLabel, { color: textSecondary }]}>{label}</Text>
       </View>
-      <View style={[styles.goalProgressTrack, { backgroundColor: progressTrack }]}>
-        <View style={[styles.goalProgressFill, { width: `${percentage}%`, backgroundColor: iconColor }]} />
+      <Text style={[styles.metricTileValue, { color: textPrimary }]} numberOfLines={1}>{value}</Text>
+      <Text style={[styles.metricTileUnit, { color: textSecondary }]}>{unit}</Text>
+      <View style={[styles.metricBar, { backgroundColor: borderColor }]}>
+        <View style={[styles.metricBarFill, { width: `${Math.min(percentage, 100)}%`, backgroundColor: accentColor }]} />
       </View>
+      <Text style={[styles.metricPct, { color: accentColor }]}>{percentage}%</Text>
     </TouchableOpacity>
   );
 }
 export default function HomeScreen({ navigation }) {
-  const { COLORS, FONTS, isDark } = useTheme();
+  const { COLORS, isDark } = useTheme();
+  // Fetch name and avatar from Zustand
   const userAvatar = useHealthStore((state) => state.userAvatar);
+  const name = useHealthStore((state) => state.name);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   useAuth();
   const { user: clerkUser } = useUser();
@@ -96,6 +90,7 @@ export default function HomeScreen({ navigation }) {
   const sleepDuration = useHealthStore((state) => state.sleepDuration);
   const sleepGoal = useHealthStore((state) => state.sleepGoal) ?? 8;
   const weeklyProgress = useHealthStore((state) => state.weeklyProgress);
+  const completionHistory = useHealthStore((state) => state.completionHistory) || {};
   const [showCelebration, setShowCelebration] = useState(false);
   const [reviewStepGoal, setReviewStepGoal] = useState(stepGoal);
   const [reviewWaterGoal, setReviewWaterGoal] = useState(waterGoal / 1000);
@@ -105,21 +100,15 @@ export default function HomeScreen({ navigation }) {
   const [weekDates, setWeekDates] = useState(getWeekDates());
   const todayDateString = getTodayDate();
   const focusedDayIndex = weekDates.findIndex((day) => day.dateString === todayDateString);
-  useEffect(() => {
-    checkDailyReset();
-  }, [checkDailyReset]);
+  useEffect(() => { checkDailyReset(); }, [checkDailyReset]);
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextState) => {
-      if (nextState === 'active') {
-        checkDailyReset();
-      }
+      if (nextState === 'active') checkDailyReset();
     });
     return () => subscription.remove();
   }, [checkDailyReset]);
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      checkDailyReset();
-    }, 60 * 1000);
+    const intervalId = setInterval(() => checkDailyReset(), 60 * 1000);
     return () => clearInterval(intervalId);
   }, [checkDailyReset]);
   useEffect(() => {
@@ -127,9 +116,7 @@ export default function HomeScreen({ navigation }) {
     setReviewWaterGoal(waterGoal / 1000);
     setReviewSleepGoal(sleepGoal);
   }, [stepGoal, waterGoal, sleepGoal]);
-  useEffect(() => {
-    setWeekDates(getWeekDates());
-  }, []);
+  useEffect(() => { setWeekDates(getWeekDates()); }, []);
   useEffect(() => {
     refreshDailyCelebrationState();
     const today = getTodayDate();
@@ -137,9 +124,7 @@ export default function HomeScreen({ navigation }) {
     if (goalCompletedToday && !hasCelebratedToday) {
       setShowCelebration(true);
       setHasCelebratedToday(true);
-      const timer = setTimeout(() => {
-        setShowCelebration(false);
-      }, 5500);
+      const timer = setTimeout(() => setShowCelebration(false), 5500);
       return () => clearTimeout(timer);
     }
     return undefined;
@@ -148,46 +133,46 @@ export default function HomeScreen({ navigation }) {
   const stepProgress = stepGoal > 0 ? Math.min(100, Math.round((dailySteps / stepGoal) * 100)) : 0;
   const sleepProgress = sleepGoal > 0 ? Math.min(100, Math.round((sleepDuration / sleepGoal) * 100)) : 0;
   const healthScore = Math.max(0, Math.min(100, Math.round((stepProgress + waterProgress + sleepProgress) / 3)));
-  const goals = [
-    {
-      key: 'steps',
-      iconName: 'footsteps-outline',
-      iconColor: COLORS.success,
-      iconBg: '#EAF8F0',
-      title: 'Steps',
-      metric: `${dailySteps.toLocaleString()} / ${stepGoal.toLocaleString()} steps`,
-      percentage: stepProgress,
-      backgroundColor: COLORS.card,
-      navigationScreen: 'StepScreen',
-    },
-    {
-      key: 'water',
-      iconName: 'water-outline',
-      iconColor: COLORS.success,
-      iconBg: '#EAF2FF',
-      title: 'Water',
-      metric: `${(currentWaterMl / 1000).toFixed(1)} / ${(waterGoal / 1000).toFixed(1)} L`,
-      percentage: waterProgress,
-      backgroundColor: COLORS.card,
-      navigationScreen: 'WaterScreen',
-    },
-    {
-      key: 'sleep',
-      iconName: 'moon-outline',
-      iconColor: COLORS.purple,
-      iconBg: '#F0ECFD',
-      title: 'Sleep',
-      metric: `${sleepDuration.toFixed(1)} / ${sleepGoal} hrs`,
-      percentage: sleepProgress,
-      backgroundColor: COLORS.card,
-      navigationScreen: 'SleepScreen',
-    },
-  ];
-  const dashboardCards = [
-    { title: 'BMI', iconName: 'body-outline', iconColor: COLORS.BMI, iconBg: isDark ? '#1E293B' : '#FFF3E6', backgroundColor: COLORS.card, navigationScreen: 'BMIScreen' },
-    { title: 'Steps', iconName: 'footsteps-outline', iconColor: COLORS.steps, iconBg: isDark ? '#163322' : '#EAF8F0', backgroundColor: COLORS.card, navigationScreen: 'StepScreen' },
-    { title: 'Water', iconName: 'water-outline', iconColor: COLORS.water, iconBg: isDark ? '#102A43' : '#EAF2FF', backgroundColor: COLORS.card, navigationScreen: 'WaterScreen' },
-    { title: 'Sleep', iconName: 'moon-outline', iconColor: COLORS.sleep, iconBg: isDark ? '#2A1F3D' : '#F0ECFD', backgroundColor: COLORS.card, navigationScreen: 'SleepScreen' },
+  // ─── CIRCULAR PROGRESS MATH ───
+  const ringSize = 108;
+  const strokeWidth = 8;
+  const radius = (ringSize - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (circumference * healthScore) / 100;
+  // ─── DYNAMIC USER NAME ───
+  const displayName = name || clerkUser?.firstName || 'HealthMate';
+  let scoreLabel = 'Get Started';
+  let scoreSub = 'Log your first activity today.';
+  if (healthScore >= 90) { scoreLabel = 'Excellent'; scoreSub = 'You\'re crushing all your goals today.'; }
+  else if (healthScore >= 70) { scoreLabel = 'On Track'; scoreSub = 'Great momentum — keep it going.'; }
+  else if (healthScore >= 40) { scoreLabel = 'In Progress'; scoreSub = 'Steady progress. Finish strong.'; }
+  else if (healthScore > 0) { scoreLabel = 'Just Started'; scoreSub = 'Every step forward counts.'; }
+  const calculateTrend = () => {
+    const today = new Date();
+    let currentWeekCompletions = 0;
+    let lastWeekCompletions = 0;
+    for (let i = 0; i < 7; i++) {
+      const d1 = new Date(today); d1.setDate(today.getDate() - i);
+      const dateStr1 = `${d1.getFullYear()}-${String(d1.getMonth() + 1).padStart(2, '0')}-${String(d1.getDate()).padStart(2, '0')}`;
+      if (completionHistory[dateStr1]) currentWeekCompletions++;
+      const d2 = new Date(today); d2.setDate(today.getDate() - (i + 7));
+      const dateStr2 = `${d2.getFullYear()}-${String(d2.getMonth() + 1).padStart(2, '0')}-${String(d2.getDate()).padStart(2, '0')}`;
+      if (completionHistory[dateStr2]) lastWeekCompletions++;
+    }
+    if (lastWeekCompletions === 0) return currentWeekCompletions > 0 ? 100 : 0;
+    return Math.round(((currentWeekCompletions - lastWeekCompletions) / lastWeekCompletions) * 100);
+  };
+  const trendValue = calculateTrend();
+  const trendIsPositive = trendValue >= 0;
+  const trendString = `${trendIsPositive && trendValue !== 0 ? '+' : ''}${trendValue}%`;
+  const trendColor = trendIsPositive ? COLORS.success : '#E74C3C';
+  const cardBorder = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+  const surfaceMuted = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)';
+  const quickActions = [
+    { title: 'BMI', iconName: 'body-outline', iconColor: COLORS.BMI, iconBg: isDark ? '#1E293B' : '#FFF3E6', navigationScreen: 'BMIScreen' },
+    { title: 'Steps', iconName: 'footsteps-outline', iconColor: COLORS.steps, iconBg: isDark ? '#163322' : '#EAF8F0', navigationScreen: 'StepScreen' },
+    { title: 'Water', iconName: 'water-outline', iconColor: COLORS.water, iconBg: isDark ? '#102A43' : '#EAF2FF', navigationScreen: 'WaterScreen' },
+    { title: 'Sleep', iconName: 'moon-outline', iconColor: COLORS.sleep, iconBg: isDark ? '#2A1F3D' : '#F0ECFD', navigationScreen: 'SleepScreen' },
   ];
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]}>
@@ -197,10 +182,11 @@ export default function HomeScreen({ navigation }) {
             <ConfettiCannon count={180} origin={{ x: screenWidth / 2, y: 0 }} fadeOut fallSpeed={3200} explosionSpeed={420} autoStart />
           </View>
         )}
+        {/* ─── HEADER ─────────────────────────────────────── */}
         <View style={styles.headerRow}>
-          <View style={styles.headerLeftGroup}>
-            <TouchableOpacity onPress={() => setShowAvatarModal(true)} style={{ position: 'relative' }}>
-              <View style={styles.avatar}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity onPress={() => setShowAvatarModal(true)} activeOpacity={0.85}>
+              <View style={[styles.avatarRing, { borderColor: COLORS.primary }]}>
                 <Image
                   source={
                     userAvatar
@@ -212,240 +198,367 @@ export default function HomeScreen({ navigation }) {
                   style={styles.avatarImage}
                 />
               </View>
-              <View style={[styles.avatarEditIcon, { backgroundColor: COLORS.primary, borderColor: COLORS.background }]}>
-                <Ionicons name="pencil" size={10} color={COLORS.onPrimary || '#FFFFFF'} />
+              <View style={[styles.avatarEditDot, { backgroundColor: COLORS.primary }]}>
+                <Ionicons name="pencil" size={9} color="#FFFFFF" />
               </View>
             </TouchableOpacity>
-            <View style={styles.headerTitleGroup}>
-              <Text style={[styles.headerAppName, { color: COLORS.textPrimary }]}>HealthMate</Text>
+            <View style={{ marginLeft: 12 }}>
+              <Text style={[styles.headerEyebrow, { color: COLORS.textSecondary }]}>GOOD {getGreeting().toUpperCase()}</Text>
+              <Text style={[styles.headerAppName, { color: COLORS.textPrimary }]}>{displayName}</Text>
             </View>
           </View>
-          <View style={styles.headerRightGroup}>
+          <View style={styles.headerRight}>
             <TouchableOpacity
               onPress={() => navigation.navigate('StreakDetails')}
-              style={[styles.streakBadge, { backgroundColor: isDark ? COLORS.surface : '#F7E7D7', borderColor: isDark ? 'rgba(245,158,11,0.2)' : 'rgba(245,158,11,0.2)' }]}
+              style={[styles.streakPill, { backgroundColor: isDark ? 'rgba(245,158,11,0.12)' : '#FEF3C7', borderColor: isDark ? 'rgba(245,158,11,0.25)' : 'rgba(245,158,11,0.4)' }]}
               activeOpacity={0.85}
             >
-              <Ionicons name="flame-outline" size={16} color="#B25A00" />
-              <Text style={[styles.streakText, { color: isDark ? '#F9C27A' : '#B25A00' }]}>{currentStreak} Days</Text>
+              <Text style={{ fontSize: 14 }}>🔥</Text>
+              <Text style={[styles.streakNum, { color: isDark ? '#FBBF24' : '#B45309' }]}>{currentStreak}</Text>
+              <Text style={[styles.streakDays, { color: isDark ? '#F59E0B' : '#D97706' }]}>days</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('NotificationCenterScreen')}>
-              <View style={styles.notificationButton}>
-                <Ionicons name="notifications-outline" size={24} color={COLORS.textPrimary} />
-              </View>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('NotificationCenterScreen')}
+              style={[styles.iconBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)', borderColor: cardBorder }]}
+              activeOpacity={0.75}
+            >
+              <Ionicons name="notifications-outline" size={20} color={COLORS.textPrimary} />
             </TouchableOpacity>
           </View>
         </View>
+        {/* ─── DAILY REVIEW ────────────────────────────────── */}
         {needsDailyReview ? (
-          <View style={[styles.reviewCard, { backgroundColor: COLORS.card, shadowColor: isDark ? COLORS.background : '#000000' }]}>
-            <Text style={[styles.reviewGreeting, FONTS.mainHeading, { color: COLORS.textPrimary }]}>Good Morning</Text>
-            <Text style={[styles.reviewInsight, FONTS.bodyText, { color: COLORS.textSecondary }]}>{insightText}</Text>
-            <View style={[styles.goalCard, { backgroundColor: COLORS.card, borderColor: COLORS.border }]}>
-              <View style={styles.goalCardRow}>
-                <View style={[styles.goalIconCircle, { backgroundColor: COLORS.primaryContainer }]}>
-                  <Text style={{ color: COLORS.primary, fontSize: 22 }}>🚶</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Text style={[FONTS.cardTitle, { color: COLORS.textPrimary }]}>Daily Steps</Text>
-                    <Text style={[FONTS.bigNumbers, { color: COLORS.primary }]}>{Math.round(reviewStepGoal)}</Text>
+          <View style={[styles.reviewCard, { backgroundColor: COLORS.card, borderColor: cardBorder }]}>
+            <View style={[styles.reviewBadge, { backgroundColor: isDark ? 'rgba(99,102,241,0.15)' : '#EEF2FF' }]}>
+              <Text style={[styles.reviewBadgeText, { color: COLORS.primary }]}>MORNING CHECK-IN</Text>
+            </View>
+            <Text style={[styles.reviewHeading, { color: COLORS.textPrimary }]}>Set Today&apos;s Goals</Text>
+            <Text style={[styles.reviewInsight, { color: COLORS.textSecondary }]}>{insightText}</Text>
+            {[
+              { emoji: '🚶', label: 'Daily Steps', color: COLORS.primary, value: Math.round(reviewStepGoal).toLocaleString(), unit: 'steps', min: 2000, max: 20000, step: 100, minLabel: '2,000', maxLabel: '20,000', val: reviewStepGoal, onChange: setReviewStepGoal },
+              { emoji: '💧', label: 'Hydration', color: COLORS.water, value: reviewWaterGoal.toFixed(1), unit: 'litres', min: 0.5, max: 5, step: 0.1, minLabel: '0.5 L', maxLabel: '5.0 L', val: reviewWaterGoal, onChange: setReviewWaterGoal },
+              { emoji: '🌙', label: 'Sleep Duration', color: COLORS.sleep, value: reviewSleepGoal, unit: 'hours', min: 4, max: 12, step: 0.5, minLabel: '4 hrs', maxLabel: '12 hrs', val: reviewSleepGoal, onChange: setReviewSleepGoal },
+            ].map((item, i) => (
+              <View key={i} style={[styles.reviewGoalRow, { borderColor: cardBorder }]}>
+                <View style={styles.reviewGoalHeader}>
+                  <View style={styles.reviewGoalLeft}>
+                    <Text style={{ fontSize: 22 }}>{item.emoji}</Text>
+                    <Text style={[styles.reviewGoalLabel, { color: COLORS.textPrimary }]}>{item.label}</Text>
                   </View>
-                  <Text style={[FONTS.cardText, { color: COLORS.textSecondary, marginTop: 6 }]}>Walking helps cardiovascular health and mood.</Text>
+                  <View style={styles.reviewGoalValueWrap}>
+                    <Text style={[styles.reviewGoalValue, { color: item.color }]}>{item.value}</Text>
+                    <Text style={[styles.reviewGoalUnit, { color: COLORS.textSecondary }]}>{item.unit}</Text>
+                  </View>
                 </View>
-              </View>
-              <View style={{ marginTop: 12 }}>
                 <Slider
-                  style={{ width: '100%', height: 40 }}
-                  minimumValue={2000}
-                  maximumValue={20000}
-                  step={100}
-                  minimumTrackTintColor={COLORS.primary}
-                  maximumTrackTintColor={COLORS.border}
-                  value={reviewStepGoal}
-                  onValueChange={(v) => setReviewStepGoal(v)}
+                  style={{ width: '100%', height: 36, marginTop: 4 }}
+                  minimumValue={item.min} maximumValue={item.max} step={item.step}
+                  minimumTrackTintColor={item.color} maximumTrackTintColor={isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}
+                  value={item.val} onValueChange={item.onChange}
                 />
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={[FONTS.smallText, { color: COLORS.textMuted }]}>2,000</Text>
-                  <Text style={[FONTS.smallText, { color: COLORS.textMuted }]}>20,000</Text>
+                  <Text style={[styles.sliderTick, { color: COLORS.textSecondary }]}>{item.minLabel}</Text>
+                  <Text style={[styles.sliderTick, { color: COLORS.textSecondary }]}>{item.maxLabel}</Text>
                 </View>
               </View>
-            </View>
-            <View style={[styles.goalCard, { backgroundColor: COLORS.card, borderColor: COLORS.border }]}>
-              <View style={styles.goalCardRow}>
-                <View style={[styles.goalIconCircle, { backgroundColor: COLORS.secondaryContainer }]}>
-                  <Text style={{ color: COLORS.secondary, fontSize: 22 }}>💧</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Text style={[FONTS.cardTitle, { color: COLORS.textPrimary }]}>Hydration</Text>
-                    <Text style={[FONTS.mediumNumbers, { color: COLORS.secondary }]}>{reviewWaterGoal.toFixed(1)} L</Text>
-                  </View>
-                  <Text style={[FONTS.cardText, { color: COLORS.textSecondary, marginTop: 6 }]}>Proper hydration maintains energy and focus.</Text>
-                </View>
-              </View>
-              <View style={{ marginTop: 12 }}>
-                <Slider
-                  style={{ width: '100%', height: 40 }}
-                  minimumValue={0.5}
-                  maximumValue={5}
-                  step={0.1}
-                  minimumTrackTintColor={COLORS.water}
-                  maximumTrackTintColor={COLORS.border}
-                  value={reviewWaterGoal}
-                  onValueChange={(v) => setReviewWaterGoal(v)}
-                />
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={[FONTS.smallText, { color: COLORS.textMuted }]}>1.0 L</Text>
-                  <Text style={[FONTS.smallText, { color: COLORS.textMuted }]}>5.0 L</Text>
-                </View>
-              </View>
-            </View>
-            <View style={[styles.goalCard, { backgroundColor: COLORS.card, borderColor: COLORS.border }]}>
-              <View style={styles.goalCardRow}>
-                <View style={[styles.goalIconCircle, { backgroundColor: COLORS.tertiaryContainer }]}>
-                  <Text style={{ color: COLORS.tertiary, fontSize: 22 }}>🌙</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Text style={[FONTS.cardTitle, { color: COLORS.textPrimary }]}>Sleep Duration</Text>
-                    <Text style={[FONTS.mediumNumbers, { color: COLORS.tertiary }]}>{reviewSleepGoal} hrs</Text>
-                  </View>
-                  <Text style={[FONTS.cardText, { color: COLORS.textSecondary, marginTop: 6 }]}>Consistent sleep aids recovery and memory.</Text>
-                </View>
-              </View>
-              <View style={{ marginTop: 12 }}>
-                <Slider
-                  style={{ width: '100%', height: 40 }}
-                  minimumValue={4}
-                  maximumValue={12}
-                  step={0.5}
-                  minimumTrackTintColor={COLORS.purple}
-                  maximumTrackTintColor={COLORS.border}
-                  value={reviewSleepGoal}
-                  onValueChange={(v) => setReviewSleepGoal(v)}
-                />
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={[FONTS.smallText, { color: COLORS.textMuted }]}>4.0 hrs</Text>
-                  <Text style={[FONTS.smallText, { color: COLORS.textMuted }]}>12.0 hrs</Text>
-                </View>
-              </View>
-            </View>
-            <View style={styles.reviewActionRow}>
+            ))}
+            <View style={styles.reviewActions}>
               <TouchableOpacity
-                style={[styles.reviewActionBtn, { backgroundColor: 'transparent', borderColor: COLORS.border, borderWidth: 1 }]}
-                onPress={() => {
-                  setReviewStepGoal(stepGoal);
-                  setReviewWaterGoal(waterGoal / 1000);
-                  setReviewSleepGoal(sleepGoal);
-                }}
+                style={[styles.reviewSecondaryBtn, { borderColor: cardBorder }]}
+                onPress={() => { setReviewStepGoal(stepGoal); setReviewWaterGoal(waterGoal / 1000); setReviewSleepGoal(sleepGoal); }}
               >
-                <Text style={[styles.reviewActionBtnText, { color: COLORS.textPrimary }]}>Keep Current</Text>
+                <Text style={[styles.reviewSecondaryText, { color: COLORS.textPrimary }]}>Keep Current</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.reviewActionBtn, { backgroundColor: COLORS.primary }]}
-                activeOpacity={isAiLoading ? 1 : 0.85}
+                style={[styles.reviewAiBtn, { backgroundColor: COLORS.primary }]}
                 disabled={isAiLoading}
                 onPress={async () => {
                   if (isAiLoading) return;
                   setIsAiLoading(true);
                   try {
-                    const NVIDIA_INVOKE_URL = process.env.EXPO_PUBLIC_NVIDIA_INVOKE_URL;
-                    const NVIDIA_MODEL = process.env.EXPO_PUBLIC_NVIDIA_MODEL;
-                    const NVIDIA_API_KEY = process.env.EXPO_PUBLIC_NVIDIA_API_KEY;
-                    if (!NVIDIA_INVOKE_URL || !NVIDIA_MODEL || !NVIDIA_API_KEY) {
-                      throw new Error('Missing NVIDIA API configuration');
-                    }
-                    const payload = {
-                      model: NVIDIA_MODEL,
-                      messages: [
-                        {
-                          role: 'system',
-                          content:
-                            'You are a fitness goal planning AI. Return ONLY a valid JSON object with keys suggestedStepGoal, suggestedWaterGoalMl, and suggestedSleepGoalHours. No markdown, no prose.',
-                        },
-                        {
-                          role: 'user',
-                          content: JSON.stringify({
-                            dailySteps,
-                            currentWaterMl,
-                            sleepDuration,
-                          }),
-                        },
-                      ],
-                      max_tokens: 200,
-                      temperature: 0.7,
-                      top_p: 0.9,
-                      stream: false,
-                    };
-                    const response = await axios.post(NVIDIA_INVOKE_URL, payload, {
-                      headers: {
-                        Authorization: `Bearer ${NVIDIA_API_KEY}`,
-                        'Content-Type': 'application/json',
-                        Accept: 'application/json',
+                    const PROXY_URL = 'https://healthmate-backend-eta.vercel.app/api/chat';
+                    // Aggregate data for the AI Coach
+                    const userProfile = {
+                      dailySteps,
+                      currentWaterMl: currentWaterMl || 0,
+                      sleepDuration,
+                      currentStreak,
+                      stepGoal,
+                      waterGoalMl: waterGoal,
+                      sleepGoal,
+                      completionHistory,
+                      lastGoalCompletionDate,
+                      currentDate: todayDateString,
+                      currentStreakDays: currentStreak,
+                      weight: useHealthStore.getState().weight,
+                      activityLevel: useHealthStore.getState().activityLevel,
+                      primaryHealthGoal: useHealthStore.getState().primaryHealthGoal,
+                      // weekly analytics: steps, water, sleep averages and trends
+                      weeklyAnalytics: {
+                        averageSteps: Math.round(weeklyProgress.reduce((sum, val) => sum + (val ? 1 : 0), 0) / 7 * stepGoal),
+                        averageWaterMl: Math.round(weeklyProgress.reduce((sum, val) => sum + (val ? 1 : 0), 0) / 7 * waterGoal),
+                        averageSleepHours: Math.round(weeklyProgress.reduce((sum, val) => sum + (val ? 1 : 0), 0) / 7 * sleepGoal),
                       },
+                    };
+                    const systemPrompt = `You are an elite health scientist, behavioral psychologist, sports physiologist, and habit-coaching AI.
+Your task is to analyze the user's current health data and generate personalized daily targets that maximize long-term adherence, health improvement, and habit consistency.
+USER DATA PROVIDED:
+* Current daily steps
+* Current water intake
+* Current sleep duration
+* Current streak
+* Current goals
+* Completion history
+* Last goal completion date
+* Weight
+* Activity level
+* Primary health goal
+* Weekly averages and trends
+GOAL GENERATION RULES
+1. CONSISTENCY FIRST
+   Never aggressively increase goals.
+   Long-term consistency is more important than short-term intensity.
+2. PROGRESSIVE OVERLOAD
+   If:
+* currentStreak >= 3
+* user completed goals recently
+* weekly averages exceed current goals
+Then increase:
+* Steps by 3-5%
+* Water by 3-5%
+* Sleep by 0-0.25 hours
+3. RECOVERY PROTOCOL
+   If:
+* User failed goals yesterday
+* Streak was broken
+* Weekly averages are significantly below goals
+Then reduce:
+* Steps by 5-10%
+* Water by 5-10%
+* Sleep by 0-0.5 hours
+Purpose:
+Restore confidence and rebuild momentum.
+4. GOAL-SPECIFIC OPTIMIZATION
+If primaryHealthGoal = lose_weight:
+* Favor increased steps
+* Maintain water target
+* Sleep minimum 7.5 hours
+If primaryHealthGoal = gain_weight:
+* Moderate steps
+* Prioritize recovery and sleep
+If primaryHealthGoal = improve_fitness:
+* Increase steps more aggressively
+If primaryHealthGoal = improve_sleep:
+* Prioritize sleep target adjustments
+If primaryHealthGoal = maintain_health:
+* Use conservative adjustments
+5. ACTIVITY LEVEL MULTIPLIER
+Sedentary:
+Target range 3000-7000 steps
+Light:
+Target range 5000-9000 steps
+Moderate:
+Target range 7000-12000 steps
+Active:
+Target range 10000-20000 steps
+6. WEIGHT-BASED WATER FORMULA
+RecommendedWaterMl =
+weight × 35
+Adjustments:
+Moderate Activity:
++300 ml
+Active:
++500 ml
+Never exceed 6000 ml.
+Never go below 1500 ml.
+7. SLEEP OPTIMIZATION
+Default target:
+8 hours
+If weekly sleep average < goal:
+Increase gradually by 0.25 hours.
+If user consistently exceeds goal:
+Maintain current target.
+Never exceed 12 hours.
+Never go below 6 hours.
+8. STREAK PRESERVATION MODE
+If currentStreak >= 7:
+Avoid increasing all goals simultaneously.
+Increase only the metric showing strongest consistency.
+Protect streak continuity.
+9. TREND ANALYSIS
+Compare:
+* Current metrics
+* Weekly averages
+* Current goals
+Determine whether performance trend is:
+"improving"
+"stable"
+"declining"
+10. COACHING INSIGHT
+Generate a concise motivational insight.
+Examples:
+"Excellent consistency this week. Small progression recommended."
+"Focus on rebuilding momentum today."
+"Sleep recovery should be prioritized."
+"Hydration is currently your strongest habit."
+OUTPUT REQUIREMENTS
+Return ONLY valid raw JSON.
+{
+"suggestedStepGoal": number,
+"suggestedWaterGoalMl": number,
+"suggestedSleepGoalHours": number,
+"performanceTrend": "improving|stable|declining",
+"confidenceScore": number,
+"reasoning": "short explanation",
+"coachingInsight": "short motivational message"
+}
+ABSOLUTE LIMITS
+Steps:
+3000-20000
+Water:
+1500-6000
+Sleep:
+6-12
+No markdown.
+No explanations.
+No extra text.
+Return JSON only.
+`;
+                    const response = await fetch(PROXY_URL, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        messages: [
+                          { role: 'system', content: systemPrompt },
+                          { role: 'user', content: JSON.stringify(userProfile) }
+                        ],
+                        model: 'meta/llama-3.1-70b-instruct' // Route to text model
+                      })
                     });
-                    const aiText = response.data?.choices?.[0]?.message?.content || '';
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'Proxy failed');
+                    const aiText = data.choices?.[0]?.message?.content || '';
                     const jsonMatch = aiText.match(/\{[\s\S]*\}/);
-                    if (!jsonMatch) {
-                      throw new Error('AI response did not contain valid JSON');
-                    }
+                    if (!jsonMatch) throw new Error('AI response did not contain valid JSON');
                     const aiResponse = JSON.parse(jsonMatch[0]);
-                    const suggestedStepGoal = Math.max(3000, Math.min(20000, Math.round(aiResponse.suggestedStepGoal || stepGoal)));
-                    const suggestedWaterGoalMl = Math.max(1000, Math.min(6000, Math.round(aiResponse.suggestedWaterGoalMl || waterGoal)));
-                    const suggestedSleepGoalHours = Math.max(4, Math.min(12, Number(aiResponse.suggestedSleepGoalHours || sleepGoal)));
-                    setReviewStepGoal(suggestedStepGoal);
-                    setReviewWaterGoal(suggestedWaterGoalMl / 1000);
-                    setReviewSleepGoal(suggestedSleepGoalHours);
+                    setReviewStepGoal(Math.max(3000, Math.min(20000, Math.round(aiResponse.suggestedStepGoal || stepGoal))));
+                    setReviewWaterGoal(Math.max(1000, Math.min(6000, Math.round(aiResponse.suggestedWaterGoalMl || waterGoal))) / 1000);
+                    setReviewSleepGoal(Math.max(4, Math.min(12, Number(aiResponse.suggestedSleepGoalHours || sleepGoal))));
                   } catch (error) {
-                    console.warn('[HomeScreen] AI suggestion failed', error);
+                    console.warn('[AI Suggestion] Error:', error.message);
+                    alert('Failed to connect to AI Coach. Please set goals manually.');
                   } finally {
                     setIsAiLoading(false);
                   }
                 }}
               >
-                {isAiLoading ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <Text style={[styles.reviewActionBtnText, { color: COLORS.onPrimary || '#FFFFFF' }]}>Use AI Suggestion</Text>
+                {isAiLoading ? <ActivityIndicator color="#FFFFFF" size="small" /> : (
+                  <><Ionicons name="sparkles-outline" size={14} color="#FFFFFF" style={{ marginRight: 6 }} /><Text style={styles.reviewAiText}>AI Suggest</Text></>
                 )}
               </TouchableOpacity>
             </View>
             <TouchableOpacity
               style={[styles.reviewStartBtn, { backgroundColor: COLORS.primary }]}
               activeOpacity={0.9}
-              onPress={() => {
-                completeReview(Math.round(reviewStepGoal), Math.round(reviewWaterGoal * 1000), reviewSleepGoal);
-              }}
+              onPress={() => completeReview(Math.round(reviewStepGoal), Math.round(reviewWaterGoal * 1000), reviewSleepGoal)}
             >
-              <Ionicons name="play-circle" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-              <Text style={[styles.reviewStartBtnText, { color: '#FFFFFF' }]}>Set Goals</Text>
+              <Ionicons name="play-circle" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+              <Text style={styles.reviewStartText}>Start My Day</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <>
-            <View style={[styles.dailyHealthCard, { backgroundColor: COLORS.card, shadowColor: isDark ? COLORS.background : '#000000' }]}>
-              <View style={styles.dailyHealthTextArea}>
-                <Text style={[styles.dailyHealthTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>Daily Health Score</Text>
-                <Text style={[styles.dailyHealthSubtitle, FONTS.bodyText, { color: COLORS.textSecondary }]}>You are doing better than 82% of users today!</Text>
-              </View>
-              <View style={styles.scoreRingWrap}>
-                <View style={[styles.scoreHeartGhost, { borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.09)' }]}>
-                  <Ionicons name="heart-outline" size={74} color={isDark ? 'rgba(255, 255, 255, 0.13)' : 'rgba(15, 23, 42, 0.12)'} />
+            {/* ─── HEALTH SCORE HERO ─────────────────────────── */}
+            <View style={[styles.heroCard, { backgroundColor: COLORS.card, borderColor: cardBorder }]}>
+              {/* Left column */}
+              <View style={{ flex: 1, paddingRight: 16 }}>
+                <View style={[styles.heroBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.07)' : surfaceMuted }]}>
+                  <View style={[styles.heroBadgeDot, { backgroundColor: healthScore >= 70 ? COLORS.success : COLORS.primary }]} />
+                  <Text style={[styles.heroBadgeText, { color: COLORS.textSecondary }]}>DAILY SCORE</Text>
                 </View>
-                <View style={[styles.scoreRing, { borderColor: COLORS.primary }]}>
-                  <Text style={[styles.scoreValue, { color: COLORS.textPrimary }]}>{healthScore}</Text>
-                  <Text style={[styles.scoreDivider, { color: COLORS.textSecondary }]}>/ 100</Text>
+                <Text style={[styles.heroScoreLabel, { color: COLORS.textPrimary }]}>{scoreLabel}</Text>
+                <Text style={[styles.heroScoreSub, { color: COLORS.textSecondary }]}>{scoreSub}</Text>
+                {/* Mini stat row */}
+                <View style={styles.heroStatRow}>
+                  <View style={styles.heroStat}>
+                    <View style={[styles.heroStatDot, { backgroundColor: COLORS.success }]} />
+                    <Text style={[styles.heroStatLabel, { color: COLORS.textSecondary }]}>{stepProgress}% steps</Text>
+                  </View>
+                  <View style={styles.heroStat}>
+                    <View style={[styles.heroStatDot, { backgroundColor: COLORS.water || '#3B82F6' }]} />
+                    <Text style={[styles.heroStatLabel, { color: COLORS.textSecondary }]}>{waterProgress}% hydrated</Text>
+                  </View>
+                </View>
+              </View>
+              {/* ─── UPDATED: DYNAMIC SVG SCORE RING ────────── */}
+              <View style={styles.heroRingWrap}>
+                <Svg width={ringSize} height={ringSize} viewBox={`0 0 ${ringSize} ${ringSize}`} style={{ position: 'absolute' }}>
+                  {/* Background Track Circle */}
+                  <Circle
+                    cx={ringSize / 2} cy={ringSize / 2} r={radius}
+                    stroke={isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}
+                    strokeWidth={strokeWidth}
+                    fill="none"
+                  />
+                  {/* Progress Fill Circle */}
+                  <Circle
+                    cx={ringSize / 2} cy={ringSize / 2} r={radius}
+                    stroke={COLORS.primary}
+                    strokeWidth={strokeWidth}
+                    fill="none"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                    rotation="-90"
+                    originX={ringSize / 2}
+                    originY={ringSize / 2}
+                  />
+                </Svg>
+                {/* Text overlay exactly inside the ring */}
+                <View style={[styles.heroRingInner, { borderColor: 'transparent' }]}>
+                  <Text style={[styles.heroScore, { color: COLORS.textPrimary }]}>{healthScore}</Text>
+                  <Text style={[styles.heroScoreDivider, { color: COLORS.textSecondary }]}>/ 100</Text>
                 </View>
               </View>
             </View>
-            <View style={[styles.weeklyMomentumCard, { backgroundColor: COLORS.card, shadowColor: isDark ? COLORS.background : '#000000' }]}>
-              <View style={styles.weeklyProgressHeader}>
-                <Text style={[styles.weeklyProgressTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>Weekly Momentum</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('StreakDetails')} activeOpacity={0.85}>
-                  <Text style={[styles.viewDetailsText, { color: COLORS.primary }]}>View Report</Text>
+            {/* ─── METRIC TILES (Steps / Water / Sleep) ─────── */}
+            <Text style={[styles.sectionEyebrow, { color: COLORS.textSecondary }]}>TODAY&apos;S GOALS</Text>
+            <View style={styles.metricRow}>
+              <MetricTile
+                iconName="footsteps-outline" iconColor={COLORS.success} iconBg={isDark ? '#163322' : '#EAF8F0'}
+                label="Steps" value={dailySteps.toLocaleString()} unit={`of ${stepGoal.toLocaleString()}`}
+                percentage={stepProgress} accentColor={COLORS.success}
+                cardBg={COLORS.card} textPrimary={COLORS.textPrimary} textSecondary={COLORS.textSecondary} borderColor={cardBorder}
+                onPress={() => navigation.navigate('StepScreen')}
+              />
+              <MetricTile
+                iconName="water-outline" iconColor={COLORS.water || '#3B82F6'} iconBg={isDark ? '#102A43' : '#EAF2FF'}
+                label="Water" value={`${(currentWaterMl / 1000).toFixed(1)}L`} unit={`of ${(waterGoal / 1000).toFixed(1)}L`}
+                percentage={waterProgress} accentColor={COLORS.water || '#3B82F6'}
+                cardBg={COLORS.card} textPrimary={COLORS.textPrimary} textSecondary={COLORS.textSecondary} borderColor={cardBorder}
+                onPress={() => navigation.navigate('WaterScreen')}
+              />
+              <MetricTile
+                iconName="moon-outline" iconColor={COLORS.purple || '#8B5CF6'} iconBg={isDark ? '#2A1F3D' : '#F0ECFD'}
+                label="Sleep" value={sleepDuration.toFixed(1)} unit={`of ${sleepGoal}hrs`}
+                percentage={sleepProgress} accentColor={COLORS.purple || '#8B5CF6'}
+                cardBg={COLORS.card} textPrimary={COLORS.textPrimary} textSecondary={COLORS.textSecondary} borderColor={cardBorder}
+                onPress={() => navigation.navigate('SleepScreen')}
+              />
+            </View>
+            {/* ─── WEEKLY MOMENTUM ──────────────────────────── */}
+            <View style={[styles.momentumCard, { backgroundColor: COLORS.card, borderColor: cardBorder }]}>
+              <View style={styles.momentumHeader}>
+                <View>
+                  <Text style={[styles.sectionEyebrowInline, { color: COLORS.textSecondary }]}>THIS WEEK</Text>
+                  <Text style={[styles.momentumTitle, { color: COLORS.textPrimary }]}>Weekly Momentum</Text>
+                </View>
+                <TouchableOpacity onPress={() => navigation.navigate('StreakDetails')} activeOpacity={0.8}>
+                  <Text style={[styles.linkText, { color: COLORS.primary }]}>Report →</Text>
                 </TouchableOpacity>
               </View>
-              <View style={styles.weekDaysContainer}>
+              {/* Day strip */}
+              <View style={styles.dayStrip}>
                 {weekDates.map((dayData, index) => {
                   const isGoalMet = Boolean(weeklyProgress && weeklyProgress[index]);
                   const isFocused = index === focusedDayIndex;
@@ -453,136 +566,113 @@ export default function HomeScreen({ navigation }) {
                     <TouchableOpacity
                       key={dayData.dateString}
                       onPress={() => navigation.navigate('StreakDetails', { date: dayData.dateString })}
-                      style={styles.dayCircleWrapper}
-                      activeOpacity={0.9}
+                      style={styles.dayCol}
+                      activeOpacity={0.8}
                     >
-                      <View
-                        style={[
-                          styles.dayCircle,
-                          isGoalMet && styles.dayCircleCompleted,
-                          isFocused && styles.dayCircleFocused,
-                          {
-                            backgroundColor: isGoalMet ? COLORS.success : isFocused ? 'transparent' : COLORS.surface,
-                            borderColor: isGoalMet || isFocused ? COLORS.success : COLORS.border,
-                          },
-                        ]}
-                      >
-                        {isGoalMet ? (
-                          <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-                        ) : (
-                          <Text style={[styles.dayDate, { color: isFocused ? COLORS.success : COLORS.textSecondary }]}>{dayData.date}</Text>
-                        )}
+                      <Text style={[styles.dayLetter, { color: isFocused ? COLORS.primary : COLORS.textSecondary }]}>
+                        {dayData.day.slice(0, 1)}
+                      </Text>
+                      <View style={[
+                        styles.dayPill,
+                        {
+                          backgroundColor: isGoalMet
+                            ? COLORS.success
+                            : isFocused
+                              ? 'transparent'
+                              : isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                          borderColor: isGoalMet
+                            ? COLORS.success
+                            : isFocused
+                              ? COLORS.primary
+                              : 'transparent',
+                          borderWidth: isFocused ? 1.5 : 0,
+                        },
+                      ]}>
+                        {isGoalMet
+                          ? <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                          : <Text style={[styles.dayNum, { color: isFocused ? COLORS.primary : COLORS.textSecondary }]}>{dayData.date}</Text>
+                        }
                       </View>
-                      <Text style={[styles.dayLabel, { color: isFocused ? COLORS.primary : COLORS.textMuted }]}>{dayData.day.slice(0, 1)}</Text>
                     </TouchableOpacity>
                   );
                 })}
               </View>
-              <View style={styles.weeklyMomentumFooter}>
-                <Text
-                  onPress={() => navigation.navigate('AnalyticsScreenPremium')}
-                  style={[styles.weeklyTrendText, { color: COLORS.textSecondary }]}
-                >
-                  Trend: <Text style={{ color: COLORS.success, fontWeight: '800' }}>+5%</Text> from last week
-                </Text>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('AnalyticsScreenPremium')}
-                  activeOpacity={0.85}
-                >
-                  <Text style={[styles.weeklyReportText, { color: COLORS.primary }]}>View Details</Text>
+              {/* Trend footer */}
+              <View style={[styles.momentumFooter, { borderTopColor: cardBorder }]}>
+                <View style={styles.momentumTrendWrap}>
+                  <Ionicons
+                    name={trendIsPositive ? 'trending-up-outline' : 'trending-down-outline'}
+                    size={16} color={trendColor}
+                  />
+                  <Text style={[styles.momentumTrend, { color: COLORS.textSecondary }]}>
+                    {' '}vs last 7 days: <Text style={{ color: trendColor, fontWeight: '700' }}>{trendString}</Text>
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => navigation.navigate('AnalyticsScreenPremium')} activeOpacity={0.8}>
+                  <Text style={[styles.linkText, { color: COLORS.primary }]}>Details →</Text>
                 </TouchableOpacity>
               </View>
             </View>
-            <Text style={[styles.sectionTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>Daily Goals</Text>
-            {goals.map((goal) => (
-              <GoalBar
-                key={goal.key}
-                iconName={goal.iconName}
-                iconColor={goal.iconColor}
-                iconBg={goal.iconBg}
-                title={goal.title}
-                metric={goal.metric}
-                percentage={goal.percentage}
-                backgroundColor={COLORS.card}
-                textPrimary={COLORS.textPrimary}
-                textSecondary={COLORS.textSecondary}
-                onPress={() => navigation.navigate(goal.navigationScreen)}
-                progressTrack={isDark ? '#374151' : '#EBEDF0'}
-              />
-            ))}
-            <Text style={[styles.sectionTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>Quick Actions</Text>
-            <View style={styles.dashboardGrid}>
-              {dashboardCards.map((card) => (
+            {/* ─── QUICK ACTIONS ───────────────────────────── */}
+            <Text style={[styles.sectionEyebrow, { color: COLORS.textSecondary }]}>QUICK ACTIONS</Text>
+            <View style={styles.quickGrid}>
+              {quickActions.map((card) => (
                 <TouchableOpacity
                   key={card.title}
                   onPress={() => navigation.navigate(card.navigationScreen)}
-                  style={[
-                    styles.dashboardCard,
-                    {
-                      backgroundColor: card.backgroundColor,
-                      shadowColor: isDark ? COLORS.background : '#000000',
-                    },
-                  ]}
+                  style={[styles.quickCard, { backgroundColor: COLORS.card, borderColor: cardBorder }]}
+                  activeOpacity={0.82}
                 >
-                  <View style={[styles.dashboardIconCircle]}>
-                    <Ionicons name={card.iconName} size={20} color={card.iconColor} />
+                  <View style={[styles.quickIconWrap, { backgroundColor: card.iconBg }]}>
+                    <Ionicons name={card.iconName} size={22} color={card.iconColor} />
                   </View>
-                  <Text style={[styles.dashboardTitle, { color: COLORS.textPrimary }]}>{card.title}</Text>
+                  <Text style={[styles.quickCardTitle, { color: COLORS.textPrimary }]}>{card.title}</Text>
+                  <Ionicons name="chevron-forward" size={14} color={COLORS.textSecondary} style={{ marginTop: 2 }} />
                 </TouchableOpacity>
               ))}
             </View>
-            <View style={[styles.appTipCard, { backgroundColor: COLORS.card, shadowColor: isDark ? COLORS.background : '#232627' }]}>
-              <View style={[styles.appTipBadge, { backgroundColor: isDark ? 'rgba(52, 79, 72, 0.66)' : 'rgba(163, 237, 205, 0.77)' }]}>
-                <Text style={[styles.appTipBadgeText, { color: COLORS.primary }]}>PRO TIP</Text>
+            {/* ─── TIP CARD ────────────────────────────────── */}
+            <View style={[styles.tipCard, { backgroundColor: COLORS.card, borderColor: cardBorder }]}>
+              <View style={[styles.tipAccent, { backgroundColor: COLORS.primary }]} />
+              <View style={{ flex: 1, paddingLeft: 16 }}>
+                <Text style={[styles.tipEyebrow, { color: COLORS.primary }]}>PRO TIP</Text>
+                <Text style={[styles.tipTitle, { color: COLORS.textPrimary }]}>
+                  One small habit keeps your streak alive.
+                </Text>
+                <Text style={[styles.tipSub, { color: COLORS.textSecondary }]}>
+                  Log water, hit your step goal, and wind down on time — a consistent streak compounds over weeks.
+                </Text>
               </View>
-              <Text style={[styles.appTipTitle, { color: COLORS.textPrimary }]}>Keep your streak alive with one quick habit.</Text>
-              <Text style={[styles.appTipSubtitle, { color: COLORS.textSecondary }]}>Log water, reach today steps, and finish strong on the sleep goal.</Text>
             </View>
           </>
         )}
-        <Modal
-          transparent
-          visible={!!selectedDayModal}
-          animationType="fade"
-          onRequestClose={() => setSelectedDayModal(null)}
-        >
+        {/* ─── DAY MODAL ───────────────────────────────────── */}
+        <Modal transparent visible={!!selectedDayModal} animationType="fade" onRequestClose={() => setSelectedDayModal(null)}>
           <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: COLORS.card }]}>
-              <TouchableOpacity
-                style={styles.modalCloseBtn}
-                onPress={() => setSelectedDayModal(null)}
-              >
-                <Ionicons name="close" size={24} color={COLORS.textPrimary} />
+            <View style={[styles.modalBox, { backgroundColor: COLORS.card, borderColor: cardBorder }]}>
+              <TouchableOpacity style={styles.modalClose} onPress={() => setSelectedDayModal(null)}>
+                <Ionicons name="close" size={22} color={COLORS.textPrimary} />
               </TouchableOpacity>
-              <Text style={[styles.modalTitle, FONTS.mainHeading, { color: COLORS.textPrimary }]}>
-                {selectedDayModal?.day}
-              </Text>
-              <View style={styles.modalDateDisplay}>
-                <Text style={[styles.modalDateText, FONTS.bigNumbers, { color: COLORS.primary }]}>
-                  {selectedDayModal?.date}
-                </Text>
-                <View style={styles.modalDateDivider} />
-                <Text style={[styles.modalMonthText, FONTS.subheading, { color: COLORS.textPrimary }]}>
+              <Text style={[styles.modalDay, { color: COLORS.textPrimary }]}>{selectedDayModal?.day}</Text>
+              <View style={styles.modalDateRow}>
+                <Text style={[styles.modalDateNum, { color: COLORS.primary }]}>{selectedDayModal?.date}</Text>
+                <View style={[styles.modalDateSep, { backgroundColor: cardBorder }]} />
+                <Text style={[styles.modalDateMonth, { color: COLORS.textPrimary }]}>
                   {selectedDayModal ? getMonthName(selectedDayModal.month) : ''}
                 </Text>
               </View>
-              <View style={styles.modalGoalStatus}>
+              <View style={[styles.modalStatus, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }]}>
                 <Ionicons
                   name={selectedDayModal && weeklyProgress && weeklyProgress[weekDates.findIndex(d => d.dateString === selectedDayModal.dateString)] ? 'checkmark-circle' : 'close-circle'}
-                  size={32}
+                  size={28}
                   color={selectedDayModal && weeklyProgress && weeklyProgress[weekDates.findIndex(d => d.dateString === selectedDayModal.dateString)] ? '#2ECC71' : '#E74C3C'}
                 />
-                <Text style={[styles.modalStatusText, FONTS.bodyText, { color: COLORS.textPrimary, marginLeft: 12 }]}>
-                  {selectedDayModal && weeklyProgress && weeklyProgress[weekDates.findIndex(d => d.dateString === selectedDayModal.dateString)]
-                    ? 'Goal Achieved! 🎉'
-                    : 'Goal Not Achieved'}
+                <Text style={[styles.modalStatusText, { color: COLORS.textPrimary }]}>
+                  {selectedDayModal && weeklyProgress && weeklyProgress[weekDates.findIndex(d => d.dateString === selectedDayModal.dateString)] ? 'Goal Achieved! 🎉' : 'Goal Not Achieved'}
                 </Text>
               </View>
-              <TouchableOpacity
-                style={[styles.modalCloseActionBtn, { backgroundColor: COLORS.primary }]}
-                onPress={() => setSelectedDayModal(null)}
-              >
-                <Text style={[styles.modalCloseActionBtnText, { color: '#FFFFFF' }]}>Close</Text>
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: COLORS.primary }]} onPress={() => setSelectedDayModal(null)}>
+                <Text style={styles.modalBtnText}>Close</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -592,614 +682,116 @@ export default function HomeScreen({ navigation }) {
     </SafeAreaView>
   );
 }
+// Helper
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'morning';
+  if (h < 17) return 'afternoon';
+  return 'evening';
+}
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#eef1f7',
-  },
-  confettiOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 999,
-    elevation: 999,
-  },
-  contentContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 90,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-    marginTop: 6,
-    gap: 14,
-  },
-  headerLeftGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerTitleGroup: {
-    marginLeft: 12,
-    flexShrink: 1,
-  },
-  headerAppName: {
-    fontSize: 18,
-    fontWeight: '700',
-    lineHeight: 24,
-  },
-  headerGreeting: {
-    marginTop: 2,
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  headerRightGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  notificationButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  greetingMain: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  avatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  streakBadge: {
-    minWidth: 88,
-    height: 34,
-    borderRadius: 17,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  streakText: {
-    marginLeft: 4,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  dailyPromptCard: {
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 14,
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-  },
-  dailyPromptTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-  },
-  dailyPromptSubtitle: {
-    fontSize: 13,
-    marginTop: 2,
-    marginBottom: 8,
-  },
-  dailyPromptRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 8,
-    marginBottom: 10,
-  },
-  dailyPromptMetric: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  dailyPromptActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  dailyPromptBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  dailyPromptBtnText: {
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-  dailyHealthCard: {
-    borderRadius: 22,
-    paddingVertical: 22,
-    paddingHorizontal: 18,
-    marginBottom: 22,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowOpacity: 0.1,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
-  },
-  dailyHealthTextArea: {
-    flex: 1,
-    paddingRight: 12,
-  },
-  dailyHealthTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    lineHeight: 28,
-  },
-  dailyHealthSubtitle: {
-    marginTop: 10,
-    fontSize: 17,
-    lineHeight: 24,
-    fontWeight: '500',
-  },
-  scoreRingWrap: {
-    width: 128,
-    height: 128,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scoreHeartGhost: {
-    position: 'absolute',
-    width: 118,
-    height: 118,
-    borderRadius: 59,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 10,
-    opacity: 0.16,
-  },
-  scoreRing: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
-    borderWidth: 7,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
-  },
-  scoreValue: {
-    fontSize: 34,
-    lineHeight: 38,
-    fontWeight: '800',
-  },
-  scoreDivider: {
-    marginTop: 2,
-    fontSize: 14,
-    lineHeight: 16,
-    fontWeight: '500',
-  },
-  heroCard: {
-    borderRadius: 18,
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-    minHeight: 155,
-    marginBottom: 20,
-    position: 'relative',
-    shadowColor: '#000000',
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    elevation: 2,
-  },
-  heroTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  heroScore: {
-    fontSize: 42,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    lineHeight: 66,
-  },
-  heroCaption: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.95)',
-    lineHeight: 20,
-  },
-  heroIconWrap: {
-    position: 'absolute',
-    right: 20,
-    top: 30,
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    marginTop: 8,
-    marginBottom: 14,
-  },
-  goalCard: {
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    marginBottom: 12,
-    shadowColor: '#000000',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    elevation: 2,
-    width: '100%',
-  },
-  goalTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  goalLeftWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  goalIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  goalTextWrap: {
-    marginLeft: 12,
-  },
-  goalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  goalMetric: {
-    marginTop: 2,
-    fontSize: 13,
-  },
-  goalPercent: {
-    marginLeft: 8,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  goalProgressTrack: {
-    height: 6,
-    borderRadius: 999,
-    overflow: 'hidden',
-  },
-  goalProgressFill: {
-    height: '100%',
-    borderRadius: 999,
-  },
-  dashboardGrid: {
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginTop: 2,
-    paddingBottom: 18,
-  },
-  dashboardCard: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    aspectRatio: 1,
-    width: '31%',
-    borderRadius: 22,
-    padding: 16,
-    marginBottom: 12,
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    elevation: 2,
-    overflow: 'hidden',
-  },
-  dashboardIconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  dashboardTitle: {
-    marginTop: 2,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  appTipCard: {
-    borderRadius: 22,
-    padding: 18,
-    marginTop: 10,
-    marginBottom: 10,
-    minHeight: 170,
-    justifyContent: 'flex-end',
-    overflow: 'hidden',
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
-  },
-  appTipBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    marginBottom: 10,
-  },
-  appTipBadgeText: {
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  appTipTitle: {
-    fontSize: 26,
-    fontWeight: '800',
-    lineHeight: 32,
-    maxWidth: '88%',
-  },
-  appTipSubtitle: {
-    marginTop: 10,
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 22,
-    maxWidth: '90%',
-  },
-  reviewCard: {
-    marginTop: 20,
-    marginBottom: 40,
-    width: '100%',
-    padding: 24,
-    borderRadius: 20,
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    elevation: 3,
-  },
-  reviewGreeting: {
-    fontSize: 28,
-    fontWeight: '800',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  reviewInsight: {
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: 28,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  reviewSliderBlock: {
-    marginBottom: 24,
-  },
-  reviewSliderLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 12,
-  },
-  reviewActionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 16,
-  },
-  reviewActionBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  reviewActionBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  reviewStartBtn: {
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    marginTop: 8,
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    elevation: 4,
-  },
-  reviewStartBtnText: {
-    fontSize: 17,
-    fontWeight: '800',
-  },
-  weeklyProgressCard: {
-    borderRadius: 22,
-    padding: 18,
-    marginBottom: 22,
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-  },
-  weeklyMomentumCard: {
-    borderRadius: 22,
-    padding: 18,
-    marginBottom: 22,
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-  },
-  weeklyProgressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  weeklyProgressTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  viewDetailsText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  weekDaysContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 6,
-  },
-  dayCircleWrapper: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  dayCircle: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-    borderWidth: 2,
-  },
-  dayCircleCompleted: {
-    borderWidth: 0,
-  },
-  dayCircleFocused: {
-    borderWidth: 2,
-    borderStyle: 'dotted',
-  },
-  dayDate: {
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  dayLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  weeklyMomentumFooter: {
-    marginTop: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  weeklyTrendText: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  weeklyReportText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: '85%',
-    borderRadius: 20,
-    padding: 24,
-    alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
-  },
-  modalCloseBtn: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    padding: 8,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    marginTop: 8,
-    marginBottom: 20,
-  },
-  modalDateDisplay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  modalDateText: {
-    fontSize: 48,
-    fontWeight: '800',
-  },
-  modalDateDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    marginHorizontal: 16,
-  },
-  modalMonthText: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  modalGoalStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-  },
-  modalStatusText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  modalCloseActionBtn: {
-    width: '100%',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalCloseActionBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  avatarEditIcon: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-  },
+  container: { flex: 1 },
+  contentContainer: { paddingHorizontal: 18, paddingTop: 20, paddingBottom: 100 },
+  confettiOverlay: { ...StyleSheet.absoluteFillObject, zIndex: 999, elevation: 999 },
+  // ── Header
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center' },
+  headerEyebrow: { fontSize: 10, fontWeight: '700', letterSpacing: 1.2, marginBottom: 2 },
+  headerAppName: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  avatarRing: { width: 46, height: 46, borderRadius: 23, borderWidth: 2, overflow: 'hidden' },
+  avatarImage: { width: '100%', height: '100%' },
+  avatarEditDot: { position: 'absolute', bottom: -1, right: -1, width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  streakPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
+  streakNum: { fontSize: 15, fontWeight: '800' },
+  streakDays: { fontSize: 12, fontWeight: '600' },
+  iconBtn: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  // ── Hero card
+  heroCard: { borderRadius: 24, padding: 22, marginBottom: 24, flexDirection: 'row', alignItems: 'center', borderWidth: 1 },
+  heroBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, marginBottom: 12, gap: 6 },
+  heroBadgeDot: { width: 6, height: 6, borderRadius: 3 },
+  heroBadgeText: { fontSize: 10, fontWeight: '700', letterSpacing: 1 },
+  heroScoreLabel: { fontSize: 26, fontWeight: '800', lineHeight: 30, letterSpacing: -0.5, marginBottom: 6 },
+  heroScoreSub: { fontSize: 13, lineHeight: 18, fontWeight: '500', marginBottom: 14 },
+  heroStatRow: { flexDirection: 'row', gap: 12 },
+  heroStat: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  heroStatDot: { width: 7, height: 7, borderRadius: 3.5 },
+  heroStatLabel: { fontSize: 11, fontWeight: '600' },
+  heroRingWrap: { width: 108, height: 108, alignItems: 'center', justifyContent: 'center' },
+  heroRingOuter: { width: 108, height: 108, borderRadius: 54, borderWidth: 10, alignItems: 'center', justifyContent: 'center' },
+  heroRingInner: { width: 82, height: 82, borderRadius: 41, borderWidth: 5, alignItems: 'center', justifyContent: 'center' },
+  heroScore: { fontSize: 30, fontWeight: '800', lineHeight: 34 },
+  heroScoreDivider: { fontSize: 11, fontWeight: '600', marginTop: 1 },
+  // ── Section labels
+  sectionEyebrow: { fontSize: 11, fontWeight: '700', letterSpacing: 1.4, marginBottom: 12, marginTop: 4 },
+  sectionEyebrowInline: { fontSize: 10, fontWeight: '700', letterSpacing: 1.2, marginBottom: 4 },
+  // ── Metric tiles
+  metricRow: { flexDirection: 'row', gap: 10, marginBottom: 24 },
+  metricTile: { flex: 1, borderRadius: 20, padding: 14, borderWidth: 1 },
+  metricTileTop: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
+  metricTileIcon: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  metricTileLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5, flex: 1 },
+  metricTileValue: { fontSize: 22, fontWeight: '800', letterSpacing: -0.5, lineHeight: 26 },
+  metricTileUnit: { fontSize: 10, fontWeight: '600', marginTop: 2, marginBottom: 10 },
+  metricBar: { height: 4, borderRadius: 2, overflow: 'hidden', marginBottom: 4 },
+  metricBarFill: { height: '100%', borderRadius: 2 },
+  metricPct: { fontSize: 10, fontWeight: '700' },
+  // ── Momentum card
+  momentumCard: { borderRadius: 24, padding: 20, marginBottom: 24, borderWidth: 1 },
+  momentumHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 },
+  momentumTitle: { fontSize: 18, fontWeight: '800', letterSpacing: -0.3 },
+  dayStrip: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
+  dayCol: { alignItems: 'center', gap: 6, flex: 1 },
+  dayLetter: { fontSize: 11, fontWeight: '700' },
+  dayPill: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  dayNum: { fontSize: 13, fontWeight: '700' },
+  momentumFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 14, borderTopWidth: 1 },
+  momentumTrendWrap: { flexDirection: 'row', alignItems: 'center' },
+  momentumTrend: { fontSize: 12, fontWeight: '500' },
+  linkText: { fontSize: 13, fontWeight: '700' },
+  // ── Quick actions
+  quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
+  quickCard: { width: (screenWidth - 18 * 2 - 10) / 2, borderRadius: 20, paddingVertical: 18, paddingHorizontal: 12, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  quickIconWrap: { width: 42, height: 42, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  quickCardTitle: { flex: 1, fontSize: 15, fontWeight: '700' },
+  // ── Tip card
+  tipCard: { borderRadius: 20, padding: 20, flexDirection: 'row', alignItems: 'stretch', borderWidth: 1, marginBottom: 12 },
+  tipAccent: { width: 4, borderRadius: 2 },
+  tipEyebrow: { fontSize: 10, fontWeight: '800', letterSpacing: 1.2, marginBottom: 6 },
+  tipTitle: { fontSize: 16, fontWeight: '800', lineHeight: 22, marginBottom: 6 },
+  tipSub: { fontSize: 13, lineHeight: 19, fontWeight: '500' },
+  // ── Review card
+  reviewCard: { marginTop: 8, marginBottom: 40, borderRadius: 24, padding: 24, borderWidth: 1 },
+  reviewBadge: { alignSelf: 'center', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, marginBottom: 12 },
+  reviewBadgeText: { fontSize: 10, fontWeight: '800', letterSpacing: 1.2 },
+  reviewHeading: { fontSize: 26, fontWeight: '800', textAlign: 'center', marginBottom: 8, letterSpacing: -0.5 },
+  reviewInsight: { fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
+  reviewGoalRow: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 12 },
+  reviewGoalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  reviewGoalLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  reviewGoalLabel: { fontSize: 15, fontWeight: '700' },
+  reviewGoalValueWrap: { alignItems: 'flex-end' },
+  reviewGoalValue: { fontSize: 22, fontWeight: '800', lineHeight: 26 },
+  reviewGoalUnit: { fontSize: 11, fontWeight: '600' },
+  sliderTick: { fontSize: 11, fontWeight: '500' },
+  reviewActions: { flexDirection: 'row', gap: 10, marginBottom: 12, marginTop: 4 },
+  reviewSecondaryBtn: { flex: 1, paddingVertical: 13, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  reviewSecondaryText: { fontSize: 13, fontWeight: '700' },
+  reviewAiBtn: { flex: 1, flexDirection: 'row', paddingVertical: 13, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  reviewAiText: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
+  reviewStartBtn: { paddingVertical: 16, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
+  reviewStartText: { fontSize: 16, fontWeight: '800', color: '#FFFFFF' },
+  // ── Modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center' },
+  modalBox: { width: '86%', borderRadius: 24, padding: 28, alignItems: 'center', borderWidth: 1 },
+  modalClose: { position: 'absolute', top: 18, right: 18, padding: 6 },
+  modalDay: { fontSize: 22, fontWeight: '800', marginTop: 4, marginBottom: 16, letterSpacing: -0.3 },
+  modalDateRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 20 },
+  modalDateNum: { fontSize: 48, fontWeight: '800', lineHeight: 52 },
+  modalDateSep: { width: 1, height: 36 },
+  modalDateMonth: { fontSize: 16, fontWeight: '700' },
+  modalStatus: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 14, marginBottom: 22, width: '100%', justifyContent: 'center' },
+  modalStatusText: { fontSize: 15, fontWeight: '600' },
+  modalBtn: { width: '100%', paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
+  modalBtnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
 });

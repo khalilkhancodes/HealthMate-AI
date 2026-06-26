@@ -1,6 +1,5 @@
-import { fetch as expoFetch } from 'expo/fetch';
 import { Ionicons } from '@expo/vector-icons';
-import OpenAI from 'openai';
+import * as Clipboard from 'expo-clipboard';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -18,22 +17,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
-
-const NVIDIA_INVOKE_URL = process.env.EXPO_PUBLIC_NVIDIA_INVOKE_URL || 'https://integrate.api.nvidia.com/v1';
-const MEAL_PLANNER_MODEL = process.env.EXPO_PUBLIC_NVIDIA_MEAL_PLANNER_MODEL || 'meta/llama-3.1-70b-instruct';
-// Reusing the general API key, but you can create a specific one if needed
-const API_KEY = process.env.EXPO_PUBLIC_NVIDIA_API_KEY;
-
-if (!API_KEY) {
-  console.warn("Missing EXPO_PUBLIC_NVIDIA_API_KEY in .env file");
-}
-
-const openai = new OpenAI({
-  apiKey: API_KEY,
-  baseURL: NVIDIA_INVOKE_URL,
-  dangerouslyAllowBrowser: true,
-  fetch: expoFetch, // Use Expo's fetch for better streaming support in React Native 
-});
 
 const INITIAL_GREETING = {
   id: '1',
@@ -53,7 +36,7 @@ export default function AIMealPlannerScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef(null);
   const themePreference = useHealthStore((s) => s.themePreference);
-  const { COLORS, FONTS, isDark } = useTheme(themePreference);
+  const { COLORS, FONTS } = useTheme(themePreference);
 
   const {
     isPremiumUser,
@@ -70,10 +53,13 @@ export default function AIMealPlannerScreen({ navigation }) {
 
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState(AI_LOADING_STATES[0]);
+  const [dotCount, setDotCount] = useState(1);
 
-  // Real-time Streaming State
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [streamingMessage, setStreamingMessage] = useState('');
+  // Scroll and Copy Feedback States
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
 
   const safeTopPadding = Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 10 : insets.top + 10;
 
@@ -83,26 +69,53 @@ export default function AIMealPlannerScreen({ navigation }) {
     }
   }, [aiMealPlannerHistory.length, addMealPlannerMessage]);
 
+  useEffect(() => {
+    if (!isTyping) return;
+    const interval = setInterval(() => {
+      setDotCount((prev) => (prev % 3) + 1);
+    }, 500);
+    return () => clearInterval(interval);
+  }, [isTyping]);
+
+  useEffect(() => {
+    let interval;
+    if (isTyping) {
+      let index = 0;
+      interval = setInterval(() => {
+        index = (index + 1) % AI_LOADING_STATES.length;
+        setLoadingMessage(AI_LOADING_STATES[index]);
+      }, 1500);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isTyping]);
+
+  const handleScroll = (event) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    setShowScrollToTop(contentOffset.y > 200);
+    const isAtBottom = contentSize.height - layoutMeasurement.height - contentOffset.y < 150;
+    setShowScrollToBottom(!isAtBottom);
+  };
+
+  const handleCopy = async (text, id) => {
+    await Clipboard.setStringAsync(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleEdit = (text) => {
+    setInputText(text);
+    flatListRef.current?.scrollToEnd({ animated: true });
+  };
 
   const buildSystemPrompt = () =>
     `You are HealthMate AI Meal Planner.
 CRITICAL FORMATTING RULES:
 1. DO NOT use markdown formatting. "NO asterisks (**), NO bold tags, NO hash symbols (#)". 
-2. Use ALL CAPS for section headings (e.g., WEEKLY MEAL PLAN, MONDAY, DAYS NAMES, ADVANTAGES AND OTHER HEADINGS REQUIRED BY USER).
+2. Use ALL CAPS for section headings.
 3. Use simple hyphens (-) for bullet points.
 4. Separate sections with blank lines for readability.
-
-Create personalized weekly meal plans.
-Use:
-- Age
-- Weight
-- Height
-- Activity level
-- Goal
-- BMI
-- BMR
-- Country
-
 Goals:
   - Current Weight: ${weightKg}kg
   - Target Weight: ${targetWeightKg}kg
@@ -113,59 +126,29 @@ Requirements:
 - Weekly meal plan.
 - Breakfast, lunch, dinner and snacks.
 - Estimate calories and protein content.
-- Suggest affordable foods.
 - Include Pakistani foods when appropriate.
-- Explain advantages of following the plan.
-- Explain expected results.
-- Mention hydration.
-
-Format:
-WEEKLY MEAL PLAN
-MONDAY
-- Breakfast:
-...
-- Lunch:
-...
-- Dinner:
-...
-- Daily Calories:
-...
-ADVANTAGES OF THIS PLAN:
-• ...
-EXPECTED RESULTS:
-• ...
-HEALTH ALTERNATIVES TO COMMON INGREDIENTS:
-• ...
-
-
 Communication Style:
-Professional, practical and supportive.
-- Avoid greetings, small talk and filler words.
-- Start directly with useful information.
-- Default response length is medium (150-250 words).
-- Provide detailed explanations only when requested.
-- Use simple language suitable for non-medical users.
-- Explain uncertainty when confidence is low.
-- Never reveal chain of thought or internal reasoning.
-- Do not invent information.
-`;
+Professional, practical and supportive.`;
 
   const callNvidiaMealPlanner = async (messages) => {
-    if (!API_KEY) throw new Error('Missing API Configuration.');
-
     try {
-      const stream = await openai.chat.completions.create({
-        model: MEAL_PLANNER_MODEL,
-        messages: messages,
-        temperature: 0.5, // Slightly higher than the doctor for culinary creativity
-        top_p: 0.9,
-        max_tokens: 1024,
-        stream: true, // Enables real-time typing
+      const response = await fetch('https://healthmate-backend-eta.vercel.app/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ messages: messages, max_tokens: 512, model: 'llama-3.3-70b-instruct' }),
       });
 
-      return stream;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Server rejected the request.');
+      }
+
+      return data.choices?.[0]?.message?.content || 'Sorry, I could not generate a meal plan at this time.';
     } catch (error) {
-      throw new Error(error?.response?.data?.message || error?.message || 'NVIDIA API error');
+      throw new Error(error.message || 'Proxy connection failed');
     }
   };
 
@@ -190,6 +173,7 @@ Professional, practical and supportive.
     addMealPlannerMessage(userMessage);
     setInputText('');
     setIsTyping(true);
+    setLoadingMessage(AI_LOADING_STATES[0]);
 
     requestAnimationFrame(() => flatListRef.current?.scrollToEnd({ animated: true }));
 
@@ -205,35 +189,16 @@ Professional, practical and supportive.
         { role: 'user', content: userMessage.text },
       ];
 
-      setIsTyping(false);
-      setIsStreaming(true);
-      setStreamingMessage('');
-
-      const stream = await callNvidiaMealPlanner(messages);
-      let accumulatedText = '';
-
-      for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content || '';
-        if (content) {
-          accumulatedText += content;
-          setStreamingMessage(accumulatedText);
-          flatListRef.current?.scrollToEnd({ animated: false });
-        }
-      }
-
-      setIsStreaming(false);
-      setStreamingMessage('');
+      const responseText = await callNvidiaMealPlanner(messages);
 
       addMealPlannerMessage({
         id: (Date.now() + 1).toString(),
-        text: accumulatedText,
+        text: responseText,
         sender: 'ai',
         timestamp: new Date().toISOString(),
       });
 
     } catch (error) {
-      setIsStreaming(false);
-      setIsTyping(false);
       console.warn('AI Meal Planner API Error: ', error);
       addMealPlannerMessage({
         id: (Date.now() + 1).toString(),
@@ -241,6 +206,9 @@ Professional, practical and supportive.
         sender: 'ai',
         timestamp: new Date().toISOString(),
       });
+    } finally {
+      setIsTyping(false);
+      requestAnimationFrame(() => flatListRef.current?.scrollToEnd({ animated: true }));
     }
   };
 
@@ -253,18 +221,40 @@ Professional, practical and supportive.
             <Ionicons name="restaurant" size={14} color={COLORS.card} />
           </View>
         )}
-        <View
-          style={[
-            styles.messageBubble,
-            isUser ? styles.userBubble : styles.aiBubble,
-            isUser
-              ? { backgroundColor: COLORS.primary }
-              : { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
-          ]}
-        >
-          <Text style={[styles.messageText, { color: isUser ? COLORS.card : COLORS.textPrimary }]}>
-            {item.text}
-          </Text>
+        <View style={styles.bubbleContainer}>
+          <View
+            style={[
+              styles.messageBubble,
+              isUser ? styles.userBubble : styles.aiBubble,
+              isUser
+                ? { backgroundColor: COLORS.primary }
+                : { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
+            ]}
+          >
+            <Text selectable={true} style={[styles.messageText, { color: isUser ? COLORS.card : COLORS.textPrimary }]}>
+              {item.text}
+            </Text>
+          </View>
+
+          <View style={[styles.actionRow, { justifyContent: isUser ? 'flex-end' : 'flex-start' }]}>
+            <TouchableOpacity onPress={() => handleCopy(item.text, item.id)} style={styles.actionBtn}>
+              <Ionicons 
+                name={copiedId === item.id ? "checkmark-done" : "copy-outline"} 
+                size={14} 
+                color={copiedId === item.id ? COLORS.primary : COLORS.textMuted} 
+              />
+              <Text style={[styles.actionText, { color: copiedId === item.id ? COLORS.primary : COLORS.textMuted }]}>
+                {copiedId === item.id ? "Copied" : "Copy"}
+              </Text>
+            </TouchableOpacity>
+            
+            {isUser && (
+              <TouchableOpacity onPress={() => handleEdit(item.text)} style={[styles.actionBtn, { marginLeft: 12 }]}>
+                <Ionicons name="pencil-outline" size={14} color={COLORS.textMuted} />
+                <Text style={[styles.actionText, { color: COLORS.textMuted }]}>Edit</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </View>
     );
@@ -307,34 +297,45 @@ Professional, practical and supportive.
           showsVerticalScrollIndicator={false}
           keyboardDismissMode="interactive"
           keyboardShouldPersistTaps="handled"
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         />
 
-        {/* ── REAL-TIME STREAMING BUBBLE ── */}
-        {isStreaming && (
-          <View style={[styles.messageWrapper, styles.messageWrapperAI, { paddingHorizontal: 16 }]}>
-            <View style={[styles.aiAvatar, { backgroundColor: COLORS.primary }]}>
-              <Ionicons name="restaurant" size={14} color={COLORS.card} />
-            </View>
-            <View style={[styles.messageBubble, styles.aiBubble, { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border }]}>
-              <Text style={[styles.messageText, { color: COLORS.textPrimary }]}>
-                {streamingMessage}
-                <Text style={{ color: COLORS.primary }}> ▍</Text>
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* ── TYPING INDICATOR (Short delay before stream starts) ── */}
-        {isTyping && !isStreaming && (
+        {/* ── TYPING INDICATOR ── */}
+        {isTyping && (
           <View style={styles.typingContainer}>
             <View style={[styles.aiAvatar, { backgroundColor: COLORS.primary }]}>
               <Ionicons name="restaurant" size={14} color={COLORS.card} />
             </View>
             <View style={[styles.aiBubble, { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, paddingVertical: 12, paddingHorizontal: 16 }]}>
-              <ActivityIndicator size="small" color={COLORS.primary} />
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <ActivityIndicator size="small" color={COLORS.primary} style={{ marginRight: 10 }} />
+                <Text style={{ color: COLORS.textPrimary, fontSize: 14, flexShrink: 1 }}>
+                  {loadingMessage}{'.'.repeat(dotCount)}
+                </Text>
+              </View>
             </View>
           </View>
         )}
+
+        <View style={styles.floatingNavContainer}>
+          {showScrollToTop && (
+            <TouchableOpacity 
+              style={[styles.floatingBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]} 
+              onPress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
+            >
+              <Ionicons name="arrow-up" size={20} color={COLORS.textPrimary} />
+            </TouchableOpacity>
+          )}
+          {showScrollToBottom && (
+            <TouchableOpacity 
+              style={[styles.floatingBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border, marginTop: 8 }]} 
+              onPress={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            >
+              <Ionicons name="arrow-down" size={20} color={COLORS.textPrimary} />
+            </TouchableOpacity>
+          )}
+        </View>
 
         {/* ── INPUT DOCK ── */}
         <View style={[styles.inputDock, { backgroundColor: COLORS.aiBackground }]}>
@@ -351,7 +352,7 @@ Professional, practical and supportive.
             <TouchableOpacity
               style={[styles.sendButton, { backgroundColor: inputText.trim() ? COLORS.primary : 'transparent' }]}
               onPress={handleSend}
-              disabled={!inputText.trim() || isTyping || isStreaming}
+              disabled={!inputText.trim() || isTyping}
             >
               <Ionicons name="arrow-up" size={20} color={inputText.trim() ? COLORS.card : COLORS.textMuted} />
             </TouchableOpacity>
@@ -375,7 +376,8 @@ const styles = StyleSheet.create({
   messageWrapper: { flexDirection: 'row', marginBottom: 16, maxWidth: '85%' },
   messageWrapperUser: { alignSelf: 'flex-end', justifyContent: 'flex-end' },
   messageWrapperAI: { alignSelf: 'flex-start', alignItems: 'flex-start' },
-  aiAvatar: { width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 8, marginBottom: 4 },
+  aiAvatar: { width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 8, marginBottom: 24 },
+  bubbleContainer: { flex: 1 },
   messageBubble: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20 },
   userBubble: { borderBottomRightRadius: 4 },
   aiBubble: { borderBottomLeftRadius: 4 },
@@ -385,4 +387,9 @@ const styles = StyleSheet.create({
   pillContainer: { flexDirection: 'row', borderRadius: 24, paddingHorizontal: 6, borderWidth: 1, alignItems: 'flex-end', minHeight: 48, paddingBottom: 6 },
   textInput: { flex: 1, minHeight: 36, maxHeight: 120, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 8, fontSize: 15, backgroundColor: 'transparent' },
   sendButton: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginLeft: 8, marginBottom: 4 },
+  actionRow: { flexDirection: 'row', marginTop: 6, paddingHorizontal: 4 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', padding: 4 },
+  actionText: { fontSize: 12, marginLeft: 4, fontWeight: '500' },
+  floatingNavContainer: { position: 'absolute', bottom: 100, right: 16, alignItems: 'flex-end', zIndex: 10 },
+  floatingBtn: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 3, elevation: 4 },
 });

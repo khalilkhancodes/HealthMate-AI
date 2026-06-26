@@ -1,8 +1,75 @@
 import Slider from '@react-native-community/slider';
 import { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
+function GoalCard({
+  COLORS,
+  FONTS,
+  RADII,
+  iconBg,
+  iconColor,
+  emoji,
+  title,
+  description,
+  valueLabel,
+  valueColor,
+  min,
+  max,
+  step,
+  value,
+  onValueChange,
+  trackColor,
+  minLabel,
+  maxLabel,
+}) {
+  return (
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: COLORS.card,
+          borderColor: COLORS.border,
+          borderRadius: RADII.lg ?? RADII.md,
+          shadowColor: COLORS.textPrimary,
+        },
+      ]}
+    >
+      <View style={styles.cardRow}>
+        <View style={[styles.iconCircle, { backgroundColor: iconBg }]}>
+          <Text style={{ color: iconColor, fontSize: 20 }}>{emoji}</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[FONTS.cardTitle, styles.cardTitleText, { color: COLORS.textPrimary }]}>{title}</Text>
+          <Text style={[FONTS.cardText, styles.cardDescriptionText, { color: COLORS.textSecondary }]}>
+            {description}
+          </Text>
+        </View>
+        <View style={[styles.valuePill, { backgroundColor: iconBg }]}>
+          <Text style={[FONTS.mediumNumbers, { color: valueColor }]}>{valueLabel}</Text>
+        </View>
+      </View>
+      <View style={[styles.divider, { backgroundColor: COLORS.border }]} />
+      <View style={styles.sliderBlock}>
+        <Slider
+          style={styles.slider}
+          minimumValue={min}
+          maximumValue={max}
+          step={step}
+          minimumTrackTintColor={trackColor}
+          maximumTrackTintColor={COLORS.border}
+          thumbTintColor={trackColor}
+          value={value}
+          onValueChange={onValueChange}
+        />
+        <View style={styles.sliderLabelsRow}>
+          <Text style={[FONTS.smallText, styles.sliderLabelText, { color: COLORS.textMuted }]}>{minLabel}</Text>
+          <Text style={[FONTS.smallText, styles.sliderLabelText, { color: COLORS.textMuted }]}>{maxLabel}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
 export default function SetupGoalsScreen({ navigation }) {
   const { COLORS, FONTS, SPACING, RADII } = useTheme();
   const stepGoalStore = useHealthStore((s) => s.stepGoal);
@@ -35,117 +102,111 @@ export default function SetupGoalsScreen({ navigation }) {
     completeSetup();
   };
   return (
-    <View style={[styles.container, { backgroundColor: COLORS.background }]}> 
-      <View style={[styles.content, { padding: SPACING.lg }]}> 
-        <Text style={[styles.title, FONTS.mainHeading, { color: COLORS.textPrimary }]}>Set Your Daily Goals</Text>
-        <View style={[styles.card, { backgroundColor: COLORS.card, borderColor: COLORS.border, borderRadius: RADII.md }]}> 
-          <View style={styles.cardRow}>
-            <View style={[styles.iconCircle, { backgroundColor: COLORS.primaryContainer }]}> 
-              <Text style={{ color: COLORS.primary }}>{'🚶'}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={[FONTS.cardTitle, { color: COLORS.textPrimary }]}>Daily Steps</Text>
-                <Text style={[FONTS.mediumNumbers, { color: COLORS.primary }]}>{Math.round(stepGoal)}</Text>
-              </View>
-              <Text style={[FONTS.cardText, { color: COLORS.textSecondary, marginTop: 6 }]}>Walking helps cardiovascular health and mood.</Text>
-            </View>
+    <View style={[styles.container, { backgroundColor: COLORS.background }]}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={[styles.content, { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.lg }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.headerBlock}>
+          <View style={[styles.headerBadge, { backgroundColor: COLORS.primaryContainer }]}>
+            <Text style={[FONTS.smallText, styles.headerBadgeText, { color: COLORS.primary }]}>DAILY TARGETS</Text>
           </View>
-          <View style={{ marginTop: 12 }}>
-            <Slider
-              style={{ width: '100%', height: 40 }}
-              minimumValue={2000}
-              maximumValue={20000}
-              step={100}
-              minimumTrackTintColor={COLORS.primary}
-              maximumTrackTintColor={COLORS.border}
-              value={stepGoal}
-              onValueChange={(v) => setStepGoalLocal(v)}
-            />
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={[FONTS.smallText, { color: COLORS.textMuted }]}>2,000</Text>
-              <Text style={[FONTS.smallText, { color: COLORS.textMuted }]}>20,000</Text>
-            </View>
-          </View>
+          <Text style={[styles.title, FONTS.mainHeading, { color: COLORS.textPrimary }]}>Set Your Daily Goals</Text>
+          <Text style={[FONTS.cardText, styles.subtitle, { color: COLORS.textSecondary }]}>
+            Fine-tune your targets, or let Smart Auto-Fill personalize them for you.
+          </Text>
         </View>
-        <View style={[styles.card, { backgroundColor: COLORS.card, borderColor: COLORS.border, borderRadius: RADII.md }]}> 
-          <View style={styles.cardRow}>
-            <View style={[styles.iconCircle, { backgroundColor: COLORS.secondaryContainer }]}> 
-              <Text style={{ color: COLORS.secondary }}>{'💧'}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={[FONTS.cardTitle, { color: COLORS.textPrimary }]}>Hydration</Text>
-                <Text style={[FONTS.mediumNumbers, { color: COLORS.secondary }]}>{waterLiters.toFixed(1)} L</Text>
-              </View>
-              <Text style={[FONTS.cardText, { color: COLORS.textSecondary, marginTop: 6 }]}>Proper hydration maintains energy and focus.</Text>
-            </View>
-          </View>
-          <View style={{ marginTop: 12 }}>
-            <Slider
-              style={{ width: '100%', height: 40 }}
-              minimumValue={0.5}
-              maximumValue={6}
-              step={0.1}
-              minimumTrackTintColor={COLORS.water}
-              maximumTrackTintColor={COLORS.border}
-              value={waterLiters}
-              onValueChange={(v) => setWaterLiters(v)}
-            />
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={[FONTS.smallText, { color: COLORS.textMuted }]}>1.0 L</Text>
-              <Text style={[FONTS.smallText, { color: COLORS.textMuted }]}>6.0 L</Text>
-            </View>
-          </View>
-        </View>
-        <View style={[styles.card, { backgroundColor: COLORS.card, borderColor: COLORS.border, borderRadius: RADII.md }]}> 
-          <View style={styles.cardRow}>
-            <View style={[styles.iconCircle, { backgroundColor: COLORS.tertiaryContainer }]}> 
-              <Text style={{ color: COLORS.tertiary }}>{'🌙'}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={[FONTS.cardTitle, { color: COLORS.textPrimary }]}>Sleep Duration</Text>
-                <Text style={[FONTS.mediumNumbers, { color: COLORS.tertiary }]}>{sleepHours} hrs</Text>
-              </View>
-              <Text style={[FONTS.cardText, { color: COLORS.textSecondary, marginTop: 6 }]}>Consistent sleep aids recovery and memory.</Text>
-            </View>
-          </View>
-          <View style={{ marginTop: 12 }}>
-            <Slider
-              style={{ width: '100%', height: 40 }}
-              minimumValue={4}
-              maximumValue={12}
-              step={0.5}
-              minimumTrackTintColor={COLORS.purple}
-              maximumTrackTintColor={COLORS.border}
-              value={sleepHours}
-              onValueChange={(v) => setSleepHoursLocal(v)}
-            />
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={[FONTS.smallText, { color: COLORS.textMuted }]}>4.0 hrs</Text>
-              <Text style={[FONTS.smallText, { color: COLORS.textMuted }]}>12.0 hrs</Text>
-            </View>
-          </View>
-        </View>
+        <GoalCard
+          COLORS={COLORS}
+          FONTS={FONTS}
+          RADII={RADII}
+          iconBg={COLORS.primaryContainer}
+          iconColor={COLORS.primary}
+          emoji="🚶"
+          title="Daily Steps"
+          description="Walking helps cardiovascular health and mood."
+          valueLabel={`${Math.round(stepGoal).toLocaleString()}`}
+          valueColor={COLORS.primary}
+          min={2000}
+          max={20000}
+          step={100}
+          value={stepGoal}
+          onValueChange={(v) => setStepGoalLocal(v)}
+          trackColor={COLORS.primary}
+          minLabel="2,000"
+          maxLabel="20,000"
+        />
+        <GoalCard
+          COLORS={COLORS}
+          FONTS={FONTS}
+          RADII={RADII}
+          iconBg={COLORS.secondaryContainer}
+          iconColor={COLORS.secondary}
+          emoji="💧"
+          title="Hydration"
+          description="Proper hydration maintains energy and focus."
+          valueLabel={`${waterLiters.toFixed(1)} L`}
+          valueColor={COLORS.secondary}
+          min={0.5}
+          max={6}
+          step={0.1}
+          value={waterLiters}
+          onValueChange={(v) => setWaterLiters(v)}
+          trackColor={COLORS.water ?? COLORS.secondary}
+          minLabel="1.0 L"
+          maxLabel="6.0 L"
+        />
+        <GoalCard
+          COLORS={COLORS}
+          FONTS={FONTS}
+          RADII={RADII}
+          iconBg={COLORS.tertiaryContainer}
+          iconColor={COLORS.tertiary}
+          emoji="🌙"
+          title="Sleep Duration"
+          description="Consistent sleep aids recovery and memory."
+          valueLabel={`${sleepHours} hrs`}
+          valueColor={COLORS.tertiary}
+          min={4}
+          max={12}
+          step={0.5}
+          value={sleepHours}
+          onValueChange={(v) => setSleepHoursLocal(v)}
+          trackColor={COLORS.purple ?? COLORS.tertiary}
+          minLabel="4.0 hrs"
+          maxLabel="12.0 hrs"
+        />
         <View style={styles.actionRow}>
           <TouchableOpacity
-            style={[styles.ghostBtn, { borderColor: COLORS.border, backgroundColor: 'transparent' }]}
-            activeOpacity={0.9}
+            style={[styles.ghostBtn, { borderColor: COLORS.border, backgroundColor: COLORS.card }]}
+            activeOpacity={0.85}
             onPress={() => resetToCurrent()}
           >
             <Text style={[styles.ghostBtnText, { color: COLORS.textPrimary }]}>Keep Current</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.secondaryBtn, { backgroundColor: COLORS.primary }]}
-            activeOpacity={0.9}
+            style={[
+              styles.secondaryBtn,
+              {
+                backgroundColor: COLORS.primaryContainer,
+                borderColor: COLORS.primary,
+              },
+            ]}
+            activeOpacity={0.85}
             onPress={() => applyAISuggestion()}
           >
-            <Text style={[styles.secondaryBtnText, { color: COLORS.onPrimary || '#FFF' }]}>Smart Auto-Fill</Text>
+            <Text style={[styles.secondaryBtnText, { color: COLORS.primary }]}>✨ Smart Auto-Fill</Text>
           </TouchableOpacity>
         </View>
         <TouchableOpacity
-          style={[styles.saveButton, { backgroundColor: COLORS.primary }]}
+          style={[
+            styles.saveButton,
+            {
+              backgroundColor: COLORS.primary,
+              shadowColor: COLORS.primary,
+            },
+          ]}
           activeOpacity={0.9}
           onPress={() => {
             handleSave();
@@ -156,22 +217,85 @@ export default function SetupGoalsScreen({ navigation }) {
         >
           <Text style={[styles.saveText, FONTS.buttonText, { color: COLORS.onPrimary || COLORS.card }]}>Save Goals</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </View>
   );
 }
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingTop: 50 },
-  title: { fontSize: 22, marginBottom: 12 },
-  card: { borderRadius: 12, padding: 10, marginBottom: 12, borderWidth: 1, overflow: 'hidden' },
-  cardRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  iconCircle: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  actionRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
-  ghostBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1, alignItems: 'center', marginRight: 10 },
-  ghostBtnText: { fontSize: 15, fontWeight: '600' },
-  secondaryBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', marginLeft: 10 },
-  secondaryBtnText: { fontSize: 15, fontWeight: '700', color: '#FFF' },
-  saveButton: { marginTop: 18, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
-  saveText: { fontSize: 16, fontWeight: '700' },
+  content: { paddingTop: 56 },
+  headerBlock: { marginBottom: 22 },
+  headerBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  headerBadgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 1 },
+  title: { fontSize: 26, marginBottom: 6, letterSpacing: -0.3 },
+  subtitle: { fontSize: 14, lineHeight: 20 },
+  card: {
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    elevation: 2,
+  },
+  cardRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+  iconCircle: {
+    width: 46,
+    height: 46,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  cardTitleText: { fontSize: 16, marginBottom: 3 },
+  cardDescriptionText: { fontSize: 12.5, lineHeight: 17 },
+  valuePill: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginLeft: 10,
+  },
+  divider: { height: 1, opacity: 0.6, marginVertical: 14 },
+  sliderBlock: {},
+  slider: { width: '100%', height: 38 },
+  sliderLabelsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
+  sliderLabelText: { fontSize: 11.5 },
+  actionRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8, marginBottom: 14 },
+  ghostBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  ghostBtnText: { fontSize: 14.5, fontWeight: '600' },
+  secondaryBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginLeft: 10,
+    borderWidth: 1.5,
+  },
+  secondaryBtnText: { fontSize: 14.5, fontWeight: '700' },
+  saveButton: {
+    marginTop: 6,
+    paddingVertical: 17,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  saveText: { fontSize: 16.5, fontWeight: '700', letterSpacing: 0.2 },
 });

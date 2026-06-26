@@ -233,7 +233,7 @@ export default function SleepScreen() {
                   </Text>
                   <Text style={[styles.alarmToggleSub, { color: COLORS.textMuted }]}>
                     {isAlarmEnabled
-                      ? `Rings after ${Math.floor(targetHours)}h`
+                      ? `Rings after ${(targetHours)}h`
                       : 'Alarm off — silent session'}
                   </Text>
                 </View>
@@ -298,14 +298,6 @@ export default function SleepScreen() {
               : `Goal: ${Math.floor(targetHours)}h • Suggested bedtime: ${suggestedBedtime}`}
           </Text>
         </View>
-        {!isSleeping && (
-             <TouchableOpacity 
-               style={{ marginTop: 10, padding: 12, backgroundColor: '#333', borderRadius: 10, alignItems: 'center' }}
-               onPress={handleTestAlarm}
-             >
-               <Text style={{ color: '#FFF', fontWeight: 'bold' }}>🧪 TEST ALARM (10 SECONDS)</Text>
-             </TouchableOpacity>
-          )}
         <TouchableOpacity
           style={[styles.metricCard, { backgroundColor: COLORS.card, ...SHADOWS.small, marginBottom: 16 }]}
           activeOpacity={0.85}
@@ -577,8 +569,8 @@ export default function SleepScreen() {
 }
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 100 },
-  sessionCard: { borderRadius: 20, padding: 16, marginBottom: 16 },
+  content: { paddingHorizontal: 16, paddingTop: 5, paddingBottom: 100 },
+  sessionCard: { borderRadius: 20, padding: 16, marginBottom: 16,},
   sessionTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   sessionLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 1, color: 'rgba(255,255,255,0.75)' },
   sessionTitle: { fontSize: 30, fontWeight: '800', lineHeight: 40 },
@@ -628,7 +620,7 @@ const styles = StyleSheet.create({
   sliderContainer: { marginBottom: 24, marginTop: 16 },
   slider: { width: '100%', height: 40, marginVertical: 12 },
   sliderLabels: { flexDirection: 'row', justifyContent: 'space-between' },
-  modalButtonRow: { flexDirection: 'row', gap: 12 },
+  modalButtonRow: { flexDirection: 'row', gap: 12, width: '50%'},
   modalButton: { flex: 0, width: '100%', borderRadius: 12, paddingVertical: 14, alignItems: 'center', justifyContent: 'center' },
   bottomSheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40, width: '100%' },
   bottomSheetHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(150,150,150,0.35)', alignSelf: 'center', marginBottom: 16 },

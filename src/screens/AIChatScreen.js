@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { fetch as expofetch } from 'expo/fetch';
-import OpenAI from 'openai';
+import * as Clipboard from 'expo-clipboard'; // NEW IMPORT
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -15,26 +14,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
-
-const EXPO_PUBLIC_NVIDIA_INVOKE_URL = process.env.EXPO_PUBLIC_NVIDIA_INVOKE_URL;
-const EXPO_PUBLIC_NVIDIA_MODEL = process.env.EXPO_PUBLIC_NVIDIA_MODEL;
-const EXPO_PUBLIC_NVIDIA_API_KEY = process.env.EXPO_PUBLIC_NVIDIA_API_KEY;
-
-if (!EXPO_PUBLIC_NVIDIA_API_KEY) {
-  console.warn("Missing EXPO_PUBLIC_NVIDIA_API_KEY in .env file");
-}
-
-// 2. INITIALIZE SDK WITH THE STRICT BASE URL
-const openai = new OpenAI({
-  apiKey: EXPO_PUBLIC_NVIDIA_API_KEY,
-  baseURL: EXPO_PUBLIC_NVIDIA_INVOKE_URL,
-  dangerouslyAllowBrowser: true, 
-  fetch: expofetch,
-});
 
 const INITIAL_AI_GREETING = {
   id: '1',
@@ -57,21 +39,18 @@ export default function AIChatScreen({ navigation }) {
     stepGoal,
     waterIntake,
     sleepDuration,
-    
   } = useHealthStore();
-
+  
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState(
-    'Analyzing your health data...'
-  );
-
-  const safeTopPadding =
-    Platform.OS === 'android'
-      ? (StatusBar.currentHeight || 24) + 10
-      : insets.top + 10;
-
-  // ─── Initial greeting ─────────────────────────────────────────────────────
+  const [loadingMessage, setLoadingMessage] = useState('Analyzing your health data...');
+  
+  // NEW STATE: Scroll tracking
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [copiedId, setCopiedId] = useState(null); // Visual feedback for copy
+  
+  const safeTopPadding = Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 10 : insets.top + 10;
 
   const AI_LOADING_STATES = [
     'Thinking...',
@@ -80,26 +59,17 @@ export default function AIChatScreen({ navigation }) {
     'Reviewing Progress...',
     'Preparing Insights...',
   ];
-
   const [dotCount, setDotCount] = useState(1);
-
+  
   useEffect(() => {
     if (!isTyping) return;
-
-    const interval = setInterval(() => {
-      setDotCount(prev => (prev % 3) + 1);
-    }, 500);
-
+    const interval = setInterval(() => setDotCount(prev => (prev % 3) + 1), 500);
     return () => clearInterval(interval);
   }, [isTyping]);
 
   useEffect(() => {
-    if (aiChatHistory.length === 0) {
-      addChatMessage(INITIAL_AI_GREETING);
-    }
+    if (aiChatHistory.length === 0) addChatMessage(INITIAL_AI_GREETING);
   }, [aiChatHistory.length, addChatMessage]);
-
-  // ─── Helpers ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
     let interval;
@@ -110,137 +80,106 @@ export default function AIChatScreen({ navigation }) {
         setLoadingMessage(AI_LOADING_STATES[index]);
       }, 1200);
     }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    return () => { if (interval) clearInterval(interval); };
   }, [isTyping]);
+
+  // ─── NEW: SCROLL, COPY & EDIT HANDLERS ────────────────────────────────────
+  
+  const handleScroll = (event) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    
+    // Show 'Top' button if scrolled down more than 200px
+    setShowScrollToTop(contentOffset.y > 200);
+    
+    // Show 'Bottom' button if user is scrolled up away from the bottom by more than 150px
+    const isAtBottom = contentSize.height - layoutMeasurement.height - contentOffset.y < 150;
+    setShowScrollToBottom(!isAtBottom);
+  };
+
+  const handleCopy = async (text, id) => {
+    await Clipboard.setStringAsync(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000); // Clear checkmark after 2s
+  };
+
+  const handleEdit = (text) => {
+    setInputText(text);
+    // Optional: You could scroll to bottom here automatically
+    flatListRef.current?.scrollToEnd({ animated: true });
+  };
+
+  // ──────────────────────────────────────────────────────────────────────────
 
   const buildSystemPrompt = () =>
     `You are HealthMate AI Health Assistant.
-
-  CRITICAL FORMATTING RULES:
+CRITICAL FORMATTING RULES:
 1. DO NOT use markdown formatting. "NO asterisks (**), NO bold tags, NO hash symbols (#)". 
-2. Use ALL CAPS for section headings (e.g., DISH NAME, DESCRIPTION, INGREDIENTS, INSTRUCTIONS, TIPS).
+2. Use ALL CAPS for section headings.
 3. Use simple hyphens (-) for bullet points.
 4. Separate sections with blank lines for readability.
-
-
 Your role is lifestyle optimization.
-  Use user data including:
-  steps, sleep, water intake, BMI, BMR, activity level, goals and location.
-  - Steps: ${dailySteps} / ${stepGoal}
-  - Water: ${waterIntake}ml
-  - Sleep: ${sleepDuration} hours
-Capabilities:
-- Fitness
-- Sleep
-- Hydration
-- Weight loss
-- Weight gain
-- Healthy habits
-- Nutrition
-- BMI and BMR explanations
-- Motivation
-- General wellness
+Use user data including:
+- Steps: ${dailySteps} / ${stepGoal}
+- Water: ${waterIntake}ml
+- Sleep: ${sleepDuration} hours
 Rules:
 - Avoid greetings.
 - Give practical advice.
 - Keep responses concise.
-- Explain reasons behind recommendations.
 - Personalize recommendations using available metrics.
-If users ask about:
-- Medications
-- Symptoms
-- Diseases
-Answer briefly and encourage using AI Doctor for better guidance.
-Format:
-ANALYSIS:
-...
-RECOMMENDATIONS:
-• ...
-BENEFITS:
-• ...
-WARNINGS:
-• ...
-Use metric units.
-Prefer foods commonly available globally with emphasis on Pakistan.
-
-
-Communication Style:
-Professional, practical and supportive.
-- Avoid greetings, small talk and filler words.
-- Start directly with useful information.
-- Default response length is medium (150-250 words).
-- Provide detailed explanations only when requested.
-- Use simple language suitable for non-medical users.
-- Explain uncertainty when confidence is low.
-- Never reveal chain of thought or internal reasoning.
-- Do not invent information.
-`;
+Use metric units. Prefer foods commonly available globally with emphasis on Pakistan.
+Communication Style: Professional, practical and supportive.`;
 
   const callNvidiaChat = async (messages) => {
-    if (!EXPO_PUBLIC_NVIDIA_API_KEY || !EXPO_PUBLIC_NVIDIA_INVOKE_URL || !EXPO_PUBLIC_NVIDIA_MODEL) {
-      throw new Error('Missing API Configuration. Check environment variables.');
-    }
-
     try {
-      // Using the exact payload structure required by Nemotron
-      const completion = await openai.chat.completions.create({
-        model: EXPO_PUBLIC_NVIDIA_MODEL,
-        messages: messages,
-        temperature: 0.3, // Lower temp for clinical accuracy
-        top_p: 0.95,
-        max_tokens: 540, // Adjusted from 16384 for faster mobile response
-        reasoning_budget: 1000, // Specific to Nemotron for deeper reasoning
-        chat_template_kwargs: { "enable_thinking": true },
-        stream: false // Kept false for simpler state management in React Native
+      const response = await fetch('https://healthmate-backend-eta.vercel.app/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: messages, stream: true, max_tokens: 400, model: 'meta/llama-3.2-90b-vision-instruct' }),
       });
-
-      return (
-        completion.choices[0]?.message?.content ||
-        'Sorry, I could not generate a medical insight at this time.'
-      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Server rejected the request.');
+      return data.choices?.[0]?.message?.content || 'Sorry, I could not generate an insight at this time.';
     } catch (error) {
-      throw new Error(
-        error?.response?.data?.message || error?.message || 'NVIDIA API error'
-      );
+      throw new Error(error.message || 'Proxy connection failed');
     }
   };
 
   const handleSend = async () => {
     if (!inputText.trim()) return;
     Keyboard.dismiss();
+    
     if (!isPremiumUser && freeAiQuestionsRemaining <= 0) {
       navigation.navigate('PaywallScreen');
       return;
     }
     if (!isPremiumUser) decrementAiQuestions();
+    
     const userMessage = {
       id: Date.now().toString(),
       text: inputText.trim(),
       sender: 'user',
       timestamp: new Date().toISOString(),
     };
+    
     addChatMessage(userMessage);
     setInputText('');
     setIsTyping(true);
     setLoadingMessage(AI_LOADING_STATES[0]);
-    requestAnimationFrame(() =>
-      flatListRef.current?.scrollToEnd({ animated: true })
-    );
+    
+    requestAnimationFrame(() => flatListRef.current?.scrollToEnd({ animated: true }));
+    
     try {
       const messages = [
         { role: 'system', content: buildSystemPrompt() },
         ...aiChatHistory
           .filter((msg, index) => !(index === 0 && msg.sender === 'ai'))
-          .map((msg) => ({
-            role: msg.sender === 'user' ? 'user' : 'assistant',
-            content: msg.text,
-          })),
+          .map((msg) => ({ role: msg.sender === 'user' ? 'user' : 'assistant', content: msg.text })),
         { role: 'user', content: userMessage.text },
       ];
+      
       const assistantText = await callNvidiaChat(messages);
+      
       addChatMessage({
         id: (Date.now() + 1).toString(),
         text: assistantText,
@@ -251,123 +190,87 @@ Professional, practical and supportive.
       console.warn('AI API Error: ', error);
       addChatMessage({
         id: (Date.now() + 1).toString(),
-        text: 'Sorry, I am having trouble connecting to the server right now. Please try again.',
+        text: 'Sorry, I am having trouble connecting to the secure server right now. Please try again.',
         sender: 'ai',
         timestamp: new Date().toISOString(),
       });
     } finally {
       setIsTyping(false);
-      requestAnimationFrame(() =>
-        flatListRef.current?.scrollToEnd({ animated: true })
-      );
+      requestAnimationFrame(() => flatListRef.current?.scrollToEnd({ animated: true }));
     }
   };
-
-  // ─── Render message ───────────────────────────────────────────────────────
 
   const renderMessage = ({ item }) => {
     const isUser = item.sender === 'user';
     return (
-      <View
-        style={[
-          styles.messageWrapper,
-          isUser ? styles.messageWrapperUser : styles.messageWrapperAI,
-        ]}
-      >
+      <View style={[styles.messageWrapper, isUser ? styles.messageWrapperUser : styles.messageWrapperAI]}>
         {!isUser && (
           <View style={[styles.aiAvatar, { backgroundColor: COLORS.primary }]}>
-            <Ionicons
-              name="sparkles"
-              size={14}
-              color={COLORS.onPrimary || '#0B1326'}
-            />
+            <Ionicons name="sparkles" size={14} color={COLORS.onPrimary || '#0B1326'} />
           </View>
         )}
-        <View
-          style={[
-            styles.messageBubble,
-            isUser ? styles.userBubble : styles.aiBubble,
-            isUser
-              ? { backgroundColor: COLORS.primary }
-              : {
-                backgroundColor: COLORS.surface,
-                borderWidth: 1,
-                borderColor: COLORS.border,
-              },
-          ]}
-        >
-          <Text
+        <View style={styles.bubbleContainer}>
+          <View
             style={[
-              styles.messageText,
-              {
-                color: isUser
-                  ? COLORS.onPrimary || '#0B1326'
-                  : COLORS.textPrimary,
-              },
+              styles.messageBubble,
+              isUser ? styles.userBubble : styles.aiBubble,
+              isUser
+                ? { backgroundColor: COLORS.primary }
+                : { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
             ]}
           >
-            {item.text}
-          </Text>
+            {/* Native Text Selection Enabled */}
+            <Text selectable={true} style={[styles.messageText, { color: isUser ? COLORS.onPrimary || '#0B1326' : COLORS.textPrimary }]}>
+              {item.text}
+            </Text>
+          </View>
+          
+          {/* Action Row: Copy & Edit */}
+          <View style={[styles.actionRow, { justifyContent: isUser ? 'flex-end' : 'flex-start' }]}>
+            <TouchableOpacity onPress={() => handleCopy(item.text, item.id)} style={styles.actionBtn}>
+              <Ionicons 
+                name={copiedId === item.id ? "checkmark-done" : "copy-outline"} 
+                size={14} 
+                color={copiedId === item.id ? COLORS.primary : COLORS.textMuted} 
+              />
+              <Text style={[styles.actionText, { color: copiedId === item.id ? COLORS.primary : COLORS.textMuted }]}>
+                {copiedId === item.id ? "Copied" : "Copy"}
+              </Text>
+            </TouchableOpacity>
+            
+            {isUser && (
+              <TouchableOpacity onPress={() => handleEdit(item.text)} style={[styles.actionBtn, { marginLeft: 12 }]}>
+                <Ionicons name="pencil-outline" size={14} color={COLORS.textMuted} />
+                <Text style={[styles.actionText, { color: COLORS.textMuted }]}>Edit</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </View>
     );
   };
 
-
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: COLORS.aiBackground }]}
-      behavior= 'padding' enabled={true}
-    >
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor: COLORS.aiBackground }]} behavior='padding' enabled={true}>
       <View style={{ flex: 1 }}>
         <View style={{ flex: 1, backgroundColor: COLORS.aiBackground }}>
-
-          {/* ── HEADER ── */}
-          <View
-            style={[
-              styles.header,
-              { paddingTop: safeTopPadding, borderBottomColor: COLORS.border },
-            ]}
-          >
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
+          {/* HEADER */}
+          <View style={[styles.header, { paddingTop: safeTopPadding, borderBottomColor: COLORS.border }]}>
+            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
               <Ionicons name="chevron-down" size={28} color={COLORS.textPrimary} />
             </TouchableOpacity>
             <View style={styles.headerTitleContainer}>
-
-              <Text
-
-                style={[
-                  styles.headerTitle,
-                  FONTS.sectionHeading,
-                  { color: COLORS.textPrimary },
-                ]}
-              >
-                HealthMate AI
-              </Text>
+              <Text style={[styles.headerTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>HealthMate AI</Text>
               {!isPremiumUser && (
-                <View
-                  style={[
-                    styles.badge,
-                    {
-                      backgroundColor: COLORS.surface,
-                      borderColor: COLORS.border,
-                      borderWidth: 1,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.badgeText, { color: COLORS.primary }]}>
-                    {freeAiQuestionsRemaining} FREE LEFT
-                  </Text>
+                <View style={[styles.badge, { backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1 }]}>
+                  <Text style={[styles.badgeText, { color: COLORS.primary }]}>{freeAiQuestionsRemaining} FREE LEFT</Text>
                 </View>
               )}
             </View>
             <View style={{ width: 40 }} />
           </View>
-
-          {/* ── CHAT LIST ── */}
+          
+          {/* CHAT LIST */}
           <FlatList
             ref={flatListRef}
             data={aiChatHistory}
@@ -377,83 +280,53 @@ Professional, practical and supportive.
             contentContainerStyle={styles.chatList}
             showsVerticalScrollIndicator={false}
             keyboardDismissMode="interactive"
+            onScroll={handleScroll}
+            scrollEventThrottle={16} // Controls onScroll firing rate for performance
             onContentSizeChange={() => {
-              if (isTyping) {
-                flatListRef.current?.scrollToEnd({ animated: true });
-              }
+              if (isTyping) flatListRef.current?.scrollToEnd({ animated: true });
             }}
           />
-
-
-
-          {/* ── TYPING INDICATOR ── */}
+          
+          {/* TYPING INDICATOR */}
           {isTyping && (
             <View style={styles.typingContainer}>
               <View style={[styles.aiAvatar, { backgroundColor: COLORS.primary }]}>
-                <Ionicons
-                  name="sparkles"
-                  size={14}
-                  color={COLORS.onPrimary || '#0B1326'}
-                />
+                <Ionicons name="sparkles" size={14} color={COLORS.onPrimary || '#0B1326'} />
               </View>
-              <View
-                style={[
-                  styles.aiBubble,
-                  {
-                    backgroundColor: COLORS.surface,
-                    borderWidth: 1,
-                    borderColor: COLORS.border,
-                    paddingVertical: 12,
-                    paddingHorizontal: 16,
-                  },
-                ]}
-              >
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}
-                >
-                  <ActivityIndicator
-                    size="small"
-                    color={COLORS.primary}
-                    style={{ marginRight: 10 }}
-                  />
-
-                  <Text
-                    style={{
-                      color: COLORS.textPrimary,
-                      fontSize: 14,
-                      flexShrink: 1,
-                    }}
-                  >
-                    {loadingMessage}
-                    {'.'.repeat(dotCount)}
+              <View style={[styles.aiBubble, { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, paddingVertical: 12, paddingHorizontal: 16 }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <ActivityIndicator size="small" color={COLORS.primary} style={{ marginRight: 10 }} />
+                  <Text style={{ color: COLORS.textPrimary, fontSize: 14, flexShrink: 1 }}>
+                    {loadingMessage}{'.'.repeat(dotCount)}
                   </Text>
                 </View>
               </View>
             </View>
           )}
 
-          {/* ── INPUT DOCK ── */}
-          <View
-            style={[
-              styles.inputDock,
-              { backgroundColor: COLORS.aiBackground },
-            ]}
-          >
-            <View
-              style={[
-                styles.pillContainer,
-                {
-                  backgroundColor: COLORS.inputField || COLORS.surface,
-                  borderColor: COLORS.border,
-                  marginBottom: Math.max(insets.bottom, 22),
-                  marginTop: Math.max(insets.bottom, 12),
-                  // paddingTop: Math.max(insets.bottom, 22),
-                },
-              ]}
-            >
+          {/* FLOATING SCROLL BUTTONS */}
+          <View style={styles.floatingNavContainer}>
+            {showScrollToTop && (
+              <TouchableOpacity 
+                style={[styles.floatingBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]} 
+                onPress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
+              >
+                <Ionicons name="arrow-up" size={20} color={COLORS.textPrimary} />
+              </TouchableOpacity>
+            )}
+            {showScrollToBottom && (
+              <TouchableOpacity 
+                style={[styles.floatingBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border, marginTop: 8 }]} 
+                onPress={() => flatListRef.current?.scrollToEnd({ animated: true })}
+              >
+                <Ionicons name="arrow-down" size={20} color={COLORS.textPrimary} />
+              </TouchableOpacity>
+            )}
+          </View>
+          
+          {/* INPUT DOCK */}
+          <View style={[styles.inputDock, ]}>
+            <View style={[styles.pillContainer, { backgroundColor: COLORS.inputField || COLORS.surface, borderColor: COLORS.border, marginBottom: Math.max(insets.bottom, 22), marginTop: Math.max(insets.bottom, 12) }]}>
               <TextInput
                 style={[styles.textInput, { color: COLORS.textPrimary }]}
                 placeholder="Ask me anything..."
@@ -464,26 +337,11 @@ Professional, practical and supportive.
                 maxLength={500}
               />
               <TouchableOpacity
-                style={[
-                  styles.sendButton,
-                  {
-                    backgroundColor: inputText.trim()
-                      ? COLORS.primary
-                      : 'transparent',
-                  },
-                ]}
+                style={[styles.sendButton, { backgroundColor: inputText.trim() ? COLORS.primary : 'transparent' }]}
                 onPress={handleSend}
                 disabled={!inputText.trim() || isTyping}
               >
-                <Ionicons
-                  name="arrow-up"
-                  size={20}
-                  color={
-                    inputText.trim()
-                      ? COLORS.onPrimary || '#0B1326'
-                      : COLORS.textMuted
-                  }
-                />
+                <Ionicons name="arrow-up" size={20} color={inputText.trim() ? COLORS.onPrimary || '#0B1326' : COLORS.textMuted} />
               </TouchableOpacity>
             </View>
           </View>
@@ -493,142 +351,38 @@ Professional, practical and supportive.
   );
 }
 
-
-
 const styles = StyleSheet.create({
+  container: { flex: 1 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 16, borderBottomWidth: 1 },
+  backButton: { padding: 4 },
+  headerTitleContainer: { alignItems: 'center' },
+  headerTitle: { fontSize: 18, fontWeight: '700' },
+  badge: { marginTop: 4, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 12 },
+  badgeText: { fontSize: 10, fontWeight: '700' },
+  flatList: { flex: 1 },
+  chatList: { padding: 16, paddingBottom: 24 },
+  messageWrapper: { flexDirection: 'row', marginBottom: 20, alignItems: 'flex-start' },
+  messageWrapperUser: { justifyContent: 'flex-end' },
+  messageWrapperAI: { justifyContent: 'flex-start' },
+  aiAvatar: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: 8, marginBottom: 24 },
+  bubbleContainer: { maxWidth: '85%' },
+  messageBubble: { paddingHorizontal: 16, paddingVertical: 12 },
+  userBubble: { borderTopLeftRadius: 20, borderTopRightRadius: 20, borderBottomLeftRadius: 20, borderBottomRightRadius: 4 },
+  aiBubble: { borderTopLeftRadius: 20, borderTopRightRadius: 20, borderBottomLeftRadius: 4, borderBottomRightRadius: 20 },
+  messageText: { fontSize: 15, lineHeight: 22 },
+  
+  // New Action Row Styles
+  actionRow: { flexDirection: 'row', marginTop: 6, paddingHorizontal: 4 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', padding: 4 },
+  actionText: { fontSize: 12, marginLeft: 4, fontWeight: '500' },
+  
+  // New Floating Scroll Button Styles
+  floatingNavContainer: { position: 'absolute', bottom: 100, right: 16, alignItems: 'flex-end', zIndex: 10 },
+  floatingBtn: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 3, elevation: 4 },
 
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitleContainer: {
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  badge: {
-    marginTop: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-  },
-
-  badgeText: {
-
-    fontSize: 10,
-
-    fontWeight: '700',
-
-  },
-
-  flatList: {
-
-    flex: 1,
-
-  },
-
-  chatList: {
-
-    padding: 16,
-
-  },
-
-  messageWrapper: {
-
-    flexDirection: 'row',
-
-    marginBottom: 16,
-
-    maxWidth: '85%',
-
-  },
-
-  messageWrapperUser: {
-    alignSelf: 'flex-end',
-    justifyContent: 'flex-end',
-  },
-
-  messageWrapperAI: {
-    alignSelf: 'flex-start',
-    alignItems: 'flex-start',
-  },
-  aiAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-    marginBottom: 4,
-  },
-
-  messageBubble: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 20,
-  },
-
-  userBubble: {
-    borderBottomRightRadius: 4,
-  },
-
-  aiBubble: {
-    borderBottomLeftRadius: 4,
-  },
-
-  messageText: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-
-  typingContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    alignItems: 'flex-start',
-  },
-
-  inputDock: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-  },
-
-  pillContainer: {
-    flexDirection: 'row',
-    borderRadius: 24,
-    paddingHorizontal: 6,
-    paddingVertical: 6,
-    borderWidth: 1,
-    alignItems: 'flex-end',
-    minHeight: 48,
-  }, textInput: {
-    flex: 1,
-    minHeight: 36,
-    maxHeight: 120,
-    paddingHorizontal: 12,
-    paddingTop: 8,
-    paddingBottom: 8,
-    fontSize: 15,
-    backgroundColor: 'transparent',
-  },
-  sendButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-  },
+  typingContainer: { paddingHorizontal: 16, flexDirection: 'row', alignItems: 'flex-end' },
+  inputDock: { paddingHorizontal: 16, borderTopWidth: 1, borderTopColor: 'transparent', backgroundColor: "#ffffff" },
+  pillContainer: { flexDirection: 'row', alignItems: 'flex-end', borderRadius: 24, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 2, paddingBottom: 10 },
+  textInput: { flex: 1, maxHeight: 100, minHeight: 24, fontSize: 15, paddingTop: Platform.OS === 'ios' ? 8 : 4, paddingBottom: Platform.OS === 'ios' ? 8 : 4 },
+  sendButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginLeft: 8, alignSelf: 'flex-end' },
 });

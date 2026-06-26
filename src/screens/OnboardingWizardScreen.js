@@ -1,11 +1,9 @@
 import { useUser } from '@clerk/expo';
 import Slider from '@react-native-community/slider';
 import { useMemo, useState } from 'react';
-// import { useUser } from '@clerk/expo';
 import {
   Alert,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +14,7 @@ import {
 
 import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
+import { FirebaseService } from '../utils/firebaseService';
 
 const GENDER_OPTIONS = [
   { key: 'male', label: 'Male' },
@@ -56,7 +55,6 @@ const INPUT_STYLE = (COLORS) => ({
 export default function OnboardingWizardScreen() {
   const { COLORS, FONTS, RADII, SHADOWS } = useTheme();
   
-  // Connect Clerk to pull Google Identity if available
   const { user } = useUser();
 
   const storeName = useHealthStore((s) => s.name);
@@ -87,12 +85,10 @@ export default function OnboardingWizardScreen() {
 
   const [step, setStep] = useState(1);
   
-  // If store is empty, fallback to Clerk Google Profile Name
   const [name, setNameLocal] = useState(storeName || user?.fullName || user?.firstName || '');
   const [gender, setGenderLocal] = useState(storeGender || 'other');
   const [age, setAgeLocal] = useState(storeAge ? String(storeAge) : '');
   
-  // Height State logic
   const [heightUnit, setHeightUnit] = useState('cm'); 
   const [heightCm, setHeightCmLocal] = useState(storeHeightCm ? String(storeHeightCm) : '');
   const [heightFt, setHeightFtLocal] = useState('');
@@ -102,7 +98,6 @@ export default function OnboardingWizardScreen() {
   const [targetWeightKg, setTargetWeightKgLocal] = useState(storeTargetWeightKg ? String(storeTargetWeightKg) : '');
   const [activityLevel, setActivityLevelLocal] = useState(storeActivityLevel || 'moderate');
   
-  // Goals State Logic (Multi-select)
   const defaultGoals = Array.isArray(storePrimaryGoal) ? storePrimaryGoal : (storePrimaryGoal ? [storePrimaryGoal] : []);
   const [selectedGoals, setSelectedGoals] = useState(defaultGoals);
 
@@ -194,41 +189,24 @@ export default function OnboardingWizardScreen() {
   };
 
   const handleConfirmGoals = async () => {
-    // 1. Save locally for immediate UI response
     setStepGoal(reviewStepGoal);
     setWaterGoalMl(reviewWaterGoal * 1000);
     setSleepGoalHours(reviewSleepGoal);
     
-    // 2. Build the cloud payload
-    if (user) {
-      try {
-        const cloudPayload = {
-          name: name.trim(),
-          gender,
-          age: Number(age),
-          heightCm: calculatedHeightCm,
-          weightKg: Number(weightKg),
-          targetWeightKg: Number(targetWeightKg),
-          activityLevel,
-          primaryGoal: selectedGoals,
-          stepGoal: reviewStepGoal,
-          waterGoalMl: reviewWaterGoal * 1000,
-          sleepGoalHours: reviewSleepGoal,
-          hasCompletedSetup: true,
-        };
-
-        // 3. Push to Clerk's Cloud Database
-        await user.update({
-          unsafeMetadata: cloudPayload
-        });
-        console.log("Profile successfully synced to Clerk Cloud.");
-      } catch (error) {
-        console.warn("Failed to sync profile to cloud:", error);
-      }
-    }
-
-    // 4. Complete setup to unmount the wizard
     completeSetup();
+
+    // BACKGROUND FIREBASE SYNC: Executes asynchronously to prevent UI blocking
+    if (user && user.id) {
+      setTimeout(async () => {
+        try {
+          const currentState = useHealthStore.getState();
+          await FirebaseService.backupUserProfile(user.id, currentState);
+          console.log("[Firebase] Onboarding configuration securely archived.");
+        } catch (error) {
+          console.warn("[Firebase] Architecture synchronization failure:", error);
+        }
+      }, 1000);
+    }
   };
 
   const renderStepHeader = () => (
@@ -245,7 +223,6 @@ export default function OnboardingWizardScreen() {
   );
 
   return (
-    // Keyboard vertical offset fixes the overlap on standard navigation headers
     <KeyboardAvoidingView 
       style={[styles.container, { backgroundColor: COLORS.background }]} 
       behavior='padding'
@@ -427,7 +404,6 @@ export default function OnboardingWizardScreen() {
                         <Text style={[FONTS.cardTitle, { color: COLORS.textPrimary }]}>{option.label}</Text>
                         <Text style={[FONTS.cardText, { color: COLORS.textMuted, marginTop: 4 }]}>{option.description}</Text>
                       </View>
-                      {/* Checkbox Style UI for Multi-select */}
                       <View style={[styles.checkboxContainer, { borderColor: selected ? COLORS.primary : COLORS.border, backgroundColor: selected ? COLORS.primary : 'transparent' }]}>
                         {selected && <Text style={{ color: COLORS.card, fontSize: 12, fontWeight: '800' }}>✓</Text>}
                       </View>
@@ -513,7 +489,6 @@ export default function OnboardingWizardScreen() {
         </View>
 
         <View style={styles.footerRow}>
-          {/* Hide Back button on Summary (5) and Review (6) per request */}
           {step > 1 && step < 5 ? (
             <TouchableOpacity activeOpacity={0.85} onPress={goBack} style={[styles.secondaryBtn, { borderColor: COLORS.border, backgroundColor: COLORS.card }]}>
               <Text style={[styles.secondaryBtnText, { color: COLORS.textPrimary }]}>Back</Text>
@@ -559,7 +534,6 @@ function SummaryRow({ label, value, COLORS }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  // Increased bottom padding to ensure keyboard layout doesn't crush the Continue button
   content: { padding: 20, paddingBottom: 60, paddingTop: 40, flexGrow: 1 },
   headerWrap: { marginBottom: 18 },
   stepLabel: { marginBottom: 8, fontWeight: '700' },
