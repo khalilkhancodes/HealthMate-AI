@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import { useKeyboardPadding } from '../hooks/useKeyboardPadding';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Keyboard,
-  KeyboardAvoidingView,
   Platform,
   StatusBar,
   StyleSheet,
@@ -13,6 +13,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHealthStore } from '../store/useHealthStore';
@@ -35,6 +36,7 @@ const AI_LOADING_STATES = [
 export default function AIDoctorScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef(null);
+  const { keyboardPadding, isKeyboardVisible } = useKeyboardPadding(flatListRef);
   const { COLORS, FONTS } = useTheme();
 
   const {
@@ -97,6 +99,15 @@ export default function AIDoctorScreen({ navigation }) {
     setShowScrollToTop(contentOffset.y > 200);
     const isAtBottom = contentSize.height - layoutMeasurement.height - contentOffset.y < 150;
     setShowScrollToBottom(!isAtBottom);
+  };
+
+  const renderFooter = () => {
+    if (!isTyping) return null;
+    return (
+      <View style={styles.typingContainer}>
+        {/* Your avatar and activity indicator UI */}
+      </View>
+    );
   };
 
   const handleCopy = async (text, id) => {
@@ -223,34 +234,58 @@ See a doctor if:
     }
   };
 
-  const renderMessage = ({ item }) => {
-    const isUser = item.sender === 'user';
-    return (
-      <View style={[styles.messageWrapper, isUser ? styles.messageWrapperUser : styles.messageWrapperAI]}>
-        {!isUser && (
-          <View style={[styles.aiAvatar, { backgroundColor: COLORS.tertiary }]}>
-            <Ionicons name="medkit" size={14} color={COLORS.card} />
+    const renderMessage = ({ item }) => {
+      const isUser = item.sender === 'user';
+      return (
+        <View style={[styles.messageWrapper, isUser ? styles.messageWrapperUser : styles.messageWrapperAI]}>
+          {!isUser && (
+            <View style={[styles.aiAvatar, { backgroundColor: COLORS.tertiary }]}>
+              <Ionicons name="medkit" size={14} color={COLORS.card} />
+            </View>
+          )}
+          <View style={styles.bubbleContainer}>
+            <View
+              style={[
+                styles.messageBubble,
+                isUser ? styles.userBubble : styles.aiBubble,
+                isUser
+                  ? { backgroundColor: COLORS.tertiary }
+                  : { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
+              ]}
+            >
+              <Text selectable={true} style={[styles.messageText, { color: isUser ? COLORS.card : COLORS.textPrimary }]}>
+                {item.text}
+              </Text>
+            </View>
+  
+            <View style={[styles.actionRow, { justifyContent: isUser ? 'flex-end' : 'flex-start' }]}>
+              <TouchableOpacity onPress={() => handleCopy(item.text, item.id)} style={styles.actionBtn}>
+                <Ionicons 
+                  name={copiedId === item.id ? "checkmark-done" : "copy-outline"} 
+                  size={14} 
+                  color={copiedId === item.id ? COLORS.tertiary : COLORS.textMuted} 
+                />
+                <Text style={[styles.actionText, { color: copiedId === item.id ? COLORS.tertiary : COLORS.textMuted }]}>
+                  {copiedId === item.id ? "Copied" : "Copy"}
+                </Text>
+              </TouchableOpacity>
+              
+              {isUser && (
+                <TouchableOpacity onPress={() => handleEdit(item.text)} style={[styles.actionBtn, { marginLeft: 12 }]}>
+                  <Ionicons name="pencil-outline" size={14} color={COLORS.textMuted} />
+                  <Text style={[styles.actionText, { color: COLORS.textMuted }]}>Edit</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
-        )}
-        <View
-          style={[
-            styles.messageBubble,
-            isUser ? styles.userBubble : styles.aiBubble,
-            isUser
-              ? { backgroundColor: COLORS.tertiary }
-              : { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
-          ]}
-        >
-          <Text style={[styles.messageText, { color: isUser ? COLORS.card : COLORS.textPrimary }]}>
-            {item.text}
-          </Text>
         </View>
-      </View>
-    );
-  };
+      );
+    };
 
   return (
-    <KeyboardAvoidingView style={[styles.container, { backgroundColor: COLORS.aiBackground }]} behavior='padding' enabled={true}>
+    <Animated.View
+      style={[styles.container, { backgroundColor: COLORS.aiBackground, paddingBottom: keyboardPadding }]}
+    >
       <View style={{ flex: 1, backgroundColor: COLORS.aiBackground }}>
         {/* ── HEADER ── */}
         <View style={[styles.header, { paddingTop: safeTopPadding, borderBottomColor: COLORS.border }]}>
@@ -284,6 +319,7 @@ See a doctor if:
           keyboardDismissMode="interactive"
           keyboardShouldPersistTaps="handled"
           onScroll={handleScroll}
+          ListFooterComponent={renderFooter}
           scrollEventThrottle={16}
           onContentSizeChange={() => {
             if (isTyping) {
@@ -330,7 +366,7 @@ See a doctor if:
 
         {/* ── INPUT DOCK ── */}
         <View style={[styles.inputDock, { backgroundColor: COLORS.aiBackground }]}>
-          <View style={[styles.pillContainer, { backgroundColor: COLORS.inputField || COLORS.surface, borderColor: COLORS.border, marginBottom: Math.max(insets.bottom, 12), marginTop: 12 }]}>
+          <View style={[styles.pillContainer, { backgroundColor: COLORS.inputField || COLORS.surface, borderColor: COLORS.border, marginBottom: isKeyboardVisible ? 12 : Math.max(insets.bottom, 12), marginTop: 12 }]}>
             <TextInput
               style={[styles.textInput, { color: COLORS.textPrimary }]}
               placeholder="Describe your symptoms..."
@@ -350,7 +386,7 @@ See a doctor if:
           </View>
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </Animated.View>
   );
 }
 
@@ -378,5 +414,6 @@ const styles = StyleSheet.create({
   textInput: { flex: 1, minHeight: 36, maxHeight: 120, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 8, fontSize: 15, backgroundColor: 'transparent' },
   sendButton: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginLeft: 8, marginBottom: 4 },
   floatingNavContainer: { position: 'absolute', bottom: 100, right: 16, alignItems: 'flex-end', zIndex: 10 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', padding: 4 },
   floatingBtn: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 3, elevation: 4 },
 });

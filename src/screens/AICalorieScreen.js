@@ -8,7 +8,6 @@ import {
   FlatList,
   Image,
   Keyboard,
-  KeyboardAvoidingView,
   Platform,
   StatusBar,
   StyleSheet,
@@ -16,10 +15,12 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
+import { useKeyboardPadding } from '../hooks/useKeyboardPadding';
 
 const INITIAL_GREETING = {
   id: '1',
@@ -203,6 +204,7 @@ const RichAIText = ({ text, colors, showMacroCard = false }) => {
 export default function AICaloriesScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef(null);
+  const { keyboardPadding, isKeyboardVisible } = useKeyboardPadding(flatListRef);
   const { COLORS, FONTS } = useTheme();
 
   const {
@@ -237,6 +239,15 @@ export default function AICaloriesScreen({ navigation }) {
     const interval = setInterval(() => setDotCount((p) => (p % 3) + 1), 500);
     return () => clearInterval(interval);
   }, [isTyping]);
+
+  const renderFooter = () => {
+      if (!isTyping) return null;
+      return (
+        <View style={styles.typingContainer}>
+          {/* Your avatar and activity indicator UI */}
+        </View>
+      );
+    };
 
   // Dynamic loading states
   useEffect(() => {
@@ -510,10 +521,8 @@ CRITICAL RULES: NO markdown. Use ALL CAPS for section headings. Use hyphens for 
   };
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: COLORS.aiBackground }]}
-      behavior='padding'
-      keyboardVerticalOffset={0}
+    <Animated.View 
+      style={[styles.container, { backgroundColor: COLORS.aiBackground, paddingBottom: keyboardPadding }]}
     >
       <View style={{ flex: 1, backgroundColor: COLORS.aiBackground }}>
         {/* Header */}
@@ -548,6 +557,7 @@ CRITICAL RULES: NO markdown. Use ALL CAPS for section headings. Use hyphens for 
           keyboardDismissMode="interactive"
           keyboardShouldPersistTaps="handled"
           onScroll={handleScroll}
+          ListFooterComponent={renderFooter}
           scrollEventThrottle={16}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
         />
@@ -635,7 +645,7 @@ CRITICAL RULES: NO markdown. Use ALL CAPS for section headings. Use hyphens for 
           <View style={[styles.pillContainer, {
             backgroundColor: COLORS.inputField || COLORS.surface,
             borderColor: COLORS.border,
-            marginBottom: Math.max(insets.bottom, 12),
+            marginBottom: isKeyboardVisible ? 12 : Math.max(insets.bottom, 12),
             marginTop: selectedImageUri ? 0 : 12,
           }]}>
             <TouchableOpacity style={styles.attachBtn} onPress={() => pickImage(false)}>
@@ -669,7 +679,7 @@ CRITICAL RULES: NO markdown. Use ALL CAPS for section headings. Use hyphens for 
           </View>
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </Animated.View>
   );
 }
 

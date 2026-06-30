@@ -41,6 +41,9 @@ yarn-error.*
 .env.local
 .env.*
 !.env.example
+*.keystore
+*.jks
+google-services.json
 
 app-example
 

@@ -3,19 +3,20 @@ import * as Clipboard from 'expo-clipboard';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useRef, useState } from 'react';
+import { useKeyboardPadding } from '../hooks/useKeyboardPadding';
 import {
   ActivityIndicator,
   FlatList,
   Image,
   Keyboard,
-  KeyboardAvoidingView,
   Platform,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHealthStore } from '../store/useHealthStore';
@@ -129,6 +130,7 @@ const RichAIText = ({ text, colors }) => {
 export default function AIIngredientScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef(null);
+  const { keyboardPadding, isKeyboardVisible } = useKeyboardPadding(flatListRef);
   const { COLORS, FONTS } = useTheme();
 
   const {
@@ -189,6 +191,15 @@ export default function AIIngredientScreen({ navigation }) {
     setShowScrollToTop(contentOffset.y > 200);
     setShowScrollToBottom(
       contentSize.height - layoutMeasurement.height - contentOffset.y > 150
+    );
+  };
+
+  const renderFooter = () => {
+    if (!isTyping) return null;
+    return (
+      <View style={styles.typingContainer}>
+        {/* Your avatar and activity indicator UI */}
+      </View>
     );
   };
 
@@ -464,12 +475,8 @@ CRITICAL RULES: NO markdown (** or #)`
   };
 
   return (
-    // FIX: On Android, KeyboardAvoidingView behavior='padding' fights with StatusBar.
-    // Using 'height' on Android prevents the jump; iOS keeps 'padding'.
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: COLORS.aiBackground }]}
-      behavior='padding'
-      keyboardVerticalOffset={0}
+    <Animated.View 
+      style={[styles.container, { backgroundColor: COLORS.aiBackground, paddingBottom: keyboardPadding }]}
     >
       <View style={{ flex: 1, backgroundColor: COLORS.aiBackground }}>
         {/* Header */}
@@ -514,6 +521,7 @@ CRITICAL RULES: NO markdown (** or #)`
           keyboardDismissMode="interactive"
           keyboardShouldPersistTaps="handled"
           onScroll={handleScroll}
+          ListFooterComponent={renderFooter}
           scrollEventThrottle={16}
           onContentSizeChange={() =>
             flatListRef.current?.scrollToEnd({ animated: true })
@@ -626,7 +634,7 @@ CRITICAL RULES: NO markdown (** or #)`
               {
                 backgroundColor: COLORS.inputField || COLORS.surface,
                 borderColor: COLORS.border,
-                marginBottom: Math.max(insets.bottom, 12),
+                marginBottom: isKeyboardVisible ? 12 : Math.max(insets.bottom, 12),
                 marginTop: selectedImageUri ? 0 : 12,
               },
             ]}
@@ -666,7 +674,7 @@ CRITICAL RULES: NO markdown (** or #)`
           </View>
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </Animated.View>
   );
 }
 

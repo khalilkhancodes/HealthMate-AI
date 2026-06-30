@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   FlatList,
   Keyboard,
-  KeyboardAvoidingView,
   Platform,
   StatusBar,
   StyleSheet,
@@ -13,10 +12,12 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHealthStore } from '../store/useHealthStore';
 import { useTheme } from '../theme/theme';
+import { useKeyboardPadding } from '../hooks/useKeyboardPadding';
 
 const INITIAL_AI_GREETING = {
   id: '1',
@@ -28,6 +29,7 @@ const INITIAL_AI_GREETING = {
 export default function AIChatScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef(null);
+  const { keyboardPadding, isKeyboardVisible } = useKeyboardPadding(flatListRef);
   const { COLORS, FONTS } = useTheme();
   const {
     isPremiumUser,
@@ -145,6 +147,15 @@ Communication Style: Professional, practical and supportive.`;
     }
   };
 
+  const renderFooter = () => {
+    if (!isTyping) return null;
+    return (
+      <View style={styles.typingContainer}>
+        {/* Your avatar and activity indicator UI */}
+      </View>
+    );
+  };
+
   const handleSend = async () => {
     if (!inputText.trim()) return;
     Keyboard.dismiss();
@@ -251,7 +262,7 @@ Communication Style: Professional, practical and supportive.`;
   };
 
   return (
-    <KeyboardAvoidingView style={[styles.container, { backgroundColor: COLORS.aiBackground }]} behavior='padding' enabled={true}>
+    <Animated.View style={[styles.container, { backgroundColor: COLORS.aiBackground, paddingBottom: keyboardPadding }]}>
       <View style={{ flex: 1 }}>
         <View style={{ flex: 1, backgroundColor: COLORS.aiBackground }}>
           {/* HEADER */}
@@ -281,6 +292,7 @@ Communication Style: Professional, practical and supportive.`;
             showsVerticalScrollIndicator={false}
             keyboardDismissMode="interactive"
             onScroll={handleScroll}
+            ListFooterComponent={renderFooter}
             scrollEventThrottle={16} // Controls onScroll firing rate for performance
             onContentSizeChange={() => {
               if (isTyping) flatListRef.current?.scrollToEnd({ animated: true });
@@ -325,8 +337,8 @@ Communication Style: Professional, practical and supportive.`;
           </View>
           
           {/* INPUT DOCK */}
-          <View style={[styles.inputDock, ]}>
-            <View style={[styles.pillContainer, { backgroundColor: COLORS.inputField || COLORS.surface, borderColor: COLORS.border, marginBottom: Math.max(insets.bottom, 22), marginTop: Math.max(insets.bottom, 12) }]}>
+          <View style={[styles.inputDock, {backgroundColor: COLORS.aiBackground} ]}>
+            <View style={[styles.pillContainer, { backgroundColor: COLORS.inputField || COLORS.surface, borderColor: COLORS.border, marginBottom: isKeyboardVisible ? 12 : Math.max(insets.bottom, 12), marginTop: Math.max(insets.bottom, 12) }]}>
               <TextInput
                 style={[styles.textInput, { color: COLORS.textPrimary }]}
                 placeholder="Ask me anything..."
@@ -347,7 +359,7 @@ Communication Style: Professional, practical and supportive.`;
           </View>
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </Animated.View>
   );
 }
 
@@ -381,7 +393,7 @@ const styles = StyleSheet.create({
   floatingBtn: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 3, elevation: 4 },
 
   typingContainer: { paddingHorizontal: 16, flexDirection: 'row', alignItems: 'flex-end' },
-  inputDock: { paddingHorizontal: 16, borderTopWidth: 1, borderTopColor: 'transparent', backgroundColor: "#ffffff" },
+  inputDock: { paddingHorizontal: 16, borderTopWidth: 1, borderTopColor: 'transparent' },
   pillContainer: { flexDirection: 'row', alignItems: 'flex-end', borderRadius: 24, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 2, paddingBottom: 10 },
   textInput: { flex: 1, maxHeight: 100, minHeight: 24, fontSize: 15, paddingTop: Platform.OS === 'ios' ? 8 : 4, paddingBottom: Platform.OS === 'ios' ? 8 : 4 },
   sendButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginLeft: 8, alignSelf: 'flex-end' },

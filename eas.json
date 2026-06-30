@@ -4,22 +4,34 @@
   },
   "build": {
     "development": {
-      "developmentClient": true,
+      "developmentClient": false,
       "distribution": "internal",
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleDebug"
+      },
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_...",
+        "EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID": "your_client_id.apps.googleusercontent.com"
       }
     },
     "preview": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_...",
+        "EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID": "your_client_id.apps.googleusercontent.com"
       }
     },
     "production": {
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_Z29sZGVuLWxvY3VzdC04Ni5jbGVyay5hY2NvdW50cy5kZXYk",
+        "EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID": "442273395885-kf92h2eujjhaj13vq16ck90crf39ne5v.apps.googleusercontent.com"
       }
     }
   },

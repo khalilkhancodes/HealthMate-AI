@@ -52,9 +52,9 @@ const INPUT_STYLE = (COLORS) => ({
   color: COLORS.textPrimary,
 });
 
-export default function OnboardingWizardScreen() {
+export default function OnboardingWizardScreen({ navigation }) {
   const { COLORS, FONTS, RADII, SHADOWS } = useTheme();
-  
+
   const { user } = useUser();
 
   const storeName = useHealthStore((s) => s.name);
@@ -74,7 +74,7 @@ export default function OnboardingWizardScreen() {
   const setTargetWeightKg = useHealthStore((s) => s.setTargetWeightKg);
   const setActivityLevel = useHealthStore((s) => s.setActivityLevel);
   const setPrimaryGoal = useHealthStore((s) => s.setPrimaryGoal);
-  
+
   const calculateBMI = useHealthStore((s) => s.calculateBMI);
   const generateInitialGoals = useHealthStore((s) => s.generateInitialGoals);
   const completeSetup = useHealthStore((s) => s.completeSetup);
@@ -84,12 +84,12 @@ export default function OnboardingWizardScreen() {
   const setSleepGoalHours = useHealthStore((s) => s.setSleepGoalHours);
 
   const [step, setStep] = useState(1);
-  
+
   const [name, setNameLocal] = useState(storeName || user?.fullName || user?.firstName || '');
   const [gender, setGenderLocal] = useState(storeGender || 'other');
   const [age, setAgeLocal] = useState(storeAge ? String(storeAge) : '');
-  
-  const [heightUnit, setHeightUnit] = useState('cm'); 
+
+  const [heightUnit, setHeightUnit] = useState('cm');
   const [heightCm, setHeightCmLocal] = useState(storeHeightCm ? String(storeHeightCm) : '');
   const [heightFt, setHeightFtLocal] = useState('');
   const [heightIn, setHeightInLocal] = useState('');
@@ -97,7 +97,7 @@ export default function OnboardingWizardScreen() {
   const [weightKg, setWeightKgLocal] = useState(storeWeightKg ? String(storeWeightKg) : '');
   const [targetWeightKg, setTargetWeightKgLocal] = useState(storeTargetWeightKg ? String(storeTargetWeightKg) : '');
   const [activityLevel, setActivityLevelLocal] = useState(storeActivityLevel || 'moderate');
-  
+
   const defaultGoals = Array.isArray(storePrimaryGoal) ? storePrimaryGoal : (storePrimaryGoal ? [storePrimaryGoal] : []);
   const [selectedGoals, setSelectedGoals] = useState(defaultGoals);
 
@@ -141,7 +141,7 @@ export default function OnboardingWizardScreen() {
         return;
       }
     }
-    
+
     if (step === 2) {
       if (calculatedHeightCm <= 0) {
         Alert.alert('Required', 'Please enter a valid height.');
@@ -175,7 +175,7 @@ export default function OnboardingWizardScreen() {
     setWeightKg(Number.isFinite(parsedWeight) ? parsedWeight : 0);
     setTargetWeightKg(Number.isFinite(parsedTarget) ? parsedTarget : 0);
     setActivityLevel(activityLevel);
-    setPrimaryGoal(selectedGoals); 
+    setPrimaryGoal(selectedGoals);
 
     calculateBMI();
     generateInitialGoals();
@@ -189,12 +189,17 @@ export default function OnboardingWizardScreen() {
   };
 
   const handleConfirmGoals = async () => {
+    console.log("STEP 1");
     setStepGoal(reviewStepGoal);
+    console.log("STEP 2");
     setWaterGoalMl(reviewWaterGoal * 1000);
+    console.log("STEP 3");
     setSleepGoalHours(reviewSleepGoal);
-    
+    console.log("STEP 4");
     completeSetup();
-
+    console.log("STEP 5");
+    navigation.replace('Home');
+    console.log("STEP 6");
     // BACKGROUND FIREBASE SYNC: Executes asynchronously to prevent UI blocking
     if (user && user.id) {
       setTimeout(async () => {
@@ -223,14 +228,14 @@ export default function OnboardingWizardScreen() {
   );
 
   return (
-    <KeyboardAvoidingView 
-      style={[styles.container, { backgroundColor: COLORS.background }]} 
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: COLORS.background }]}
       behavior='padding'
       enabled={true}
-      >
-      <ScrollView 
-        contentContainerStyle={styles.content} 
-        keyboardShouldPersistTaps="handled" 
+    >
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         {renderStepHeader()}
@@ -433,7 +438,7 @@ export default function OnboardingWizardScreen() {
           {step === 6 && (
             <View>
               <Text style={[styles.sectionTitle, FONTS.sectionHeading, { color: COLORS.textPrimary }]}>AI Suggested Goals</Text>
-              
+
               <View style={styles.sliderWrap}>
                 <View style={styles.sliderHeader}>
                   <Text style={[FONTS.cardTitle, { color: COLORS.textPrimary }]}>Daily Steps</Text>
@@ -502,9 +507,9 @@ export default function OnboardingWizardScreen() {
               <Text style={[styles.primaryBtnText, { color: COLORS.onPrimary }]}>Continue</Text>
             </TouchableOpacity>
           ) : step === 5 ? (
-            <View style={{ flex: 1, flexDirection: 'column', gap: 8}}>
+            <View style={{ flex: 1, flexDirection: 'column', gap: 8 }}>
               <View style={styles.finalButtonsWrap}>
-                <TouchableOpacity activeOpacity={0.85} onPress={() => setStep(1)} style={[styles.secondaryBtn, { borderColor: COLORS.border, backgroundColor: COLORS.card}]}>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => setStep(1)} style={[styles.secondaryBtn, { borderColor: COLORS.border, backgroundColor: COLORS.card }]}>
                   <Text style={[styles.secondaryBtnText, { color: COLORS.textPrimary }]}>Edit Information</Text>
                 </TouchableOpacity>
               </View>

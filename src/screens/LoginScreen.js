@@ -1,8 +1,9 @@
-import { useAuth, useOAuth } from '@clerk/expo';
+import { useAuth } from '@clerk/expo';
+import { useSignInWithGoogle } from '@clerk/expo/google';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import * as Linking from 'expo-linking';
-import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useEffect, useState } from 'react';
+import Constants from 'expo-constants';
+
 import {
   ActivityIndicator,
   Alert,
@@ -25,18 +26,29 @@ const COLORS = {
   waterbg: '#eef4ff',
 };
 
-// 1. CRITICAL FOR ANDROID: Catches the returning OAuth redirect
-WebBrowser.maybeCompleteAuthSession();
+const webClientId =
+  Constants.expoConfig?.extra?.EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID ||
+  process.env.EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID;
 
 export default function LoginScreen({ navigation }) {
   const [isLoading, setIsLoading] = useState(false);
+  const { isSignedIn, isLoaded } = useAuth();
 
-  const { isSignedIn } = useAuth();
+  const { startGoogleAuthenticationFlow } = useSignInWithGoogle({
+    webClientId,
+  });
+
+  useEffect(() => {
+    if (__DEV__ && !webClientId) {
+      console.error(
+        '[LoginScreen] webClientId is undefined. Check EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID ' +
+        'in .env and app.config.js extra.'
+      );
+    }
+  }, []);
+
   const clearGuestMode = useHealthStore((state) => state.clearGuestMode);
   const setIsGuestMode = useHealthStore((state) => state.setIsGuestMode);
-  
-  // 2. Use the official Clerk OAuth hook
-  const { startOAuthFlow } = useOAuth({ strategy: 'oauth_google' });
 
   useEffect(() => {
     if (isSignedIn) {
@@ -47,44 +59,47 @@ export default function LoginScreen({ navigation }) {
     }
   }, [isSignedIn, navigation, clearGuestMode]);
 
-  const handleGoogleSignIn = useCallback(async () => {
-    if (isLoading) return;
+  const handleNativeGoogleSignIn = useCallback(async () => {
+    if (isLoading || !isLoaded) return;
+
+    if (!webClientId) {
+      Alert.alert(
+        'Configuration Error',
+        'Google Sign-In is not configured correctly. Please contact support.'
+      );
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // 3. Create a dynamic redirect URL that works everywhere (Expo Go, Dev Build, Release APK)
-      // It reads the "scheme: healthmateaitemp" automatically from your app.json
-      const redirectUrl = Linking.createURL('/', { scheme: 'healthmateaitemp' });
+      const result = await startGoogleAuthenticationFlow();
 
-      const { createdSessionId, setActive } = await startOAuthFlow({ 
-        redirectUrl 
-      });
+      const createdSessionId = result?.createdSessionId;
+      const setActive = result?.setActive;
 
       if (createdSessionId && setActive) {
         await setActive({ session: createdSessionId });
-        // The useEffect will trigger the navigation once isSignedIn becomes true
-        return;
+      } else if (__DEV__) {
+        console.warn('[LoginScreen] Google auth returned no session:', result);
       }
-
-      setIsLoading(false);
     } catch (err) {
-      setIsLoading(false);
-
+      const cancelCodes = ['SIGN_IN_CANCELLED', '-5', 'CANCELED', '12501'];
       const isCancelled =
-        err?.code === 'SIGN_IN_CANCELLED' ||
-        err?.code === '-5' ||
-        err?.message?.includes('cancelled') ||
-        err?.message?.includes('browser');
+        cancelCodes.includes(err?.code) ||
+        cancelCodes.includes(String(err?.code));
 
       if (!isCancelled) {
-        console.error('Google sign-in error:', err);
+        console.error('[LoginScreen] Google Sign-In failed:', err);
         Alert.alert(
           'Sign-In Failed',
-          err?.errors?.[0]?.longMessage || err?.message || 'Something went wrong. Please try again.'
+          err?.message || 'Could not authenticate with Google. Please try again.'
         );
       }
+    } finally {
+      setIsLoading(false);
     }
-  }, [startOAuthFlow, isLoading]);
+  }, [isLoading, isLoaded, startGoogleAuthenticationFlow]);
 
   const handleContinueAsGuest = useCallback(() => {
     setIsGuestMode(true);
@@ -124,8 +139,8 @@ export default function LoginScreen({ navigation }) {
             { backgroundColor: isLoading ? '#6a9e80' : COLORS.primary },
           ]}
           activeOpacity={0.9}
-          onPress={handleGoogleSignIn}
-          disabled={isLoading}
+          onPress={handleNativeGoogleSignIn}
+          disabled={isLoading || !isLoaded}
         >
           {isLoading ? (
             <ActivityIndicator size="small" color={COLORS.onPrimary} />

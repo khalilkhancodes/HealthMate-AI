@@ -140,7 +140,7 @@ export default function HomeScreen({ navigation }) {
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (circumference * healthScore) / 100;
   // ─── DYNAMIC USER NAME ───
-  const displayName = name || clerkUser?.firstName || 'HealthMate';
+  const displayName = name || clerkUser?.firstName + ' ' + clerkUser?.lastName || 'HealthMate';
   let scoreLabel = 'Get Started';
   let scoreSub = 'Log your first activity today.';
   if (healthScore >= 90) { scoreLabel = 'Excellent'; scoreSub = 'You\'re crushing all your goals today.'; }

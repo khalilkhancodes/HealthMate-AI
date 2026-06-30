@@ -10,16 +10,16 @@ export default function ProfileScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const safeTopPadding = Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 20 : insets.top + 20;
   const { COLORS, FONTS, isDark, themePreference, setThemePreference } = useTheme();
-  
+
   const { isSignedIn, signOut } = useAuth();
   const { user: clerkUser, isLoaded } = useUser();
-  
-  const { 
-    isPremiumUser, user, setUser, isGuestMode, clearGuestMode, 
-    userWakeTime, userBedTime, updateBiologicalSchedule, requiresTimezoneUpdate 
+
+  const {
+    isPremiumUser, user, setUser, isGuestMode, clearGuestMode,
+    userWakeTime, userBedTime, updateBiologicalSchedule, requiresTimezoneUpdate
   } = useHealthStore();
   const userAvatar = useHealthStore((state) => state.userAvatar);
-  
+
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [tempWakeH, setTempWakeH] = useState(parseInt(userWakeTime.split(':')[0]));
   const [tempWakeM, setTempWakeM] = useState(parseInt(userWakeTime.split(':')[1]));
@@ -30,29 +30,29 @@ export default function ProfileScreen({ navigation }) {
     if (isLoaded && clerkUser) {
       setUser({
         id: clerkUser.id,
-        name: clerkUser.firstName || clerkUser.username || 'User',
+        name: clerkUser.firstName + ' ' + clerkUser.lastName || clerkUser.username || 'User',
         email: clerkUser.emailAddresses?.[0]?.emailAddress || '',
         avatar: clerkUser.profileImageUrl || '',
       });
     }
   }, [isLoaded, clerkUser, setUser]);
-  
+
   const displayName = user?.name || 'User';
   const displayEmail = user?.email || '';
-  
+
   const handleLogout = async () => {
     try {
       if (isSignedIn) await signOut();
       clearGuestMode();
     } catch (err) { console.error('Logout error:', err); }
   };
-  
+
   const themeOptions = [
     { key: 'light', label: 'Light', icon: 'sunny-outline' },
     { key: 'dark', label: 'Dark', icon: 'moon-outline' },
     { key: 'system', label: 'System', icon: 'phone-portrait-outline' },
   ];
-  
+
   const MenuRow = ({ icon, title, subtitle, showArrow = true, rightElement, onPress, iconBg = '#E6F4FE', iconColor = COLORS.primary }) => (
     <TouchableOpacity style={[styles.menuRow, { borderBottomColor: COLORS.border }]} onPress={onPress} activeOpacity={0.7} disabled={!onPress}>
       <View style={[styles.menuIcon, { backgroundColor: iconBg }]}>
@@ -69,9 +69,9 @@ export default function ProfileScreen({ navigation }) {
   const saveBiologicalSchedule = (isTimezoneFix = false) => {
     const wFormat = `${String(tempWakeH).padStart(2, '0')}:${String(tempWakeM).padStart(2, '0')}`;
     const bFormat = `${String(tempBedH).padStart(2, '0')}:${String(tempBedM).padStart(2, '0')}`;
-    
+
     const result = updateBiologicalSchedule(wFormat, bFormat, isTimezoneFix);
-    
+
     if (result.success) {
       setShowScheduleModal(false);
       if (isTimezoneFix) Alert.alert("Timezone Calibrated", "Your biological schedule has been synced to local time.");
@@ -90,7 +90,7 @@ export default function ProfileScreen({ navigation }) {
   return (
     <View style={[styles.container, { backgroundColor: COLORS.background }]}>
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: safeTopPadding }]} showsVerticalScrollIndicator={false}>
-        
+
         {/* TIMEZONE DRIFT BANNER */}
         {requiresTimezoneUpdate && (
           <View style={[styles.timezoneBanner, { backgroundColor: '#FEF2F2', borderColor: '#F87171' }]}>
@@ -138,10 +138,23 @@ export default function ProfileScreen({ navigation }) {
             </TouchableOpacity>
           )}
         </View>
+        {(isSignedIn || isGuestMode) && !isPremiumUser && (
+          <TouchableOpacity
+            style={[styles.upgradeBanner, { backgroundColor: COLORS.primary, shadowColor: isDark ? COLORS.background : '#000000' }]}
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('PaywallScreen')}
+          >
+            <View style={styles.bannerTextContainer}>
+              <Text style={[styles.bannerTitle, FONTS.sectionHeading, { color: COLORS.card }]}>Upgrade to Premium</Text>
+              <Text style={[styles.bannerSubtitle, FONTS.bodyText, { color: 'rgba(255, 255, 255, 0.9)' }]}>Unlock AI Analytics & AI Health Coaching</Text>
+            </View>
+            <Ionicons name="arrow-forward-circle" size={28} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
 
         <Text style={[styles.sectionTitle, FONTS.bodyText, { color: COLORS.textMuted }]}>App Preferences</Text>
         <View style={[styles.card, { backgroundColor: COLORS.card, paddingVertical: 8, shadowColor: isDark ? COLORS.background : '#000000' }]}>
-          
+
           <MenuRow
             icon="time-outline"
             title="Biological Schedule"

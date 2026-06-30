@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import { useKeyboardPadding } from '../hooks/useKeyboardPadding';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Keyboard,
-  KeyboardAvoidingView,
   Platform,
   StatusBar,
   StyleSheet,
@@ -13,6 +13,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHealthStore } from '../store/useHealthStore';
@@ -35,6 +36,7 @@ const AI_LOADING_STATES = [
 export default function AIMealPlannerScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef(null);
+  const { keyboardPadding, isKeyboardVisible } = useKeyboardPadding(flatListRef);
   const themePreference = useHealthStore((s) => s.themePreference);
   const { COLORS, FONTS } = useTheme(themePreference);
 
@@ -96,6 +98,15 @@ export default function AIMealPlannerScreen({ navigation }) {
     setShowScrollToTop(contentOffset.y > 200);
     const isAtBottom = contentSize.height - layoutMeasurement.height - contentOffset.y < 150;
     setShowScrollToBottom(!isAtBottom);
+  };
+
+  const renderFooter = () => {
+    if (!isTyping) return null;
+    return (
+      <View style={styles.typingContainer}>
+        {/* Your avatar and activity indicator UI */}
+      </View>
+    );
   };
 
   const handleCopy = async (text, id) => {
@@ -261,9 +272,8 @@ Professional, practical and supportive.`;
   };
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: COLORS.aiBackground }]}
-      behavior='padding' enabled={true}
+    <Animated.View 
+      style={[styles.container, { backgroundColor: COLORS.aiBackground, paddingBottom: keyboardPadding }]}
     >
       <View style={{ flex: 1, backgroundColor: COLORS.aiBackground }}>
         {/* ── HEADER ── */}
@@ -298,6 +308,7 @@ Professional, practical and supportive.`;
           keyboardDismissMode="interactive"
           keyboardShouldPersistTaps="handled"
           onScroll={handleScroll}
+          ListFooterComponent={renderFooter}
           scrollEventThrottle={16}
         />
 
@@ -339,7 +350,7 @@ Professional, practical and supportive.`;
 
         {/* ── INPUT DOCK ── */}
         <View style={[styles.inputDock, { backgroundColor: COLORS.aiBackground }]}>
-          <View style={[styles.pillContainer, { backgroundColor: COLORS.inputField || COLORS.surface, borderColor: COLORS.border, marginBottom: Math.max(insets.bottom, 12), marginTop: 12 }]}>
+          <View style={[styles.pillContainer, { backgroundColor: COLORS.inputField || COLORS.surface, borderColor: COLORS.border, marginBottom: isKeyboardVisible ? 12 : Math.max(insets.bottom, 12), marginTop: 12 }]}>
             <TextInput
               style={[styles.textInput, { color: COLORS.textPrimary }]}
               placeholder="E.g., High protein vegetarian dinner..."
@@ -359,7 +370,7 @@ Professional, practical and supportive.`;
           </View>
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </Animated.View>
   );
 }
 

@@ -286,7 +286,7 @@ export default function WaterScreen() {
                 </View>
               </View>
             );
-          }, [todaysDrinks, totalIntake, COLORS, FONTS])}
+          }, [todaysDrinks, totalIntake, COLORS.textPrimary, COLORS.textMuted])}
         </View>
         <View style={[styles.premiumReminderCard, { backgroundColor: COLORS.card }]}>
           <View style={[styles.reminderLeft, { backgroundColor: isDark ? 'rgba(245,158,11,0.15)' : '#FFEDD5' }]}>

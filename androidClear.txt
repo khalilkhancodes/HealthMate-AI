@@ -1,0 +1,3 @@
+rd /s /q app\.cxx
+rd /s /q app\build
+rd /s /q .gradle
