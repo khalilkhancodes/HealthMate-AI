@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useKeyboardPadding } from '../hooks/useKeyboardPadding';
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
   Image,
   Keyboard,
@@ -16,7 +17,6 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHealthStore } from '../store/useHealthStore';
@@ -29,7 +29,6 @@ const INITIAL_GREETING = {
   timestamp: new Date().toISOString(),
 };
 
-// ─── Dynamic loading states based on context ───────────────────────────────
 const IMAGE_LOADING_STATES = [
   'Scanning image layers',
   'Identifying ingredients',
@@ -44,19 +43,16 @@ const TEXT_LOADING_STATES = [
   'Formatting response',
 ];
 
-// ─── Rich Text Renderer ─────────────────────────────────────────────────────
-// Parses AI plain-text (ALL CAPS headings, hyphen bullets) into styled JSX
+// ─── Rich Text Renderer ──────────────────────────────────────────────────────
 const RichAIText = ({ text, colors }) => {
   if (!text) return null;
   const lines = text.split('\n');
-
   return (
     <View>
       {lines.map((line, i) => {
         const trimmed = line.trim();
         if (!trimmed) return <View key={i} style={{ height: 6 }} />;
 
-        // ALL CAPS heading detection (e.g. "DETECTED ITEMS:")
         const isHeading = /^[A-Z][A-Z\s:]{3,}$/.test(trimmed.replace(/:$/, ''));
         if (isHeading) {
           return (
@@ -67,10 +63,8 @@ const RichAIText = ({ text, colors }) => {
           );
         }
 
-        // Bullet point (- or •)
         if (trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
           const content = trimmed.replace(/^[-•]\s+/, '');
-          // Check for key: value pattern inside bullet
           const kvMatch = content.match(/^(.+?):\s*(.+)$/);
           if (kvMatch) {
             return (
@@ -91,7 +85,6 @@ const RichAIText = ({ text, colors }) => {
           );
         }
 
-        // Numbered list (1. 2. etc.)
         const numMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
         if (numMatch) {
           return (
@@ -104,7 +97,6 @@ const RichAIText = ({ text, colors }) => {
           );
         }
 
-        // Key: Value inline
         const topLevelKV = trimmed.match(/^([A-Za-z][^:]{1,30}):\s*(.+)$/);
         if (topLevelKV) {
           return (
@@ -115,7 +107,6 @@ const RichAIText = ({ text, colors }) => {
           );
         }
 
-        // Plain paragraph
         return (
           <Text key={i} style={[styles.richBody, { color: colors.textPrimary }]}>
             {trimmed}
@@ -126,7 +117,7 @@ const RichAIText = ({ text, colors }) => {
   );
 };
 
-// ─── Main Screen ────────────────────────────────────────────────────────────
+// ─── Main Screen ─────────────────────────────────────────────────────────────
 export default function AIIngredientScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef(null);
@@ -153,7 +144,17 @@ export default function AIIngredientScreen({ navigation }) {
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
 
-  // Ref to track current image context for dynamic loading
+  // FIX 4 — track input dock height so FlatList always has correct bottom padding
+  const [inputDockHeight, setInputDockHeight] = useState(80);
+
+  // FIX 5 — track whether user is near bottom to decide auto-scroll during streaming
+  const isNearBottomRef = useRef(true);
+
+  // FIX 2 — track which message is being edited
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  // maps messageId → paired AI response id so we can replace the right bubble
+  const editPairRef = useRef({});
+
   const isVisionRef = useRef(false);
 
   const safeTopPadding =
@@ -186,21 +187,20 @@ export default function AIIngredientScreen({ navigation }) {
     if (aiIngredientHistory.length === 0) addIngredientMessage(INITIAL_GREETING);
   }, [aiIngredientHistory.length, addIngredientMessage]);
 
+  // FIX 5 — only auto-scroll during streaming if user hasn't scrolled up
   const handleScroll = (event) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const distanceFromBottom =
+      contentSize.height - layoutMeasurement.height - contentOffset.y;
     setShowScrollToTop(contentOffset.y > 200);
-    setShowScrollToBottom(
-      contentSize.height - layoutMeasurement.height - contentOffset.y > 150
-    );
+    setShowScrollToBottom(distanceFromBottom > 150);
+    isNearBottomRef.current = distanceFromBottom < 150;
   };
 
-  const renderFooter = () => {
-    if (!isTyping) return null;
-    return (
-      <View style={styles.typingContainer}>
-        {/* Your avatar and activity indicator UI */}
-      </View>
-    );
+  const scrollToBottomIfNear = () => {
+    if (isNearBottomRef.current) {
+      flatListRef.current?.scrollToEnd({ animated: false });
+    }
   };
 
   const handleCopy = async (text, id) => {
@@ -209,8 +209,24 @@ export default function AIIngredientScreen({ navigation }) {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleEdit = (text) => {
-    setInputText(text);
+  // FIX 2 — edit puts text back into input AND remembers which message pair to update
+  const handleEdit = (item) => {
+    // Find the AI response that follows this user message
+    const history = aiIngredientHistory;
+    const userIndex = history.findIndex((m) => m.id === item.id);
+    const nextMsg = history[userIndex + 1];
+    const pairedAiId = nextMsg && nextMsg.sender === 'ai' ? nextMsg.id : null;
+
+    setEditingMessageId(item.id);
+    if (pairedAiId) editPairRef.current[item.id] = pairedAiId;
+
+    setInputText(item.text);
+    // Restore image if the message had one
+    if (item.imageUri) {
+      setSelectedImageUri(item.imageUri);
+      // We don't have the base64 anymore but flag it for vision routing
+      setSelectedImage(item.imageUri);
+    }
     flatListRef.current?.scrollToEnd({ animated: true });
   };
 
@@ -237,7 +253,9 @@ export default function AIIngredientScreen({ navigation }) {
         setSelectedImageUri(manipResult.uri);
         setSelectedImage(`data:image/jpeg;base64,${manipResult.base64}`);
       }
-    } catch (error) { console.error('Image capture error:', error); }
+    } catch (error) {
+      console.error('Image capture error:', error);
+    }
   };
 
   const removeSelectedImage = () => {
@@ -245,14 +263,11 @@ export default function AIIngredientScreen({ navigation }) {
     setSelectedImageUri(null);
   };
 
-  // ─── Streaming fetch via SSE / chunked response simulation ───────────────
-  // NVIDIA API doesn't natively stream through a proxy, so we simulate
-  // progressive reveal by chunking the full response on receipt.
   const callAPIWithStreaming = async (payloadMessages, modelName, onChunk) => {
     const response = await fetch('https://healthmate-backend-eta.vercel.app/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: modelName, messages: payloadMessages, max_tokens: 800 }),
+      body: JSON.stringify({ model: modelName, messages: payloadMessages }),
     });
 
     const data = await response.json();
@@ -262,13 +277,12 @@ export default function AIIngredientScreen({ navigation }) {
       data.choices?.[0]?.message?.content ||
       'Sorry, I could not process the request at this time.';
 
-    // Simulate streaming: reveal words progressively for premium feel
+    // Simulate streaming word-by-word reveal
     const words = fullText.split(' ');
     let accumulated = '';
     for (let i = 0; i < words.length; i++) {
       accumulated += (i === 0 ? '' : ' ') + words[i];
       onChunk(accumulated);
-      // Vary delay: faster for short words, slight pause at punctuation
       const delay = words[i].endsWith('.') || words[i].endsWith('\n') ? 30 : 12;
       await new Promise((r) => setTimeout(r, delay));
     }
@@ -283,33 +297,48 @@ export default function AIIngredientScreen({ navigation }) {
       navigation.navigate('PaywallScreen');
       return;
     }
-    if (!isPremiumUser) decrementAiQuestions();
 
     const cachedImage = selectedImage;
     const cachedText = inputText.trim();
     const isVisionRequest = !!cachedImage;
     isVisionRef.current = isVisionRequest;
 
+    // FIX 2 — decrement only on new messages, not re-sends of edits
+    const isEdit = !!editingMessageId;
+    if (!isPremiumUser && !isEdit) decrementAiQuestions();
+
+    const messageId = editingMessageId || Date.now().toString();
+    const aiResponseId = editPairRef.current[messageId] || (Date.now() + 1).toString();
+
     const userMessage = {
-      id: Date.now().toString(),
+      id: messageId,
       text: cachedText || 'Analyze this image.',
       imageUri: selectedImageUri,
       sender: 'user',
       timestamp: new Date().toISOString(),
     };
 
-    addIngredientMessage(userMessage);
+    // FIX 2 — if editing, replace existing message; otherwise append new one
+    if (isEdit) {
+      useHealthStore.getState().updateIngredientMessage(messageId, userMessage);
+    } else {
+      addIngredientMessage(userMessage);
+    }
+
     setInputText('');
+    setEditingMessageId(null);
     removeSelectedImage();
     setDotCount(1);
     setIsTyping(true);
     setIsStreaming(false);
     setStreamingText('');
+    isNearBottomRef.current = true;
     requestAnimationFrame(() => flatListRef.current?.scrollToEnd({ animated: true }));
 
     try {
       const formattedHistory = aiIngredientHistory
         .filter((msg, index) => !(index === 0 && msg.sender === 'ai'))
+        .filter((msg) => msg.id !== messageId && msg.id !== aiResponseId) // exclude the pair being replaced
         .slice(-4)
         .map((msg) => ({
           role: msg.sender === 'user' ? 'user' : 'assistant',
@@ -317,8 +346,8 @@ export default function AIIngredientScreen({ navigation }) {
         }));
 
       const modelToUse = isVisionRequest
-        ? 'meta/llama-3.2-90b-vision-instruct'
-        : 'meta/llama-3.1-70b-instruct';
+        ? 'meta/llama-3.2-11b-vision-instruct'
+        : 'meta/llama-3.1-8b-instruct';
 
       const systemPrompt = isVisionRequest
         ? `Analyze the image carefully. Identify the dish, individual ingredients, and estimated weights.
@@ -339,10 +368,10 @@ Example output:
 | HEALTH ANALYSIS:
 • High in protein due to ground beef and cheese.
 • Contains vegetables from the salad, providing fiber and vitamins.
-• Moderate calorie content; portion control is advised for weight management.
-`
+• Moderate calorie content; portion control is advised for weight management.`
         : `You are an expert culinary AI. Answer questions about recipes, ingredients, and food preparation.
-CRITICAL RULES: NO markdown (** or #)`
+CRITICAL RULES: NO markdown (** or #)`;
+
       const currentMessageContent = isVisionRequest
         ? [
             { type: 'text', text: cachedText || 'Identify the ingredients in this image.' },
@@ -356,25 +385,34 @@ CRITICAL RULES: NO markdown (** or #)`
         { role: 'user', content: currentMessageContent },
       ];
 
-      // Switch to streaming bubble once we have first content
       let finalText = '';
       await callAPIWithStreaming(payloadMessages, modelToUse, (chunk) => {
         if (!isStreaming) setIsStreaming(true);
         setIsTyping(false);
         setStreamingText(chunk);
         finalText = chunk;
-        requestAnimationFrame(() => flatListRef.current?.scrollToEnd({ animated: false }));
+        // FIX 5 — only auto-scroll if user hasn't scrolled away
+        scrollToBottomIfNear();
       });
 
-      // Commit the final message to store
       setIsStreaming(false);
       setStreamingText('');
-      addIngredientMessage({
-        id: (Date.now() + 1).toString(),
+
+      const aiMessage = {
+        id: aiResponseId,
         text: finalText,
         sender: 'ai',
         timestamp: new Date().toISOString(),
-      });
+      };
+
+      // FIX 2 — replace existing AI response bubble if editing, else append
+      if (isEdit && editPairRef.current[messageId]) {
+        useHealthStore.getState().updateIngredientMessage(aiResponseId, aiMessage);
+      } else {
+        addIngredientMessage(aiMessage);
+        editPairRef.current[messageId] = aiResponseId;
+      }
+
     } catch (error) {
       console.warn('AI API Error:', error.message);
       setIsTyping(false);
@@ -394,6 +432,7 @@ CRITICAL RULES: NO markdown (** or #)`
 
   const renderMessage = ({ item }) => {
     const isUser = item.sender === 'user';
+    const isCurrentlyEditing = editingMessageId === item.id;
     return (
       <View
         style={[
@@ -419,15 +458,12 @@ CRITICAL RULES: NO markdown (** or #)`
               styles.messageBubble,
               isUser ? styles.userBubble : styles.aiBubble,
               isUser
-                ? { backgroundColor: COLORS.primary }
+                ? { backgroundColor: isCurrentlyEditing ? COLORS.primary + 'CC' : COLORS.primary }
                 : { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
             ]}
           >
             {isUser ? (
-              <Text
-                selectable
-                style={[styles.messageText, { color: COLORS.card }]}
-              >
+              <Text selectable style={[styles.messageText, { color: COLORS.card }]}>
                 {item.text}
               </Text>
             ) : (
@@ -435,37 +471,30 @@ CRITICAL RULES: NO markdown (** or #)`
             )}
           </View>
 
-          <View
-            style={[
-              styles.actionRow,
-              { justifyContent: isUser ? 'flex-end' : 'flex-start' },
-            ]}
-          >
-            <TouchableOpacity
-              onPress={() => handleCopy(item.text, item.id)}
-              style={styles.actionBtn}
-            >
+          <View style={[styles.actionRow, { justifyContent: isUser ? 'flex-end' : 'flex-start' }]}>
+            <TouchableOpacity onPress={() => handleCopy(item.text, item.id)} style={styles.actionBtn}>
               <Ionicons
                 name={copiedId === item.id ? 'checkmark-done' : 'copy-outline'}
                 size={14}
                 color={copiedId === item.id ? COLORS.primary : COLORS.textMuted}
               />
-              <Text
-                style={[
-                  styles.actionText,
-                  { color: copiedId === item.id ? COLORS.primary : COLORS.textMuted },
-                ]}
-              >
+              <Text style={[styles.actionText, { color: copiedId === item.id ? COLORS.primary : COLORS.textMuted }]}>
                 {copiedId === item.id ? 'Copied' : 'Copy'}
               </Text>
             </TouchableOpacity>
             {isUser && (
               <TouchableOpacity
-                onPress={() => handleEdit(item.text)}
+                onPress={() => handleEdit(item)}
                 style={[styles.actionBtn, { marginLeft: 12 }]}
               >
-                <Ionicons name="pencil-outline" size={14} color={COLORS.textMuted} />
-                <Text style={[styles.actionText, { color: COLORS.textMuted }]}>Edit</Text>
+                <Ionicons
+                  name={isCurrentlyEditing ? 'pencil' : 'pencil-outline'}
+                  size={14}
+                  color={isCurrentlyEditing ? COLORS.primary : COLORS.textMuted}
+                />
+                <Text style={[styles.actionText, { color: isCurrentlyEditing ? COLORS.primary : COLORS.textMuted }]}>
+                  {isCurrentlyEditing ? 'Editing' : 'Edit'}
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -474,18 +503,17 @@ CRITICAL RULES: NO markdown (** or #)`
     );
   };
 
+  // FIX 3 — whether the input has grown (text length > threshold or image selected)
+  const inputIsExpanded = inputText.length > 0 || !!selectedImageUri;
+
   return (
-    <Animated.View 
+    <Animated.View
       style={[styles.container, { backgroundColor: COLORS.aiBackground, paddingBottom: keyboardPadding }]}
     >
       <View style={{ flex: 1, backgroundColor: COLORS.aiBackground }}>
+
         {/* Header */}
-        <View
-          style={[
-            styles.header,
-            { paddingTop: safeTopPadding, borderBottomColor: COLORS.border },
-          ]}
-        >
+        <View style={[styles.header, { paddingTop: safeTopPadding, borderBottomColor: COLORS.border }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-down" size={28} color={COLORS.textPrimary} />
           </TouchableOpacity>
@@ -494,12 +522,7 @@ CRITICAL RULES: NO markdown (** or #)`
               Ingredient Detector
             </Text>
             {!isPremiumUser && (
-              <View
-                style={[
-                  styles.badge,
-                  { backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1 },
-                ]}
-              >
+              <View style={[styles.badge, { backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1 }]}>
                 <Text style={[styles.badgeText, { color: COLORS.primary }]}>
                   {freeAiQuestionsRemaining} FREE LEFT
                 </Text>
@@ -509,96 +532,61 @@ CRITICAL RULES: NO markdown (** or #)`
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Chat list */}
+        {/* FIX 4 — FlatList fills remaining space; paddingBottom accounts for input dock */}
         <FlatList
           ref={flatListRef}
           data={aiIngredientHistory}
           keyExtractor={(item) => item.id}
           renderItem={renderMessage}
           style={styles.flatList}
-          contentContainerStyle={styles.chatList}
+          contentContainerStyle={[styles.chatList, { paddingBottom: inputDockHeight + 16 }]}
           showsVerticalScrollIndicator={false}
           keyboardDismissMode="interactive"
           keyboardShouldPersistTaps="handled"
           onScroll={handleScroll}
-          ListFooterComponent={renderFooter}
           scrollEventThrottle={16}
-          onContentSizeChange={() =>
-            flatListRef.current?.scrollToEnd({ animated: true })
-          }
+          // FIX 5 — removed onContentSizeChange auto-scroll; handled by scrollToBottomIfNear
         />
 
-        {/* Loading indicator (shown before streaming begins) */}
+        {/* Loading indicator */}
         {isTyping && !isStreaming && (
           <View style={styles.typingContainer}>
             <View style={[styles.aiAvatar, { backgroundColor: COLORS.primary }]}>
               <Ionicons name="scan" size={14} color={COLORS.card} />
             </View>
-            <View
-              style={[
-                styles.aiBubble,
-                {
-                  backgroundColor: COLORS.surface,
-                  borderWidth: 1,
-                  borderColor: COLORS.border,
-                  paddingVertical: 12,
-                  paddingHorizontal: 16,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                },
-              ]}
-            >
+            <View style={[styles.aiBubble, {
+              backgroundColor: COLORS.surface,
+              borderWidth: 1,
+              borderColor: COLORS.border,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }]}>
               <ActivityIndicator size="small" color={COLORS.primary} style={{ marginRight: 10 }} />
               <Text style={{ color: COLORS.textPrimary, fontSize: 13, fontWeight: '500' }}>
-                {loadingMessage}
-                {'.'.repeat(dotCount)}
+                {loadingMessage}{'.'.repeat(dotCount)}
               </Text>
             </View>
           </View>
         )}
 
-        {/* Streaming bubble — live text appears here */}
+        {/* Streaming bubble */}
         {isStreaming && streamingText.length > 0 && (
           <View style={[styles.typingContainer, { marginBottom: 4 }]}>
             <View style={[styles.aiAvatar, { backgroundColor: COLORS.primary }]}>
               <Ionicons name="scan" size={14} color={COLORS.card} />
             </View>
-            <View
-              style={[
-                styles.aiBubble,
-                {
-                  backgroundColor: COLORS.surface,
-                  borderWidth: 1,
-                  borderColor: COLORS.border,
-                  paddingVertical: 12,
-                  paddingHorizontal: 16,
-                  flex: 1,
-                },
-              ]}
-            >
+            <View style={[styles.aiBubble, {
+              backgroundColor: COLORS.surface,
+              borderWidth: 1,
+              borderColor: COLORS.border,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              flex: 1,
+            }]}>
               <RichAIText text={streamingText} colors={COLORS} />
-              {/* Blinking cursor */}
               <Text style={{ color: COLORS.primary, fontWeight: '700', fontSize: 16 }}>▌</Text>
-            </View>
-          </View>
-        )}
-
-        {/* Image preview dock */}
-        {selectedImageUri && (
-          <View
-            style={[
-              styles.imagePreviewDock,
-              { borderTopColor: COLORS.border, backgroundColor: COLORS.aiBackground },
-            ]}
-          >
-            <View style={styles.previewWrap}>
-              <Image source={{ uri: selectedImageUri }} style={styles.previewImage} />
-              <TouchableOpacity
-                style={[styles.removeImageBtn, { backgroundColor: COLORS.card }]}
-                onPress={removeSelectedImage}
-              >
-                <Ionicons name="close" size={14} color={COLORS.textPrimary} />
-              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -615,10 +603,7 @@ CRITICAL RULES: NO markdown (** or #)`
           )}
           {showScrollToBottom && (
             <TouchableOpacity
-              style={[
-                styles.floatingBtn,
-                { backgroundColor: COLORS.surface, borderColor: COLORS.border, marginTop: 8 },
-              ]}
+              style={[styles.floatingBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border, marginTop: 8 }]}
               onPress={() => flatListRef.current?.scrollToEnd({ animated: true })}
             >
               <Ionicons name="arrow-down" size={20} color={COLORS.textPrimary} />
@@ -626,53 +611,104 @@ CRITICAL RULES: NO markdown (** or #)`
           )}
         </View>
 
-        {/* Input dock */}
-        <View style={[styles.inputDock, { backgroundColor: COLORS.aiBackground }]}>
-          <View
-            style={[
-              styles.pillContainer,
-              {
-                backgroundColor: COLORS.inputField || COLORS.surface,
-                borderColor: COLORS.border,
-                marginBottom: isKeyboardVisible ? 12 : Math.max(insets.bottom, 12),
-                marginTop: selectedImageUri ? 0 : 12,
-              },
-            ]}
-          >
-            <TouchableOpacity style={styles.attachBtn} onPress={() => pickImage(false)}>
-              <Ionicons name="image-outline" size={24} color={COLORS.textMuted} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.attachBtn} onPress={() => pickImage(true)}>
-              <Ionicons name="camera-outline" size={24} color={COLORS.textMuted} />
-            </TouchableOpacity>
+        {/* FIX 4 — Input dock: measure height via onLayout */}
+        <View
+          style={[styles.inputDock, { backgroundColor: COLORS.aiBackground }]}
+          onLayout={(e) => setInputDockHeight(e.nativeEvent.layout.height)}
+        >
+          {/* Image preview dock — shown above pill when image is selected */}
+          {selectedImageUri && (
+            <View style={[styles.imagePreviewDock, { borderTopColor: COLORS.border }]}>
+              <View style={styles.previewWrap}>
+                <Image source={{ uri: selectedImageUri }} style={styles.previewImage} />
+                <TouchableOpacity
+                  style={[styles.removeImageBtn, { backgroundColor: COLORS.card }]}
+                  onPress={removeSelectedImage}
+                >
+                  <Ionicons name="close" size={14} color={COLORS.textPrimary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* FIX 3 — Pill: icons hidden when image selected OR when text is being typed */}
+          <View style={[styles.pillContainer, {
+            backgroundColor: COLORS.inputField || COLORS.surface,
+            borderColor: editingMessageId ? COLORS.primary : COLORS.border,
+            marginBottom: isKeyboardVisible ? 12 : Math.max(insets.bottom, 12),
+            marginTop: 12,
+          }]}>
+
+            {/* FIX 3 — Only show camera/image buttons when input is empty and no image selected */}
+            {!inputIsExpanded && (
+              <>
+                <TouchableOpacity style={styles.attachBtn} onPress={() => pickImage(false)}>
+                  <Ionicons name="image-outline" size={24} color={COLORS.textMuted} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.attachBtn} onPress={() => pickImage(true)}>
+                  <Ionicons name="camera-outline" size={24} color={COLORS.textMuted} />
+                </TouchableOpacity>
+              </>
+            )}
+
+            {/* FIX 3 — When expanded, show a small single icon to re-access camera/gallery */}
+            {inputIsExpanded && !selectedImageUri && (
+              <TouchableOpacity
+                style={styles.attachBtnCompact}
+                onPress={() => pickImage(false)}
+              >
+                <Ionicons name="attach-outline" size={20} color={COLORS.textMuted} />
+              </TouchableOpacity>
+            )}
+
             <TextInput
               style={[styles.textInput, { color: COLORS.textPrimary }]}
-              placeholder={selectedImageUri ? 'Add a note...' : 'Upload food image...'}
+              placeholder={
+                editingMessageId
+                  ? 'Editing message...'
+                  : selectedImageUri
+                  ? 'Add a note...'
+                  : 'Ask anything...'
+              }
               placeholderTextColor={COLORS.textMuted}
               value={inputText}
               onChangeText={setInputText}
               multiline
               maxLength={200}
             />
+
+            {/* FIX 2 — Cancel edit button */}
+            {editingMessageId && (
+              <TouchableOpacity
+                style={styles.cancelEditBtn}
+                onPress={() => {
+                  setEditingMessageId(null);
+                  setInputText('');
+                  removeSelectedImage();
+                }}
+              >
+                <Ionicons name="close" size={18} color={COLORS.textMuted} />
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity
-              style={[
-                styles.sendButton,
-                {
-                  backgroundColor:
-                    inputText.trim() || selectedImage ? COLORS.primary : 'transparent',
-                },
-              ]}
+              style={[styles.sendButton, {
+                backgroundColor: (inputText.trim() || selectedImage)
+                  ? COLORS.primary
+                  : COLORS.primary + '20',
+              }]}
               onPress={handleSend}
               disabled={(!inputText.trim() && !selectedImage) || isTyping || isStreaming}
             >
               <Ionicons
                 name="arrow-up"
                 size={20}
-                color={inputText.trim() || selectedImage ? COLORS.card : COLORS.textMuted}
+                color={(inputText.trim() || selectedImage) ? COLORS.card : COLORS.textMuted}
               />
             </TouchableOpacity>
           </View>
         </View>
+
       </View>
     </Animated.View>
   );
@@ -720,9 +756,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     alignItems: 'flex-start',
   },
-  imagePreviewDock: {
+  // FIX 4 — input dock is now position-static (not absolute), so it
+  // pushes the FlatList up correctly via flex layout
+  inputDock: {
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 4,
+  },
+  imagePreviewDock: {
+    paddingTop: 10,
+    paddingBottom: 4,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   previewWrap: { position: 'relative', width: 60, height: 60 },
@@ -741,22 +783,31 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     elevation: 3,
   },
-  inputDock: { paddingHorizontal: 16, paddingTop: 8 },
   pillContainer: {
     flexDirection: 'row',
     borderRadius: 24,
     paddingHorizontal: 6,
-    paddingVertical: 6,
-    borderWidth: 1,
-    alignItems: 'flex-end',
+    borderWidth: 1.5,
+    alignItems: 'flex-end', // FIX 3 — pins all children to bottom so send btn stays put
     minHeight: 48,
   },
+  // FIX 3 — standard attach buttons, pinned to bottom via parent alignItems
   attachBtn: {
     width: 36,
     height: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
+    flexShrink: 0, // FIX 3 — prevents icons from being pushed by growing TextInput
+  },
+  // compact single attach icon shown when text is being typed
+  attachBtnCompact: {
+    width: 28,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6,
+    flexShrink: 0,
   },
   textInput: {
     flex: 1,
@@ -764,8 +815,17 @@ const styles = StyleSheet.create({
     maxHeight: 120,
     paddingHorizontal: 8,
     paddingTop: 8,
+    paddingBottom: 12,
     fontSize: 15,
     backgroundColor: 'transparent',
+  },
+  cancelEditBtn: {
+    width: 28,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6,
+    flexShrink: 0,
   },
   sendButton: {
     width: 36,
@@ -774,7 +834,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 4,
-    marginBottom: 4,
+    marginBottom: 6,
+    flexShrink: 0, // FIX 3 — send button never squishes
   },
   actionRow: {
     flexDirection: 'row',
@@ -804,51 +865,14 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 4,
   },
-  // Rich text styles
-  richHeadingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 4,
-  },
-  richHeadingAccent: {
-    width: 3,
-    height: 14,
-    borderRadius: 2,
-    marginRight: 8,
-  },
-  richHeading: {
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  richBulletRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginVertical: 3,
-    paddingLeft: 4,
-  },
-  richBulletDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginTop: 7,
-    marginRight: 10,
-    flexShrink: 0,
-  },
+  richHeadingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10, marginBottom: 4 },
+  richHeadingAccent: { width: 3, height: 14, borderRadius: 2, marginRight: 8 },
+  richHeading: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, textTransform: 'uppercase' },
+  richBulletRow: { flexDirection: 'row', alignItems: 'flex-start', marginVertical: 3, paddingLeft: 4 },
+  richBulletDot: { width: 6, height: 6, borderRadius: 3, marginTop: 7, marginRight: 10, flexShrink: 0 },
   richBulletText: { fontSize: 14, lineHeight: 21, flex: 1 },
   richBulletKey: { fontWeight: '700' },
-  richNumBadge: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-    marginTop: 1,
-    flexShrink: 0,
-  },
+  richNumBadge: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight: 10, marginTop: 1, flexShrink: 0 },
   richNumText: { fontSize: 11, fontWeight: '800' },
   richBody: { fontSize: 14, lineHeight: 21, marginVertical: 2 },
   richInlineKey: { fontWeight: '700' },

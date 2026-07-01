@@ -62,8 +62,6 @@ export const subscriptionPlans = [
   },
 ];
 
-
-
 export const premiumPricingPlan = {
   trial: 'Start 7-Day Free Trial',
 };
@@ -127,7 +125,7 @@ const generateInsightText = ({ dailySteps, stepGoal, currentWaterMl, waterIntake
   if (allMet) {
     return currentStreak > 1
       ? `Amazing! All goals met. You're on a ${currentStreak}-day streak! Keep it up! 🔥`
-      : 'Fantastic! You crushed all your goals yesterday. Let\'s make it a streak! 💪';
+      : "Fantastic! You crushed all your goals yesterday. Let's make it a streak! 💪";
   }
 
   const missed = [];
@@ -147,7 +145,13 @@ const getDefaultNotificationSettings = () => ({
   goalProgress: true,
   streakAlerts: true,
   dailyBriefing: true,
+  encouragement: true,
+  weeklyReports: true,
+  monthlyReports: true,
 });
+
+// Build Daily AI Suggestions function
+// calculateSleepDuration function
 
 export const useHealthStore = create(
   persist(
@@ -160,12 +164,12 @@ export const useHealthStore = create(
       weeklyProgress: [false, false, false, false, false, false, false],
       completionHistory: {},
       achievements: getDefaultAchievements(),
-      
+
       lastDailyResetDate: getTodayDate(),
       lastWakeResetDate: getTodayDate(),
-      
-      userWakeTime: "08:00", 
-      userBedTime: "23:00",  
+
+      userWakeTime: '08:00',
+      userBedTime: '23:00',
       lastScheduleUpdateTimestamp: 0,
       timezoneOffset: new Date().getTimezoneOffset(),
       requiresTimezoneUpdate: false,
@@ -175,7 +179,7 @@ export const useHealthStore = create(
       insightText: '',
       lastActiveDate: getTodayDate(),
 
-      // Personal Demographics & Goals
+      // ─── Personal Demographics & Goals ───────────────────────────────────────
       name: '',
       gender: 'other',
       age: '',
@@ -185,7 +189,6 @@ export const useHealthStore = create(
       activityLevel: 'moderate',
       primaryGoal: [],
 
-      // ─── RESTORED DEMOGRAPHIC SETTERS ───
       setName: (name) => set({ name }),
       setGender: (gender) => set({ gender }),
       setAge: (age) => set({ age }),
@@ -222,6 +225,7 @@ export const useHealthStore = create(
       setNotificationFeed: (feed) => set({ notificationFeed: feed }),
       setUnreadNotificationCount: (count) => set({ unreadNotificationCount: count }),
 
+      // Target Metrics
       waterGoalMl: 2500,
       stepGoal: 6000,
       sleepGoalHours: 8,
@@ -243,7 +247,7 @@ export const useHealthStore = create(
       isWaterReminderEnabled: true,
       isMorningCheckInEnabled: true,
 
-      // ─── RESTORED GOAL GENERATION LOGIC ───
+      // ─── Goal generation ─────────────────────────────────────────────────────
       getCalculatedBaselines: () => {
         const { weightKg, activityLevel, primaryGoal, dailySteps } = get();
         const safeWeight = Number(weightKg) || 70;
@@ -258,14 +262,14 @@ export const useHealthStore = create(
 
         if (dailySteps > suggestedSteps) suggestedSteps = Math.ceil(dailySteps / 500) * 500 + 500;
         suggestedSteps = clamp(suggestedSteps, 3000, 20000);
-        
+
         let suggestedWater = Math.round(safeWeight * 35);
         if (activityLevel === 'moderate' || activityLevel === 'active') suggestedWater += 500;
         suggestedWater = clamp(Math.round(suggestedWater / 100) * 100, 1500, 6000);
-        
+
         let suggestedSleep = 8;
         if (goals.includes('improve_sleep')) suggestedSleep = 8.5;
-        
+
         return { suggestedSteps, suggestedWater, suggestedSleep };
       },
 
@@ -289,13 +293,12 @@ export const useHealthStore = create(
           calorieGoal: calculatedCalories,
         });
       },
-      
-      // Alias for UI component binding
+
       setInitialGoals: () => get().generateInitialGoals(),
 
       syncProfileFromCloud: (cloudData) => {
         if (!cloudData || !cloudData.hasCompletedSetup) return false;
-        
+
         const biologicalToday = get().lastWakeResetDate;
         const todaysLog = cloudData.historyLogs?.[biologicalToday] || {};
 
@@ -317,12 +320,10 @@ export const useHealthStore = create(
           userBedTime: cloudData.userBedTime || state.userBedTime,
           hasCompletedSetup: true,
           isPremiumUser: cloudData.isPremiumUser || false,
-
           historyLogs: cloudData.historyLogs || {},
           sleepHistory: cloudData.sleepHistory || state.sleepHistory,
           achievements: cloudData.achievements || state.achievements,
           weeklyProgress: cloudData.weeklyProgress || state.weeklyProgress,
-
           dailySteps: todaysLog.steps || 0,
           currentWaterMl: todaysLog.water || 0,
           waterIntake: todaysLog.water || 0,
@@ -341,20 +342,23 @@ export const useHealthStore = create(
       updateBiologicalSchedule: (newWakeTime, newBedTime, isTimezoneFix = false) => {
         const { lastScheduleUpdateTimestamp } = get();
         const now = Date.now();
-        const COOLDOWN = 24 * 60 * 60 * 1000; 
+        const COOLDOWN = 24 * 60 * 60 * 1000;
 
         if (!isTimezoneFix && now - lastScheduleUpdateTimestamp < COOLDOWN) {
-          return { success: false, message: 'Schedule locked. You can modify your biological schedule once every 24 hours to protect streak integrity.' };
+          return {
+            success: false,
+            message: 'Schedule locked. You can modify your biological schedule once every 24 hours to protect streak integrity.',
+          };
         }
 
         const [wakeH, wakeM] = newWakeTime.split(':').map(Number);
         const [bedH, bedM] = newBedTime.split(':').map(Number);
-        
+
         let wakeDate = new Date(); wakeDate.setHours(wakeH, wakeM, 0, 0);
         let bedDate = new Date(); bedDate.setHours(bedH, bedM, 0, 0);
-        
+
         if (wakeDate <= bedDate) wakeDate.setDate(wakeDate.getDate() + 1);
-        
+
         const diffMs = wakeDate - bedDate;
         const sleepHours = Math.round((diffMs / (1000 * 60 * 60)) * 10) / 10;
 
@@ -365,19 +369,33 @@ export const useHealthStore = create(
           sleepGoal: sleepHours,
           lastScheduleUpdateTimestamp: now,
           timezoneOffset: new Date().getTimezoneOffset(),
-          requiresTimezoneUpdate: false
+          requiresTimezoneUpdate: false,
         });
 
         const { notificationSettings } = get();
         if (notificationSettings?.masterEnabled && notificationSettings?.sleepReminder) {
           scheduleSleepWindDown(newBedTime).catch(() => {});
         }
-        
+
         return { success: true };
       },
 
+
+      /*
+       ------------------------
+       Add Notifications 
+       Mark Notification read
+       Mark All Notifications Read
+       Clear Notifications
+       --------------------------
+      */
+
+
+
       setNotificationSetting: (key, value) => {
-        set((state) => ({ notificationSettings: { ...state.notificationSettings, [key]: value } }));
+        set((state) => ({
+          notificationSettings: { ...state.notificationSettings, [key]: value },
+        }));
         const settings = get().notificationSettings;
 
         if (key === 'masterEnabled') {
@@ -407,11 +425,11 @@ export const useHealthStore = create(
           case 'streakAlerts':
             if (value) scheduleStreakRiskAlert().catch(() => {});
             break;
-          case 'sleepReminder': {
+          case 'sleepReminder':
             if (value) scheduleSleepWindDown(get().userBedTime).catch(() => {});
             break;
-          }
-          default: break;
+          default:
+            break;
         }
       },
 
@@ -420,38 +438,113 @@ export const useHealthStore = create(
       sleepGoal: null,
       isSleeping: false,
       sleepStartTime: null,
-      
-      aiChatHistory: [],
-      addChatMessage: (message) => set((state) => ({ aiChatHistory: [...state.aiChatHistory, message] })),
-      
-      aiDoctorHistory: [],
-      addDoctorMessage: (message) => set((state) => ({ aiDoctorHistory: [...state.aiDoctorHistory, message] })),
-      
-      aiMealPlannerHistory: [],
-      addMealPlannerMessage: (message) => set((state) => ({ aiMealPlannerHistory: [...state.aiMealPlannerHistory, message] })),
-      
-      aiIngredientHistory: [],
-      addIngredientMessage: (message) => set((state) => ({ aiIngredientHistory: [...state.aiIngredientHistory, message] })),
-      
-      aiCalorieHistory: [],
-      addCalorieMessage: (message) => set((state) => ({ aiCalorieHistory: [...state.aiCalorieHistory, message] })),
 
+      // ─── AI Chat Histories ────────────────────────────────────────────────────
+      aiChatHistory: [],
+      addChatMessage: (message) =>
+        set((state) => ({ aiChatHistory: [...state.aiChatHistory, message] })),
+      updateChatMessage: (id, updatedMessage) =>
+        set((state) => ({
+          aiChatHistory: state.aiChatHistory
+            .filter(Boolean)
+            .map((msg) => (msg.id === id ? { ...msg, ...updatedMessage } : msg)),
+        })),
+
+      aiDoctorHistory: [],
+      addDoctorMessage: (message) =>
+        set((state) => ({ aiDoctorHistory: [...state.aiDoctorHistory, message] })),
+      updateDoctorMessage: (id, updatedMessage) =>
+        set((state) => ({
+          aiDoctorHistory: state.aiDoctorHistory
+            .filter(Boolean)
+            .map((msg) => (msg.id === id ? { ...msg, ...updatedMessage } : msg)),
+        })),
+
+      aiMealPlannerHistory: [],
+      addMealPlannerMessage: (message) =>
+        set((state) => ({ aiMealPlannerHistory: [...state.aiMealPlannerHistory, message] })),
+      // FIX: null-safe filter added so a corrupted null entry in persisted
+      // storage never causes "can't read property 'id' of null"
+      updateMealPlannerMessage: (id, updatedMessage) =>
+        set((state) => ({
+          aiMealPlannerHistory: state.aiMealPlannerHistory
+            .filter(Boolean)
+            .map((msg) => (msg.id === id ? { ...msg, ...updatedMessage } : msg)),
+        })),
+
+      aiIngredientHistory: [],
+      addIngredientMessage: (message) =>
+        set((state) => ({ aiIngredientHistory: [...state.aiIngredientHistory, message] })),
+      updateIngredientMessage: (id, updatedMessage) =>
+        set((state) => ({
+          aiIngredientHistory: state.aiIngredientHistory
+            .filter(Boolean)
+            .map((msg) => (msg.id === id ? { ...msg, ...updatedMessage } : msg)),
+        })),
+
+      aiCalorieHistory: [],
+      addCalorieMessage: (message) =>
+        set((state) => ({ aiCalorieHistory: [...state.aiCalorieHistory, message] })),
+      updateCalorieMessage: (id, updatedMessage) =>
+        set((state) => ({
+          aiCalorieHistory: state.aiCalorieHistory
+            .filter(Boolean)
+            .map((msg) => (msg.id === id ? { ...msg, ...updatedMessage } : msg)),
+        })),
+
+      // ─── Premium & Free Tier ─────────────────────────────────────────────────
       _hasHydrated: false,
       isGuestMode: false,
       user: null,
       userAvatar: null,
       isPremiumUser: false,
-      setPremiumStatus: (status) => set({ isPremiumUser: status }),
       themePreference: 'system',
       freeAiQuestionsRemaining: 5,
+      isDarkMode: false,
 
+      setPremiumStatus: (status) => set({ isPremiumUser: status }),
+
+      // FIX: decrementAiQuestions was referenced in all AI screens but never
+      // defined in the store — caused a silent crash on every non-premium send.
+      decrementAiQuestions: () =>
+        set((state) => ({
+          freeAiQuestionsRemaining: Math.max(0, (state.freeAiQuestionsRemaining ?? 5) - 1),
+        })),
+
+      // Resets free questions (call this when user upgrades or for testing)
+      resetAiQuestions: () => set({ freeAiQuestionsRemaining: 5 }),
+
+
+      requestPedometerPermission: async () => {
+        try {
+          const available = await Pedometer.isAvailableAsync();
+          if (!available) {
+            console.warn('[Pedometer] Hardware sensor not available on this device.');
+            return false;
+          }
+          const { status } = await Pedometer.requestPermissionsAsync();
+          if (status !== 'granted') {
+            console.warn('[Pedometer] User denied Physical Activity permission.');
+            return false;
+          }
+          return true;
+        } catch (error) {
+          console.error('[Pedometer] Error requesting permissions:', error);
+          return false;
+        }
+      },
+
+      // ─── Health data helpers ──────────────────────────────────────────────────
       logDailyData: (metric, value) =>
         set((state) => {
           const targetBiologicalDate = state.lastWakeResetDate;
           return {
             historyLogs: {
               ...state.historyLogs,
-              [targetBiologicalDate]: { ...(state.historyLogs[targetBiologicalDate] || {}), [metric]: value },
+              [targetBiologicalDate]: {
+                ...(state.historyLogs[targetBiologicalDate] || {}),
+                [metric]: value,
+              },
             },
           };
         }),
@@ -488,7 +581,6 @@ export const useHealthStore = create(
         get().logDailyData('water', get().getTotalWaterIntake());
       },
 
-
       addCategorizedDrink: (type, rawAmount, multiplier = 1) => {
         const net = Math.round((rawAmount || 0) * (typeof multiplier === 'number' ? multiplier : 1));
         const drink = {
@@ -510,7 +602,7 @@ export const useHealthStore = create(
         const latestWater = get().currentWaterMl || 0;
         if (activeWaterGoal > 0 && latestWater >= activeWaterGoal) {
           get().processDailyGoalCompletion('water');
-          cancelWaterReminders().catch((err) => console.warn('Failed to cancel water reminders', err));
+          cancelWaterReminders().catch(() => {});
         }
         get().logDailyData('water', get().getTotalWaterIntake());
       },
@@ -538,7 +630,9 @@ export const useHealthStore = create(
         return { bmr: Math.round(bmrCalc), tdee: tdeeCalc };
       },
 
-      executeFullReset: (clockToday, triggerSource) => {
+      
+
+      executeFullReset: (clockToday) => {
         const {
           lastGoalCompletionDate, currentStreak,
           currentWaterMl, waterIntake, waterGoalMl, waterGoal,
@@ -547,11 +641,15 @@ export const useHealthStore = create(
           weeklyProgress,
         } = get();
 
-        const daysSinceLastGoalCompletion = lastGoalCompletionDate ? getDaysDiff(lastGoalCompletionDate, clockToday) : null;
-        const streakHasBroken = !lastGoalCompletionDate || (daysSinceLastGoalCompletion && daysSinceLastGoalCompletion > 1);
+        const daysSinceLastGoalCompletion = lastGoalCompletionDate
+          ? getDaysDiff(lastGoalCompletionDate, clockToday)
+          : null;
+        const streakHasBroken =
+          !lastGoalCompletionDate ||
+          (daysSinceLastGoalCompletion && daysSinceLastGoalCompletion > 1);
         const nextCurrentStreak = streakHasBroken ? 0 : currentStreak;
         const actualWater = currentWaterMl || waterIntake || 0;
-        
+
         const insightText = generateInsightText({
           dailySteps, stepGoal,
           currentWaterMl: actualWater, waterIntake: 0, waterGoalMl, waterGoal,
@@ -560,7 +658,10 @@ export const useHealthStore = create(
         });
 
         const todayIndex = getMonSunIndex(new Date());
-        const nextWeeklyProgress = Array.isArray(weeklyProgress) && weeklyProgress.length === 7 ? [...weeklyProgress] : [false, false, false, false, false, false, false];
+        const nextWeeklyProgress =
+          Array.isArray(weeklyProgress) && weeklyProgress.length === 7
+            ? [...weeklyProgress]
+            : [false, false, false, false, false, false, false];
         if (todayIndex === 0) for (let i = 0; i < 7; i += 1) nextWeeklyProgress[i] = false;
         nextWeeklyProgress[todayIndex] = false;
 
@@ -571,7 +672,7 @@ export const useHealthStore = create(
 
         set({
           lastDailyResetDate: clockToday,
-          lastWakeResetDate: clockToday, 
+          lastWakeResetDate: clockToday,
           lastActiveDate: clockToday,
           needsDailyReview: true,
           insightText,
@@ -601,7 +702,7 @@ export const useHealthStore = create(
 
         if (lastWakeResetDate === today) return false;
 
-        const [wakeHour, wakeMinute] = (userWakeTime || "08:00").split(':').map(Number);
+        const [wakeHour, wakeMinute] = (userWakeTime || '08:00').split(':').map(Number);
         const now = new Date();
         const wakeTimeToday = new Date();
         wakeTimeToday.setHours(wakeHour, wakeMinute, 0, 0);
@@ -616,7 +717,9 @@ export const useHealthStore = create(
       refreshDailyCelebrationState: () => {
         const biologicalToday = get().lastWakeResetDate;
         const { hasCelebratedToday, lastGoalCompletionDate } = get();
-        if (hasCelebratedToday && lastGoalCompletionDate !== biologicalToday) set({ hasCelebratedToday: false });
+        if (hasCelebratedToday && lastGoalCompletionDate !== biologicalToday) {
+          set({ hasCelebratedToday: false });
+        }
       },
 
       processDailyGoalCompletion: (goalType = 'water') => {
@@ -624,7 +727,8 @@ export const useHealthStore = create(
         const {
           lastGoalCompletionDate, currentStreak, longestStreak, weeklyProgress,
           currentWaterMl, waterIntake, waterGoalMl, waterGoal,
-          dailySteps, stepGoal, sleepDuration, sleepGoalHours, sleepGoal, notificationSettings,
+          dailySteps, stepGoal, sleepDuration, sleepGoalHours, sleepGoal,
+          notificationSettings,
         } = get();
 
         if (lastGoalCompletionDate === biologicalToday) return;
@@ -645,10 +749,47 @@ export const useHealthStore = create(
         else if (daysDiff && daysDiff > 1) nextCurrentStreak = 1;
 
         const nextLongestStreak = Math.max(longestStreak, nextCurrentStreak);
-        const nextWeeklyProgress = Array.isArray(weeklyProgress) && weeklyProgress.length === 7 ? [...weeklyProgress] : [false, false, false, false, false, false, false];
+        const nextWeeklyProgress =
+          Array.isArray(weeklyProgress) && weeklyProgress.length === 7
+            ? [...weeklyProgress]
+            : [false, false, false, false, false, false, false];
 
         const prevAchievements = get().achievements;
-        const nextAchievements = unlockAchievementsForStreak(prevAchievements, nextCurrentStreak, biologicalToday);
+        const nextAchievements = unlockAchievementsForStreak(
+          prevAchievements, nextCurrentStreak, biologicalToday
+        );
+
+        /*
+        get().addNotification(
+          'goal',
+          '🎯 All goals complete!',
+          `You hit every goal today.${nextCurrentStreak > 1 ? ` ${nextCurrentStreak}-day streak! 🔥` : ' Start a streak tomorrow!'}`,
+          'HomeScreen',
+          { streak: nextCurrentStreak }
+        );
+
+        nextAchievements.forEach((a, i) => {
+          if (a.earnedDate === today && !prevAchievements[i]?.earnedDate) {
+            get().addNotification(
+              'achievement',
+              `🏆 Badge unlocked: ${a.title}`,
+              a.description,
+              'StreakDetails',
+              { achievementId: a.id }
+            );
+          }
+        });
+
+        if ([3, 7, 14, 30, 60, 100].includes(nextCurrentStreak)) {
+          get().addNotification(
+            'streak_milestone',
+            `🔥 ${nextCurrentStreak}-day streak!`,
+            `You've maintained your streak for ${nextCurrentStreak} days in a row. Incredible consistency.`,
+            'StreakDetails',
+            { streak: nextCurrentStreak }
+          );
+        }
+        */
 
         const todayIndex = getMonSunIndex(new Date());
         nextWeeklyProgress[todayIndex] = true;
@@ -673,7 +814,12 @@ export const useHealthStore = create(
       },
 
       addWaterMl: (ml) => {
-        const drink = { id: Date.now().toString(), type: 'water', amount: ml, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+        const drink = {
+          id: Date.now().toString(),
+          type: 'water',
+          amount: ml,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
         set((state) => ({
           todaysDrinks: [...state.todaysDrinks, drink],
           consumedDrinks: [...state.consumedDrinks, drink],
@@ -691,7 +837,12 @@ export const useHealthStore = create(
         }
       },
 
-      getTotalWaterIntake: () => get().todaysDrinks.reduce((total, drink) => total + (typeof drink.netHydration === 'number' ? drink.netHydration : (drink.amount || 0)), 0),
+      getTotalWaterIntake: () =>
+        get().todaysDrinks.reduce(
+          (total, drink) =>
+            total + (typeof drink.netHydration === 'number' ? drink.netHydration : (drink.amount || 0)),
+          0
+        ),
 
       startLiveStepTracking: async () => {
         if (get().isStepTracking) return true;
@@ -701,7 +852,8 @@ export const useHealthStore = create(
 
           let historicalSteps = 0;
           if (Platform.OS === 'ios') {
-            const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+            const startOfToday = new Date();
+            startOfToday.setHours(0, 0, 0, 0);
             try {
               const historicalData = await Pedometer.getStepCountAsync(startOfToday, new Date());
               historicalSteps = historicalData.steps;
@@ -721,11 +873,16 @@ export const useHealthStore = create(
 
           set({ isStepTracking: true });
           return true;
-        } catch (_error) { return false; }
+        } catch (_error) {
+          return false;
+        }
       },
 
       stopLiveStepTracking: () => {
-        if (pedometerSubscription) { pedometerSubscription.remove(); pedometerSubscription = null; }
+        if (pedometerSubscription) {
+          pedometerSubscription.remove();
+          pedometerSubscription = null;
+        }
         set({ isStepTracking: false });
       },
 
@@ -745,41 +902,97 @@ export const useHealthStore = create(
 
         const freshState = get();
         const updatedSleepDuration = Number((freshState.sleepDuration + sleptHours).toFixed(2));
-        const quality = roundedSessionHours >= 7.5 ? 'Good' : roundedSessionHours >= 6 ? 'Fair' : 'Poor';
+        const quality =
+          roundedSessionHours >= 7.5 ? 'Good' : roundedSessionHours >= 6 ? 'Fair' : 'Poor';
 
         set({
           sleepDuration: updatedSleepDuration,
-          sleepHistory: [{ id: Date.now().toString(), date: new Date().toLocaleDateString([], { month: 'short', day: 'numeric' }), duration: roundedSessionHours, quality, qualityStars, mood }, ...freshState.sleepHistory],
+          sleepHistory: [
+            {
+              id: Date.now().toString(),
+              date: new Date().toLocaleDateString([], { month: 'short', day: 'numeric' }),
+              duration: roundedSessionHours,
+              quality,
+              qualityStars,
+              mood,
+            },
+            ...freshState.sleepHistory,
+          ],
           isSleeping: false,
           sleepStartTime: null,
         });
 
         const existingSleep = Number(freshState.historyLogs[freshState.lastWakeResetDate]?.sleep || 0);
-        get().logDailyData('sleep', Number((existingSleep + roundedSessionHours).toFixed(2)));
-        
+        get().logDailyData(
+          'sleep',
+          Number((existingSleep + roundedSessionHours).toFixed(2))
+        );
+
         const safeSleepGoal = freshState.sleepGoalHours ?? freshState.sleepGoal ?? 0;
-        if (safeSleepGoal > 0 && updatedSleepDuration >= safeSleepGoal) get().processDailyGoalCompletion('sleep');
+        if (safeSleepGoal > 0 && updatedSleepDuration >= safeSleepGoal) {
+          get().processDailyGoalCompletion('sleep');
+        }
       },
 
-      setThemePreference: (preference) => set({ themePreference: preference, isDarkMode: preference === 'dark' }),
+      setThemePreference: (preference) =>
+        set({ themePreference: preference, isDarkMode: preference === 'dark' }),
+
+      toggleDarkMode: () =>
+        set((state) => {
+          const nextPreference = state.themePreference === 'dark' ? 'light' : 'dark';
+          return { isDarkMode: nextPreference === 'dark', themePreference: nextPreference };
+        }),
+
       clearGuestMode: () => {
-        if (pedometerSubscription) { pedometerSubscription.remove(); pedometerSubscription = null; }
+        if (pedometerSubscription) {
+          pedometerSubscription.remove();
+          pedometerSubscription = null;
+        }
         return set({ isGuestMode: false, user: null, isPremiumUser: false, isStepTracking: false });
       },
+
       setUserAvatar: (avatar) => set({ userAvatar: avatar }),
-      setUser: (userData) => set({ user: userData }),
+      setUser: (userData) => set((state) => ({
+        user: {
+          ...state.user,
+          ...userData,
+          // Preserve custom name set in HomeScreen — don't overwrite with
+          // Clerk's firstName-only value if a fuller name already exists
+          name: state.user?.name || userData.name,
+        },
+      })),
       setIsGuestMode: (isGuest) => set({ isGuestMode: isGuest }),
       setHasHydrated: (status) => set({ _hasHydrated: status }),
     }),
     {
-      name: 'healthmate-storage-v12', 
+      name: 'healthmate-storage-v12',
       storage: createJSONStorage(() => AsyncStorage),
       onRehydrateStorage: () => (state) => {
         if (!state) return;
 
-        if (!state.lastWakeResetDate) state.lastWakeResetDate = state.lastDailyResetDate || getTodayDate();
-        if (!state.userWakeTime) state.userWakeTime = "08:00";
-        if (!state.userBedTime) state.userBedTime = "23:00";
+        if (!state.lastWakeResetDate) {
+          state.lastWakeResetDate = state.lastDailyResetDate || getTodayDate();
+        }
+        if (!state.userWakeTime) state.userWakeTime = '08:00';
+        if (!state.userBedTime) state.userBedTime = '23:00';
+
+        // FIX: sanitize all AI history arrays on rehydration to remove any
+        // null/undefined entries that could cause "can't read property 'id' of null"
+        if (state.aiMealPlannerHistory) {
+          state.aiMealPlannerHistory = state.aiMealPlannerHistory.filter(Boolean);
+        }
+        if (state.aiIngredientHistory) {
+          state.aiIngredientHistory = state.aiIngredientHistory.filter(Boolean);
+        }
+        if (state.aiChatHistory) {
+          state.aiChatHistory = state.aiChatHistory.filter(Boolean);
+        }
+        if (state.aiDoctorHistory) {
+          state.aiDoctorHistory = state.aiDoctorHistory.filter(Boolean);
+        }
+        if (state.aiCalorieHistory) {
+          state.aiCalorieHistory = state.aiCalorieHistory.filter(Boolean);
+        }
 
         const currentOffset = new Date().getTimezoneOffset();
         if (state.timezoneOffset !== currentOffset) {
@@ -793,12 +1006,17 @@ export const useHealthStore = create(
 
         void state.startLiveStepTracking?.();
 
-        if (!state.notificationSettings) state.notificationSettings = getDefaultNotificationSettings();
+        if (!state.notificationSettings) {
+          state.notificationSettings = getDefaultNotificationSettings();
+        }
         if (!state.notificationFeed) state.notificationFeed = [];
 
         restoreNotifications(state.notificationSettings).catch(() => {});
 
-        if (state.notificationSettings?.masterEnabled && state.notificationSettings?.sleepReminder) {
+        if (
+          state.notificationSettings?.masterEnabled &&
+          state.notificationSettings?.sleepReminder
+        ) {
           scheduleSleepWindDown(state.userBedTime).catch(() => {});
         }
       },

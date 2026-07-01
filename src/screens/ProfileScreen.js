@@ -9,14 +9,14 @@ import { useTheme } from '../theme/theme';
 export default function ProfileScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const safeTopPadding = Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 20 : insets.top + 20;
-  const { COLORS, FONTS, isDark, themePreference, setThemePreference } = useTheme();
+  const { COLORS, FONTS, isDark, themePreference} = useTheme();
 
   const { isSignedIn, signOut } = useAuth();
   const { user: clerkUser, isLoaded } = useUser();
 
   const {
     isPremiumUser, user, setUser, isGuestMode, clearGuestMode,
-    userWakeTime, userBedTime, updateBiologicalSchedule, requiresTimezoneUpdate
+    userWakeTime, userBedTime, updateBiologicalSchedule, requiresTimezoneUpdate, setThemePreference
   } = useHealthStore();
   const userAvatar = useHealthStore((state) => state.userAvatar);
 

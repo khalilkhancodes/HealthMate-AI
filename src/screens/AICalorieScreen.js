@@ -154,7 +154,7 @@ const RichAIText = ({ text, colors, showMacroCard = false }) => {
               <View key={i} style={styles.richBulletRow}>
                 <View style={[styles.richBulletDot, { backgroundColor: colors.primary }]} />
                 <Text style={[styles.richBulletText, { color: colors.textPrimary }]}>
-                  <Text style={styles.richBulletKey}>{kvMatch[1]}: </Text>
+                  <Text style={[styles.richBulletKey, { color: colors.textPrimary }]}>{kvMatch[1]}: </Text>
                   <Text style={{ color: colors.textSecondary || colors.textMuted }}>{kvMatch[2]}</Text>
                 </Text>
               </View>
@@ -299,9 +299,9 @@ Required Output Structure:
 CALORIE ESTIMATE:
 .[X] Total Calories
 MACROS:
-- Protein: [X]g
-- Carbs: [X]g
-- Fats: [X]g`
+• Protein: [X]g
+• Carbs: [X]g
+• Fats: [X]g`
       : `You are an expert nutritionist. Answer questions about food calories and macronutrients.
 CRITICAL RULES: NO markdown. Use ALL CAPS for section headings. Use hyphens for bullet points. When specific calorie/macro data is available, present it as: CALORIE ESTIMATE: then MACROS:.`;
 
@@ -342,7 +342,7 @@ CRITICAL RULES: NO markdown. Use ALL CAPS for section headings. Use hyphens for 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'meta/llama-3.2-90b-vision-instruct',
+        model: isVisionRef.current ? 'meta/llama-3.2-11b-vision-instruct' : 'meta/llama-3.1-8b-instruct',
         messages: payloadMessages,
         max_tokens: 500,
       }),
@@ -665,7 +665,7 @@ CRITICAL RULES: NO markdown. Use ALL CAPS for section headings. Use hyphens for 
             />
             <TouchableOpacity
               style={[styles.sendButton, {
-                backgroundColor: inputText.trim() || selectedImage ? COLORS.primary : 'transparent',
+                backgroundColor: inputText.trim() || selectedImage ? COLORS.primary : COLORS.primary + '20',
               }]}
               onPress={handleSend}
               disabled={(!inputText.trim() && !selectedImage) || isTyping || isStreaming}
@@ -751,7 +751,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderRadius: 24,
     paddingHorizontal: 6,
-    paddingVertical: 6,
     borderWidth: 1,
     alignItems: 'flex-end',
     minHeight: 48,
@@ -768,7 +767,7 @@ const styles = StyleSheet.create({
     minHeight: 36,
     maxHeight: 120,
     paddingHorizontal: 8,
-    paddingTop: 8,
+    paddingTop: 4,
     fontSize: 15,
     backgroundColor: 'transparent',
   },
@@ -779,7 +778,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 4,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   actionRow: { flexDirection: 'row', marginTop: 6, paddingHorizontal: 4, width: '100%' },
   actionBtn: { flexDirection: 'row', alignItems: 'center', padding: 4 },

@@ -1,3 +1,22 @@
 rd /s /q app\.cxx
 rd /s /q app\build
 rd /s /q .gradle
+
+
+Analyze the image carefully as an expert nutritionist.
+Calculate:
+- Estimated total calories.
+- Protein (g), Carbohydrates (g), and Fats (g).
+CRITICAL FORMATTING RULES:
+1. DO NOT use markdown. NO asterisks, NO bold tags, NO hash symbols.
+2. Use ALL CAPS for section headings.
+3. Use simple discs for bullet points.
+Required Output Structure:
+CALORIE ESTIMATE:
+.[X] Total Calories
+MACROS:
+• Protein: [X]g
+• Carbs: [X]g
+• Fats: [X]g`
+      : `You are an expert nutritionist. Answer questions about food calories and macronutrients.
+CRITICAL RULES: NO markdown. Use ALL CAPS for section headings. Use hyphens for bullet points. When specific calorie/macro data is available, present it as: CALORIE ESTIMATE: then MACROS:.
